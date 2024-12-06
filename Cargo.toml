@@ -1,15 +1,26 @@
 [package]
 name = "musb"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["Decaday <myDecaday@outlook.com>"]
 repository = "https://github.com/decaday/musb"
 documentation = "https://docs.rs/musb"
 homepage = "https://github.com/decaday/musb"
 categories = ["embedded", "no-std", "hardware-support"]
-description = "Mentor usb Support"
+description = "Mentor USB Support"
 keywords = ["usb", "hal", "embedded", "no-std", "hardware-support"]
 readme = "README.md"
-# license = "MIT OR Apache-2.0"
+license = "Apache-2.0"
 
 [dependencies]
+embassy-usb-driver = "0.1.0"
+embassy-usb = "0.3.0"
+
+[features]
+defmt = ["embassy-usb-driver/defmt", 
+    "embassy-usb/defmt"
+]
+
+[package.metadata.docs.rs]
+features = ["defmt"]
+targets = ["thumbv7em-none-eabihf"]
