@@ -1,0 +1,48 @@
+fieldset/INTRUSB:
+  bit_size: 8
+  description: USB Interrupt Status Register
+  fields:
+  - name: VBus_Error
+    description: VBus drops below valid threshold
+    bit_offset: 7
+    bit_size: 1
+
+  - name: Sess_Req
+    description: Session Request signaling detected
+    bit_offset: 6
+    bit_size: 1
+
+  - name: Discon
+    description: Device disconnection detected
+    bit_offset: 5
+    bit_size: 1
+
+  - name: Conn
+    description: Device connection detected
+    bit_offset: 4
+    bit_size: 1
+
+  - name: SOF
+    description: New frame start
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Reset
+    description: Reset signaling detected
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Babble
+    description: Babble condition detected in Host mode
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Resume
+    description: Resume signaling detected during Suspend
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Suspend
+    description: Suspend signaling detected
+    bit_offset: 0
+    bit_size: 1

@@ -1,0 +1,48 @@
+fieldset/INTRUSBE:
+  bit_size: 8
+  description: USB Interrupt Enable Register
+  fields:
+  - name: VBus_Error_Enable
+    description: Enable VBus Error interrupt
+    bit_offset: 7
+    bit_size: 1
+
+  - name: Sess_Req_Enable
+    description: Enable Session Request interrupt
+    bit_offset: 6
+    bit_size: 1
+
+  - name: Discon_Enable
+    description: Enable Disconnection interrupt
+    bit_offset: 5
+    bit_size: 1
+
+  - name: Conn_Enable
+    description: Enable Connection interrupt
+    bit_offset: 4
+    bit_size: 1
+
+  - name: SOF_Enable
+    description: Enable Start of Frame interrupt
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Reset_Enable
+    description: Enable Reset interrupt
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Babble_Enable
+    description: Enable Babble interrupt
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Resume_Enable
+    description: Enable Resume interrupt
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Suspend_Enable
+    description: Enable Suspend interrupt
+    bit_offset: 0
+    bit_size: 1

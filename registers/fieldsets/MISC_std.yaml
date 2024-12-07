@@ -1,0 +1,23 @@
+fieldset/MISC:
+  bit_size: 8
+  description: Miscellaneous USB Configuration Register
+  fields:
+  - name: tx_edma
+    description: DMA request timing for IN Endpoints
+    bit_offset: 1
+    bit_size: 1
+    enum: EDMA_Mode
+
+  - name: rx_edma
+    description: DMA request timing for OUT Endpoints
+    bit_offset: 0
+    bit_size: 1
+    enum: EDMA_Mode
+
+enum/EDMA_Mode:
+  bit_size: 1
+  variants:
+  - name: LATE_MODE
+    value: 0
+  - name: EARLY_MODE
+    value: 1

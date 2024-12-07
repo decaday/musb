@@ -1,0 +1,60 @@
+fieldset/DEVCTL:
+  bit_size: 8
+  description: Device Control Register for USB mode and VBus monitoring
+  fields:
+  - name: B_Device
+    description: Indicates device type in USB session
+    bit_offset: 7
+    bit_size: 1
+    enum: Device_Type
+
+  - name: FS_Dev
+    description: Full-speed or high-speed device detection
+    bit_offset: 6
+    bit_size: 1
+
+  - name: LS_Dev
+    description: Low-speed device detection
+    bit_offset: 5
+    bit_size: 1
+
+  - name: VBus
+    description: VBus voltage level indication
+    bit_offset: 3
+    bit_size: 2
+    enum: VBus_Level
+
+  - name: Host_Mode
+    description: Indicates USB Host mode operation
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Host_Req
+    description: Initiate Host Negotiation Protocol
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Session
+    description: Control or monitor USB session state
+    bit_offset: 0
+    bit_size: 1
+
+enum/Device_Type:
+  bit_size: 1
+  variants:
+  - name: A_DEVICE
+    value: 0
+  - name: B_DEVICE
+    value: 1
+
+enum/VBus_Level:
+  bit_size: 2
+  variants:
+  - name: BELOW_SESSION_END
+    value: 0
+  - name: ABOVE_SESSION_END
+    value: 1
+  - name: ABOVE_AVALID
+    value: 2
+  - name: ABOVE_VBUS_VALID
+    value: 3

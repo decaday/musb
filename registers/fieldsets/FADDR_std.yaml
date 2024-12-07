@@ -1,0 +1,9 @@
+fieldset/FADDR:
+  bit_size: 8
+  description: Function Address Register for USB device addressing
+  fields:
+  - name: Func_Addr
+    description: USB device function address
+    bit_offset: 0
+    bit_size: 7
+

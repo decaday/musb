@@ -1,0 +1,9 @@
+
+fieldset/INDEX:
+  bit_size: 4
+  description: Endpoint index selection register
+  fields:
+  - name: Index
+    description: Selects which endpoint control/status registers are accessed
+    bit_offset: 0
+    bit_size: 4

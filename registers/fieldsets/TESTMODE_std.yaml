@@ -1,0 +1,53 @@
+
+fieldset/TESTMODE:
+  bit_size: 8
+  description: USB test mode configuration register
+  fields:
+  - name: Force_Host
+    description: Force core to enter Host mode
+    bit_offset: 7
+    bit_size: 1
+    enum: Force_Host_Mode
+
+  - name: FIFO_Access
+    description: Transfer packet from Endpoint 0 TX FIFO to Endpoint 0 Rx FIFO
+    bit_offset: 6
+    bit_size: 1
+
+  - name: Force_FS
+    description: Force Full-speed mode on USB reset
+    bit_offset: 5
+    bit_size: 1
+
+  - name: Force_HS
+    description: Force High-speed mode on USB reset
+    bit_offset: 4
+    bit_size: 1
+
+  - name: Test_Packet
+    description: Enter Test_Packet high-speed test mode
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Test_K
+    description: Enter Test_K high-speed test mode
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Test_J
+    description: Enter Test_J high-speed test mode
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Test_SE0_NAK
+    description: Enter Test_SE0_NAK high-speed test mode
+    bit_offset: 0
+    bit_size: 1
+
+enum/Force_Host_Mode:
+  bit_size: 1
+  variants:
+  - name: NORMAL
+    value: 0
+  - name: FORCE
+    value: 1

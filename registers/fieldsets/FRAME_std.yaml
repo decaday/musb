@@ -1,0 +1,8 @@
+fieldset/FRAME:
+  bit_size: 16
+  description: Last received USB frame number
+  fields:
+  - name: Frame
+    description: USB frame number
+    bit_offset: 0
+    bit_size: 11
