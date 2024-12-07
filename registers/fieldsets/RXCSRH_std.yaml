@@ -1,0 +1,23 @@
+fieldset/RXCSRH:
+  bit_size: 8
+  description: RX Control and Status Register High
+  fields:
+  - name: Auto_Clear
+    description: Automatically clear RxPktRdy when max packet size is unloaded
+    bit_offset: 7
+    bit_size: 1
+
+  - name: PID_Error
+    description: Disable NYET handshakes or indicate PID error
+    bit_offset: 6
+    bit_size: 1
+
+  - name: DMA_Req_Mode
+    description: Select DMA Request Mode
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Incomp_Rx
+    description: Incomplete packet in high-bandwidth Isochronous/Interrupt transfer
+    bit_offset: 0
+    bit_size: 1

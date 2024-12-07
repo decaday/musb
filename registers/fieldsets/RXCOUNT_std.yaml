@@ -1,0 +1,9 @@
+
+fieldset/RXCOUNT:
+  bit_size: 16
+  description: USB Endpoint 0 Received Data Byte Count
+  fields:
+  - name: Count
+    description: Number of received data bytes in FIFO
+    bit_offset: 0
+    bit_size: 13

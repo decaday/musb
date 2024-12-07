@@ -1,0 +1,51 @@
+fieldset/CONFIGDATA:
+  bit_size: 8
+  description: Core configuration information register
+  fields:
+  - name: MP_RxE
+    description: Automatic bulk packet amalgamation
+    bit_offset: 7
+    bit_size: 1
+
+  - name: MP_TxE
+    description: Automatic bulk packet splitting
+    bit_offset: 6
+    bit_size: 1
+
+  - name: Big_Endian
+    description: Endian ordering indicator
+    bit_offset: 5
+    bit_size: 1
+  - name: HB_RxE
+    description: High-bandwidth Rx ISO Endpoint Support
+    bit_offset: 4
+    bit_size: 1
+
+  - name: HB_TxE
+    description: High-bandwidth TX ISO Endpoint Support
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Dyn_FIFO_Sizing
+    description: Dynamic FIFO Sizing option
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Soft_ConE
+    description: Soft Connect/Disconnect feature
+    bit_offset: 1
+    bit_size: 1
+
+  - name: UTMI_Data_Width
+    description: UTMI+ data width selection
+    bit_offset: 0
+    bit_size: 1
+    enum: UTMI_Width
+
+enum/UTMI_Width:
+  bit_size: 1
+  variants:
+  - name: EIGHT_BIT
+    value: 0
+  - name: SIXTEEN_BIT
+    value: 1

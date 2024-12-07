@@ -1,0 +1,43 @@
+fieldset/RXCSRL:
+  bit_size: 8
+  description: RX Control and Status Register Low
+  fields:
+  - name: Clr_Data_Tog
+    description: Reset endpoint data toggle to 0
+    bit_offset: 7
+    bit_size: 1
+
+  - name: Sent_Stall
+    description: STALL handshake transmission status
+    bit_offset: 6
+    bit_size: 1
+
+  - name: Send_Stall
+    description: Issue or terminate STALL handshake
+    bit_offset: 5
+    bit_size: 1
+
+  - name: Flush_FIFO
+    description: Flush next packet from Rx FIFO
+    bit_offset: 4
+    bit_size: 1
+
+  - name: Data_Error
+    description: CRC or bit-stuff error in data packet
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Over_Run
+    description: OUT packet could not be loaded into Rx FIFO
+    bit_offset: 2
+    bit_size: 1
+
+  - name: FIFO_Full
+    description: No more packets can be loaded into Rx FIFO
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Rx_Pkt_Rdy
+    description: Data packet received and ready to be unloaded
+    bit_offset: 0
+    bit_size: 1

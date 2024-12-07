@@ -1,0 +1,43 @@
+fieldset/CSR0L:
+  bit_size: 8
+  description: USB Endpoint 0 Control and Status Register Low
+  fields:
+  - name: Rx_Pkt_Rdy
+    description: Indicates received data packet ready for processing
+    bit_offset: 0
+    bit_size: 1
+
+  - name: Tx_Pkt_Rdy
+    description: Indicates data packet loaded in FIFO ready for transmission
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Sent_Stall
+    description: Set when STALL handshake is transmitted
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Data_End
+    description: Marks the end of data transfer
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Send_Stall
+    description: Terminate current transaction with STALL handshake
+    bit_offset: 4
+    bit_size: 1
+
+  - name: Serviced_Rx_Pkt_Rdy
+    description: Clear RxPktRdy bit
+    bit_offset: 5
+    bit_size: 1
+
+  - name: Serviced_Setup_End
+    description: Clear SetupEnd bit
+    bit_offset: 7
+    bit_size: 1
+
+  - name: Setup_End
+    description: Control transaction ended prematurely
+    bit_offset: 4
+    bit_size: 1

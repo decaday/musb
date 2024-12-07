@@ -1,0 +1,43 @@
+fieldset/TXCSRH:
+  bit_size: 8
+  description: Additional TX endpoint control register
+  fields:
+  - name: Auto_Set
+    description: Automatically set TxPktRdy for max packet size
+    bit_offset: 7
+    bit_size: 1
+
+  - name: ISO
+    description: Enable Isochronous transfers
+    bit_offset: 6
+    bit_size: 1
+    enum: Transfer_Mode
+
+  - name: Mode
+    description: Endpoint direction control
+    bit_offset: 5
+    bit_size: 1
+    enum: Endpoint_Direction
+
+  - name: DMAReqEnab
+    description: Enable DMA request for TX endpoint
+    bit_offset: 4
+    bit_size: 1
+
+  - name: Frc_Data_Tog
+    description: Force endpoint data toggle switch
+    bit_offset: 3
+    bit_size: 1
+
+  - name: DMA_Req_Mode
+    description: Select DMA Request Mode
+    bit_offset: 2
+    bit_size: 1
+
+enum/Endpoint_Direction:
+  bit_size: 1
+  variants:
+  - name: RX
+    value: 0
+  - name: TX
+    value: 1

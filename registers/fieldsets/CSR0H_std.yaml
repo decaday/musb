@@ -1,0 +1,8 @@
+fieldset/CSR0H:
+  bit_size: 8
+  description: USB Endpoint 0 Control and Status Register High
+  fields:
+  - name: Flush_FIFO
+    description: Reset FIFO pointer and clear packet ready status
+    bit_offset: 0
+    bit_size: 1

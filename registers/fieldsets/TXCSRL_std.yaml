@@ -1,0 +1,43 @@
+fieldset/TXCSRL:
+  bit_size: 8
+  description: TX endpoint control and status register
+  fields:
+  - name: Incomp_Tx
+    description: Incomplete high-bandwidth Isochronous transfer
+    bit_offset: 7
+    bit_size: 1
+
+  - name: Clr_Data_Tog
+    description: Reset endpoint data toggle
+    bit_offset: 6
+    bit_size: 1
+
+  - name: Sent_Stall
+    description: STALL handshake transmission status
+    bit_offset: 5
+    bit_size: 1
+
+  - name: Send_Stall
+    description: Issue STALL handshake to IN token
+    bit_offset: 4
+    bit_size: 1
+
+  - name: Flush_FIFO
+    description: Flush TX FIFO
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Under_Run
+    description: IN token received without TxPktRdy
+    bit_offset: 2
+    bit_size: 1
+
+  - name: FIFO_Not_Empty
+    description: TX FIFO contains at least one packet
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Tx_Pkt_Rdy
+    description: TX packet ready for transmission
+    bit_offset: 0
+    bit_size: 1

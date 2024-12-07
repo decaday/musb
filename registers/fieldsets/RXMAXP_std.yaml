@@ -1,0 +1,8 @@
+fieldset/RXMAXP:
+  bit_size: 11
+  description: Maximum payload size for RX endpoint
+  fields:
+  - name: maxp
+    description: Maximum payload in bytes
+    bit_offset: 0
+    bit_size: 11

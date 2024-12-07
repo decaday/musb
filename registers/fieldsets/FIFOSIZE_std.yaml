@@ -1,0 +1,13 @@
+fieldset/FIFOSIZE:
+  bit_size: 8
+  description: FIFO Size Register for TX and RX Endpoints
+  fields:
+  - name: Rx_FIFO_Size
+    description: Size of the selected Rx endpoint FIFO (2^n bytes, 0 if not configured)
+    bit_offset: 4
+    bit_size: 4
+
+  - name: Tx_FIFO_Size
+    description: Size of the selected Tx endpoint FIFO (2^n bytes, 0 if not configured)
+    bit_offset: 0
+    bit_size: 4
