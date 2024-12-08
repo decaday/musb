@@ -1,0 +1,121 @@
+block/USB:
+  description: USB control and status registers for managing USB operations.
+  items:
+  - name: FADDR
+    description: Function address register.
+    byte_offset: 0x00
+    bit_size: 8
+    fieldset: FADDR
+  - name: POWER
+    description: Power management register.
+    byte_offset: 0x01
+    bit_size: 8
+    fieldset: POWER
+  - name: INTRTX
+    description: Interrupt register for Endpoint 0 plus TX Endpoints 1 to 15.
+    byte_offset: 0x02
+    bit_size: 16
+    fieldset: INTRTX
+  - name: INTRRX
+    description: Interrupt register for Rx Endpoints 1 to 15.
+    byte_offset: 0x04
+    bit_size: 16
+    fieldset: INTRRX
+  - name: INTRTXE
+    description: Interrupt enable register for INTRTX.
+    byte_offset: 0x06
+    bit_size: 16
+    fieldset: INTRTXE
+  - name: INTRRXE
+    description: Interrupt enable register for INTRRX.
+    byte_offset: 0x08
+    bit_size: 16
+    fieldset: INTRRXE
+  - name: INTRUSB
+    description: Interrupt register for common USB interrupts.
+    byte_offset: 0x0A
+    bit_size: 8
+    fieldset: INTRUSB
+  - name: INTRUSBE
+    description: Interrupt enable register for INTRUSB.
+    byte_offset: 0x0B
+    bit_size: 8
+    fieldset: INTRUSBE
+  - name: FRAME
+    description: Frame number.
+    byte_offset: 0x0C
+    bit_size: 16
+    fieldset: FRAME
+  - name: INDEX
+    description: Index register for selecting the endpoint status and control registers.
+    byte_offset: 0x0E
+    bit_size: 8
+    fieldset: INDEX
+  - name: TESTMODE
+    description: Enables the USB 2.0 test modes.
+    byte_offset: 0x0F
+    bit_size: 8
+    fieldset: TESTMODE
+  - name: TXMAXP
+    description: Maximum packet size for peripheral TX endpoint.
+    byte_offset: 0x10
+    bit_size: 16
+    fieldset: TXMAXP
+  - name: CSR0H
+    description: Control Status register higher byte for Endpoint 0.
+    byte_offset: 0x12
+    bit_size: 8
+    fieldset: CSR0H
+  - name: CSR0L
+    description: Control Status register lower byte for Endpoint 0.
+    byte_offset: 0x13
+    bit_size: 8
+    fieldset: CSR0L
+  - name: TXCSRH
+    description: Control Status register higher byte for peripheral TX endpoint.
+    byte_offset: 0x14
+    bit_size: 8
+    fieldset: TXCSRH
+  - name: TXCSRL
+    description: Control Status register lower byte for peripheral TX endpoint.
+    byte_offset: 0x15
+    bit_size: 8
+    fieldset: TXCSRL
+  - name: RXMAXP
+    description: Maximum packet size for peripheral Rx endpoint.
+    byte_offset: 0x16
+    bit_size: 16
+    fieldset: RXMAXP
+  - name: RXCSRH
+    description: Control Status register higher byte for peripheral Rx endpoint.
+    byte_offset: 0x18
+    bit_size: 8
+    fieldset: RXCSRH
+  - name: RXCSRL
+    description: Control Status register lower byte for peripheral Rx endpoint.
+    byte_offset: 0x19
+    bit_size: 8
+    fieldset: RXCSRL
+  - name: COUNT0
+    description: Number of received bytes in Endpoint 0 FIFO.
+    byte_offset: 0x1A
+    bit_size: 8
+    fieldset: COUNT0
+  - name: RXCOUNT
+    description: Number of bytes to be read from peripheral Rx endpoint FIFO.
+    byte_offset: 0x1C
+    bit_size: 16
+    fieldset: RXCOUNT
+  - name: CONFIGDATA
+    description: Returns details of core configuration.
+    byte_offset: 0x1F
+    bit_size: 8
+    fieldset: CONFIGDATA
+  - name: FIFO
+    description: FIFO for endpoints.
+    byte_offset: 0x20
+    bit_size: 8
+    fieldset: FIFO
+    array:
+      len: ENDPOINT_COUNT
+      stride: 4

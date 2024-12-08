@@ -1,7 +1,3 @@
-# USB Registers YAML Definition
-
-# (Previous definitions remain the same)
-
 fieldset/INTRTXE:
   bit_size: 16
   description: Transmit Endpoint Interrupt Enable Register
