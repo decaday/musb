@@ -1,0 +1,9 @@
+name: std-full
+block: peri-std
+epoint_count: 16
+fifo:
+  type: dynamic
+  total_btye_size: 256 # 2048
+reg_bit_size:
+  fifo: 16
+  intr: 16

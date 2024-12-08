@@ -1,0 +1,25 @@
+name: py32f403
+block: py32
+epoint_count: 8
+fifo:
+  type: fixed
+  shared: false
+  equal_size: true
+  btye_fifo_size: 8
+reg_bit_size:
+  fifo: 8
+  intr: 8
+patches:
+  - fieldset: POWER
+    version: mini
+  - fieldset: INTRUSB
+    version: mini
+  - fieldset: INTRUSBE
+    version: mini
+  - fieldset: TXCSRL
+    version: mini
+  - fieldset: RXCSRH
+    version: mini
+
+
+    

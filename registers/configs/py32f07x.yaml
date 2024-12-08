@@ -1,0 +1,25 @@
+name: py32f07x
+block: py32
+epoint_count: 6
+fifo:
+  type: fixed
+  shared: true
+  equal_size: false
+  btye_size_per_ep: [8, 8, 16, 16, 16, 64]
+reg_bit_size:
+  fifo: 8
+  intr: 8
+patches:
+  - fieldset: POWER
+    version: mini
+  - fieldset: INTRUSB
+    version: mini
+  - fieldset: INTRUSBE
+    version: mini
+  - fieldset: TXCSRL
+    version: mini
+  - fieldset: RXCSRH
+    version: mini
+
+
+    
