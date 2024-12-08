@@ -22,22 +22,22 @@ fieldset/CSR0L:
     bit_offset: 3
     bit_size: 1
 
+  - name: Setup_End
+    description: Control transaction ended prematurely
+    bit_offset: 4
+    bit_size: 1
+
   - name: Send_Stall
     description: Terminate current transaction with STALL handshake
-    bit_offset: 4
+    bit_offset: 5
     bit_size: 1
 
   - name: Serviced_Rx_Pkt_Rdy
     description: Clear RxPktRdy bit
-    bit_offset: 5
+    bit_offset: 6
     bit_size: 1
 
   - name: Serviced_Setup_End
     description: Clear SetupEnd bit
     bit_offset: 7
-    bit_size: 1
-
-  - name: Setup_End
-    description: Control transaction ended prematurely
-    bit_offset: 4
     bit_size: 1

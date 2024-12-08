@@ -3,9 +3,6 @@
 https://github.com/py32-rs/py32-hal/pull/19
 
 
-
-
-
 ### musb IP:
 
 | Vendor            |            | Chips (not fully listed)         | IP          |
