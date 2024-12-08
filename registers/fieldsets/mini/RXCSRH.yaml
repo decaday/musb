@@ -1,0 +1,23 @@
+fieldset/RXCSRH:
+  bit_size: 8
+  description: RX Control and Status Register High
+  fields:
+  - name: Auto_Clear
+    description: Automatically clear RxPktRdy when max packet size is unloaded
+    bit_offset: 7
+    bit_size: 1
+
+  - name: ISO
+    description: ISO mode enable
+    bit_offset: 6
+    bit_size: 1
+
+  - name: DMA_Req_Enab
+    description: Enable DMA request for RX endpoint
+    bit_offset: 5
+    bit_size: 1
+
+  - name: DMA_Req_Mode
+    description: Select DMA Request Mode
+    bit_offset: 4
+    bit_size: 1

@@ -1,0 +1,45 @@
+fieldset/POWER:
+  bit_size: 8
+  description: USB Power Control and Status Register
+  fields:
+  - name: ISO_Update
+    description: Control isochronous packet transmission timing
+    bit_offset: 7
+    bit_size: 1
+    enum: ISO_Update_Mode
+
+  - name: Reset
+    description: USB reset signaling status
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Resume
+    description: Generate resume signaling
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Suspend_Mode
+    description: USB suspend mode control
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Enable_Suspend_M
+    description: Enable SUSPENDM output
+    bit_offset: 0
+    bit_size: 1
+
+enum/ISO_Update_Mode:
+  bit_size: 1
+  variants:
+  - name: NORMAL
+    value: 0
+  - name: WAIT_SOF
+    value: 1
+
+enum/HS_Mode_Status:
+  bit_size: 1
+  variants:
+  - name: FULL_SPEED
+    value: 0
+  - name: HIGH_SPEED
+    value: 1

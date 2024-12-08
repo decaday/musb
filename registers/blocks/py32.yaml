@@ -1,0 +1,109 @@
+block/USB:
+  description: USB control and status registers for managing USB operations.
+  items:
+  - name: FADDR
+    description: Function address of the USB device.
+    byte_offset: 0x00
+    bit_size: 8
+    fieldset: FADDR
+  - name: POWER
+    description: USB power management register.
+    byte_offset: 0x01
+    bit_size: 8
+    fieldset: POWER
+    version: mini
+  - name: INTUSB
+    description: USB interrupt status register.
+    byte_offset: 0x04
+    bit_size: 8
+    fieldset: INTUSB
+  - name: INTRRX
+    description: Interrupt status for OUT endpoint.
+    byte_offset: 0x05
+    bit_size: 8
+    fieldset: INTRRX
+  - name: INTRTX
+    description: Interrupt status for IN endpoint.
+    byte_offset: 0x06
+    bit_size: 8
+    fieldset: INTRTX
+  - name: INTUSBE
+    description: USB interrupt enable register.
+    byte_offset: 0x08
+    bit_size: 8
+    fieldset: INTUSBE
+  - name: INTRRXE
+    description: Interrupt enable for OUT endpoint 1.
+    byte_offset: 0x09
+    bit_size: 8
+    fieldset: INTRRXE
+  - name: INTRTXE
+    description: Interrupt enable for IN endpoint 1.
+    byte_offset: 0x0A
+    bit_size: 8
+    fieldset: INTRTXE
+  - name: FRAME
+    description: USB frame number and endpoint index.
+    byte_offset: 0x0C
+    bit_size: 8
+    fieldset: FRAME
+  - name: INDEX
+    description: Selected endpoint index.
+    byte_offset: 0x0E
+    bit_size: 8
+    fieldset: INDEX
+  - name: CSR0L
+    description: Endpoint 0 control and status register.
+    byte_offset: 0x10
+    bit_size: 8
+    fieldset: CSR0L
+  - name: COUNT0
+    description: Data count for endpoint 0.
+    byte_offset: 0x11
+    bit_size: 8
+    fieldset: COUNT0
+  - name: TXCSRH
+    description: Control and status register for IN endpoints.
+    byte_offset: 0x14
+    bit_size: 8
+    fieldset: TXCSRH
+  - name: TXCSRL
+    description: Control and status register for IN endpoints.
+    byte_offset: 0x15
+    bit_size: 8
+    fieldset: TXCSRL
+    version: mini
+  - name: TXMAXP
+    description: Maximum packet size for IN endpoints.
+    byte_offset: 0x16
+    bit_size: 8
+    fieldset: TXMAXP
+  - name: RXCSRH
+    description: Control and status register for OUT endpoints.
+    byte_offset: 0x18
+    bit_size: 8
+    fieldset: RXCSRH
+    version: mini
+  - name: RXCSRL
+    description: Control and status register for OUT endpoints.
+    byte_offset: 0x19
+    bit_size: 8
+    fieldset: OUT_CSR1
+  - name: RXMAXP
+    description: Maximum packet size for OUT endpoints.
+    byte_offset: 0x1A
+    bit_size: 8
+    fieldset: RXMAXP
+  - name: RXCOUNT
+    description: Data count for OUT endpoints.
+    byte_offset: 0x1C
+    bit_size: 8
+    fieldset: RXCOUNT
+  - name: FIFO
+    description: FIFO for endpoints.
+    byte_offset: 0x20
+    bit_size: 8
+    fieldset: FIFO
+    array:
+      len: ENDPOINT_COUNT
+      stride: 4
