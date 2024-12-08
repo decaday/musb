@@ -16,6 +16,10 @@ license = "Apache-2.0"
 embassy-usb-driver = "0.1.0"
 embassy-usb = "0.3.0"
 
+[build-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+
 [features]
 defmt = ["embassy-usb-driver/defmt", 
     "embassy-usb/defmt"
