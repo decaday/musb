@@ -2,77 +2,10 @@ fieldset/INTRRX:
   bit_size: 16
   description: Receive Endpoint Interrupt Status Register
   fields:
-  - name: EP1_RX
-    description: Endpoint 1 receive interrupt
-    bit_offset: 1
+  - name: EP_RX
+    description: Endpoint transmit interrupt (except EP0)
+    bit_offset: 0
     bit_size: 1
-
-  - name: EP2_RX
-    description: Endpoint 2 receive interrupt
-    bit_offset: 2
-    bit_size: 1
-
-  - name: EP3_RX
-    description: Endpoint 3 receive interrupt
-    bit_offset: 3
-    bit_size: 1
-
-  - name: EP4_RX
-    description: Endpoint 4 receive interrupt
-    bit_offset: 4
-    bit_size: 1
-
-  - name: EP5_RX
-    description: Endpoint 5 receive interrupt
-    bit_offset: 5
-    bit_size: 1
-
-  - name: EP6_RX
-    description: Endpoint 6 receive interrupt
-    bit_offset: 6
-    bit_size: 1
-
-  - name: EP7_RX
-    description: Endpoint 7 receive interrupt
-    bit_offset: 7
-    bit_size: 1
-
-  - name: EP8_RX
-    description: Endpoint 8 receive interrupt
-    bit_offset: 8
-    bit_size: 1
-
-  - name: EP9_RX
-    description: Endpoint 9 receive interrupt
-    bit_offset: 9
-    bit_size: 1
-
-  - name: EP10_RX
-    description: Endpoint 10 receive interrupt
-    bit_offset: 10
-    bit_size: 1
-
-  - name: EP11_RX
-    description: Endpoint 11 receive interrupt
-    bit_offset: 11
-    bit_size: 1
-
-  - name: EP12_RX
-    description: Endpoint 12 receive interrupt
-    bit_offset: 12
-    bit_size: 1
-
-  - name: EP13_RX
-    description: Endpoint 13 receive interrupt
-    bit_offset: 13
-    bit_size: 1
-
-  - name: EP14_RX
-    description: Endpoint 14 receive interrupt
-    bit_offset: 14
-    bit_size: 1
-
-  - name: EP15_RX
-    description: Endpoint 15 receive interrupt
-    bit_offset: 15
-    bit_size: 1
+    array:
+      len: ENDPOINT_COUNT
+      stride : 1

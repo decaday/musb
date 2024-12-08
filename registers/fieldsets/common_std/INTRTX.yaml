@@ -2,82 +2,10 @@ fieldset/INTRTX:
   bit_size: 16
   description: Transmit Endpoint Interrupt Status Register
   fields:
-  - name: EP0
-    description: Endpoint 0 transmit interrupt
+  - name: EP_TXE
+    description: Endpoint transmit interrupt (except EP0)
     bit_offset: 0
     bit_size: 1
-
-  - name: EP1_TX
-    description: Endpoint 1 transmit interrupt
-    bit_offset: 1
-    bit_size: 1
-
-  - name: EP2_TX
-    description: Endpoint 2 transmit interrupt
-    bit_offset: 2
-    bit_size: 1
-
-  - name: EP3_TX
-    description: Endpoint 3 transmit interrupt
-    bit_offset: 3
-    bit_size: 1
-
-  - name: EP4_TX
-    description: Endpoint 4 transmit interrupt
-    bit_offset: 4
-    bit_size: 1
-
-  - name: EP5_TX
-    description: Endpoint 5 transmit interrupt
-    bit_offset: 5
-    bit_size: 1
-
-  - name: EP6_TX
-    description: Endpoint 6 transmit interrupt
-    bit_offset: 6
-    bit_size: 1
-
-  - name: EP7_TX
-    description: Endpoint 7 transmit interrupt
-    bit_offset: 7
-    bit_size: 1
-
-  - name: EP8_TX
-    description: Endpoint 8 transmit interrupt
-    bit_offset: 8
-    bit_size: 1
-
-  - name: EP9_TX
-    description: Endpoint 9 transmit interrupt
-    bit_offset: 9
-    bit_size: 1
-
-  - name: EP10_TX
-    description: Endpoint 10 transmit interrupt
-    bit_offset: 10
-    bit_size: 1
-
-  - name: EP11_TX
-    description: Endpoint 11 transmit interrupt
-    bit_offset: 11
-    bit_size: 1
-
-  - name: EP12_TX
-    description: Endpoint 12 transmit interrupt
-    bit_offset: 12
-    bit_size: 1
-
-  - name: EP13_TX
-    description: Endpoint 13 transmit interrupt
-    bit_offset: 13
-    bit_size: 1
-
-  - name: EP14_TX
-    description: Endpoint 14 transmit interrupt
-    bit_offset: 14
-    bit_size: 1
-
-  - name: EP15_TX
-    description: Endpoint 15 transmit interrupt
-    bit_offset: 15
-    bit_size: 1
+    array:
+      len: ENDPOINT_COUNT
+      stride : 1
