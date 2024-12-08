@@ -16,6 +16,7 @@ fieldset/CONFIGDATA:
     description: Endian ordering indicator
     bit_offset: 5
     bit_size: 1
+
   - name: HB_RxE
     description: High-bandwidth Rx ISO Endpoint Support
     bit_offset: 4

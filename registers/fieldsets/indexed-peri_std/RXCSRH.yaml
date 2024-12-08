@@ -7,9 +7,19 @@ fieldset/RXCSRH:
     bit_offset: 7
     bit_size: 1
 
-  - name: PID_Error
-    description: Disable NYET handshakes or indicate PID error
+  - name: ISO
+    description: ISO mode enable
     bit_offset: 6
+    bit_size: 1
+
+  - name: DMA_Req_Enab
+    description: Enable DMA request for RX endpoint
+    bit_offset: 5
+    bit_size: 1
+  
+  - name: Dis_Nyet_PID_Error
+    description: Disable NYET handshakes or indicate PID error
+    bit_offset: 4
     bit_size: 1
 
   - name: DMA_Req_Mode
