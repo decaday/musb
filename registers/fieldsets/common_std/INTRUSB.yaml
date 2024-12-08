@@ -32,10 +32,11 @@ fieldset/INTRUSB:
     bit_offset: 2
     bit_size: 1
 
-  - name: Babble
-    description: Babble condition detected in Host mode
-    bit_offset: 1
-    bit_size: 1
+  # HOST:
+  # - name: Babble
+  #   description: Babble condition detected in Host mode
+  #   bit_offset: 1
+  #   bit_size: 1
 
   - name: Resume
     description: Resume signaling detected during Suspend

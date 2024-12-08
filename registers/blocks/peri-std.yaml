@@ -114,7 +114,7 @@ block/USB:
   - name: FIFO
     description: FIFO for endpoints.
     byte_offset: 0x20
-    bit_size: 8
+    bit_size: FIFO_REG_BIT_SIZE
     fieldset: FIFO
     array:
       len: ENDPOINT_COUNT

@@ -45,7 +45,7 @@ block/USB:
   - name: FRAME
     description: USB frame number and endpoint index.
     byte_offset: 0x0C
-    bit_size: 8
+    bit_size: 16
     fieldset: FRAME
   - name: INDEX
     description: Selected endpoint index.
@@ -76,7 +76,7 @@ block/USB:
   - name: TXMAXP
     description: Maximum packet size for IN endpoints.
     byte_offset: 0x16
-    bit_size: 8
+    bit_size: 16
     fieldset: TXMAXP
   - name: RXCSRH
     description: Control and status register for OUT endpoints.
@@ -92,17 +92,17 @@ block/USB:
   - name: RXMAXP
     description: Maximum packet size for OUT endpoints.
     byte_offset: 0x1A
-    bit_size: 8
+    bit_size: 16
     fieldset: RXMAXP
   - name: RXCOUNT
     description: Data count for OUT endpoints.
     byte_offset: 0x1C
-    bit_size: 8
+    bit_size: 16
     fieldset: RXCOUNT
   - name: FIFO
     description: FIFO for endpoints.
     byte_offset: 0x20
-    bit_size: 8
+    bit_size: FIFO_REG_BIT_SIZE
     fieldset: FIFO
     array:
       len: ENDPOINT_COUNT

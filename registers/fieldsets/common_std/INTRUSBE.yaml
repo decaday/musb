@@ -32,10 +32,11 @@ fieldset/INTRUSBE:
     bit_offset: 2
     bit_size: 1
 
-  - name: Babble_Enable
-    description: Enable Babble interrupt
-    bit_offset: 1
-    bit_size: 1
+  # HOST:
+  # - name: Babble_Enable
+  #   description: Enable Babble interrupt
+  #   bit_offset: 1
+  #   bit_size: 1
 
   - name: Resume_Enable
     description: Enable Resume interrupt

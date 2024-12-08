@@ -1,5 +1,5 @@
 fieldset/INTRRXE:
-  bit_size: 16
+  bit_size: INTR_REG_BIT_SIZE
   description: Receive Endpoint Interrupt Enable Register
   fields:
   - name: EP_RXE

@@ -1,5 +1,5 @@
 fieldset/INTRTX:
-  bit_size: 16
+  bit_size: INTR_REG_BIT_SIZE
   description: Transmit Endpoint Interrupt Status Register
   fields:
   - name: EP_TXE

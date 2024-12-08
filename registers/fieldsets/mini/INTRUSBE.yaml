@@ -1,0 +1,23 @@
+fieldset/INTRUSBE:
+  bit_size: 8
+  description: USB Interrupt Enable Register
+  fields:
+  - name: SOF_Enable
+    description: Enable Start of Frame interrupt
+    bit_offset: 3
+    bit_size: 1
+
+  - name: Reset_Enable
+    description: Enable Reset interrupt
+    bit_offset: 2
+    bit_size: 1
+
+  - name: Resume_Enable
+    description: Enable Resume interrupt
+    bit_offset: 1
+    bit_size: 1
+
+  - name: Suspend_Enable
+    description: Enable Suspend interrupt
+    bit_offset: 0
+    bit_size: 1
