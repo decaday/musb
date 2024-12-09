@@ -58,6 +58,21 @@ impl Default for RegBitSize {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Block {
+    pub description: Option<String>,
+    pub items: Vec<BlockItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BlockItem {
+    pub name: String,
+    pub description: Option<String>,
+    pub byte_offset: Option<String>,
+    pub bit_size: Option<String>,
+    pub fieldset: String,
+}
+
 fn default_16() -> u8 {
     16
 }

@@ -1,5 +1,5 @@
 name: std-full
-block: peri-std
+block: peri_std
 epoint_count: 16
 fifo:
   type: dynamic

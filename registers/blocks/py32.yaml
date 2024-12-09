@@ -11,11 +11,11 @@ block/USB:
     byte_offset: 0x01
     bit_size: 8
     fieldset: POWER
-  - name: INTUSB
+  - name: INTRUSB
     description: USB interrupt status register.
     byte_offset: 0x04
     bit_size: 8
-    fieldset: INTUSB
+    fieldset: INTRUSB
   - name: INTRRX
     description: Interrupt status for OUT endpoint.
     byte_offset: 0x05
@@ -26,11 +26,11 @@ block/USB:
     byte_offset: 0x06
     bit_size: 8
     fieldset: INTRTX
-  - name: INTUSBE
+  - name: INTRUSBE
     description: USB interrupt enable register.
     byte_offset: 0x08
     bit_size: 8
-    fieldset: INTUSBE
+    fieldset: INTRUSBE
   - name: INTRRXE
     description: Interrupt enable for OUT endpoint 1.
     byte_offset: 0x09
@@ -85,7 +85,7 @@ block/USB:
     description: Control and status register for OUT endpoints.
     byte_offset: 0x19
     bit_size: 8
-    fieldset: OUT_CSR1
+    fieldset: RXCSRL
   - name: RXMAXP
     description: Maximum packet size for OUT endpoints.
     byte_offset: 0x1A
