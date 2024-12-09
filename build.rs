@@ -5,6 +5,7 @@ use serde_yaml;
 
 mod build_src;
 use build_src::build_serde::*;
+use build_src::fieldset::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=registers");
@@ -18,6 +19,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse the YAML
     let config: Config = serde_yaml::from_str(&contents)?;
     println!("{:#?}", config);
-    
+
+    let fieldset_db = FieldsetDatabase::new_from_file()?;
+
+    for fieldset in fieldset_db.fieldsets {
+        println!("{:#?}", fieldset);
+    }
+    panic!("stop");
     Ok(())
 }
