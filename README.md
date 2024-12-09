@@ -20,6 +20,17 @@ https://github.com/py32-rs/py32-hal/pull/19
 
 # Usage
 
+## dependencies
+
+``` shell
+cargo install --git https://github.com/embedded-drivers/yaml2pac --locked
+
+# On the Stable toolchain
+rustup component add rustfmt
+#On the Nightly toolchain
+rustup component add rustfmt --toolchain nightly
+```
+
 ## Avaliable Replacements
 
 ### ENDPOINT_COUNT

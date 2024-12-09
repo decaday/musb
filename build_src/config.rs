@@ -7,9 +7,9 @@ use serde_yaml;
 use anyhow::Result;
 use crate::Config;
 
-pub fn read_configs() -> Result<Config> {
+pub fn read_configs(config_name: &str) -> Result<Config> {
     // Read the YAML file
-    let mut file = File::open("registers/configs/py32f07x.yaml")?;
+    let mut file = File::open(format!("registers/configs/{config_name}.yaml"))?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 

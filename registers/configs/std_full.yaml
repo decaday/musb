@@ -1,4 +1,4 @@
-name: std-full
+name: std_full
 block: peri_std
 endpoint_count: 16
 fifo:

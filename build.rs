@@ -1,9 +1,4 @@
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::Read;
-
-use build_src::config;
-use serde_yaml;
 
 mod build_src;
 use build_src::gen;
@@ -16,7 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=registers");
     println!("cargo:rerun-if-changed=build_src");
 
-    let config = read_configs().unwrap();
+    let config = read_configs("std_full").unwrap();
     // println!("{:#?}", config);
 
     let fieldsets = extract_fieldsets_from_block(&config.block).unwrap();
@@ -54,6 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     gen::gen_regs_yaml(&regs_yaml_files, &config.get_replacements()).unwrap();
+    gen::gen_usb_pac().unwrap();
 
     panic!("stop");
     Ok(())
