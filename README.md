@@ -27,7 +27,7 @@ cargo install --git https://github.com/embedded-drivers/yaml2pac --locked
 
 # On the Stable toolchain
 rustup component add rustfmt
-#On the Nightly toolchain
+# On the Nightly toolchain
 rustup component add rustfmt --toolchain nightly
 ```
 
