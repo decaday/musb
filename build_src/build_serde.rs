@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub name: String,
     pub block: String,
-    pub epoint_count: u8,
+    pub endpoint_count: u8,
     pub fifo: FifoConfig,
     #[serde(default)]
     pub reg_bit_size: RegBitSize,

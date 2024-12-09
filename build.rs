@@ -2,24 +2,21 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
 
+use build_src::config;
 use serde_yaml;
 
 mod build_src;
+use build_src::gen;
 use build_src::build_serde::*;
 use build_src::fieldset::*;
 use build_src::block::*;
+use build_src::config::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=registers");
     println!("cargo:rerun-if-changed=build_src");
 
-    // Read the YAML file
-    let mut file = File::open("registers/configs/py32f07x.yaml")?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-
-    // Parse the YAML
-    let config: Config = serde_yaml::from_str(&contents)?;
+    let config = read_configs().unwrap();
     // println!("{:#?}", config);
 
     let fieldsets = extract_fieldsets_from_block(&config.block).unwrap();
@@ -30,6 +27,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // }
 
     // println!("{:#?}", fieldsets);
+
+    let mut regs_yaml_files = Vec::new();
+
+    regs_yaml_files.push(format!("registers/blocks/{}.yaml", &config.block).to_string());
     
     for fieldset in &fieldsets {
         let version = if let Some(patch) = config.patches.iter()
@@ -47,10 +48,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &Some(HashSet::from(["host".to_string()])), 
             &Some(HashSet::from([mode.clone()])),
         ).unwrap();
-
-        println!("{} {} {}", fieldset, version, path);
+        
+        println!("{} {} {}", fieldset, version, &path);
+        regs_yaml_files.push(path);
     }
 
-    // panic!("stop");
+    gen::gen_regs_yaml(&regs_yaml_files, &config.get_replacements()).unwrap();
+
+    panic!("stop");
     Ok(())
 }

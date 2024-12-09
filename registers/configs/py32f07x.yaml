@@ -1,6 +1,6 @@
 name: py32f07x
 block: py32
-epoint_count: 6
+endpoint_count: 6
 fifo:
   type: fixed
   shared: true

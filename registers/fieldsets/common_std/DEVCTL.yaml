@@ -58,3 +58,4 @@ enum/VBus_Level:
     value: 2
   - name: ABOVE_VBUS_VALID
     value: 3
+

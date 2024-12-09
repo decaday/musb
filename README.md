@@ -2,8 +2,7 @@
 
 https://github.com/py32-rs/py32-hal/pull/19
 
-
-### musb IP:
+# musb IP:
 
 | Vendor            |            | Chips (not fully listed)         | IP          |
 | ----------------- | ---------- | -------------------------------- | ----------- |
@@ -18,3 +17,23 @@ https://github.com/py32-rs/py32-hal/pull/19
 *: Not sure about the IP name
 
 **: Further identification is needed
+
+# Usage
+
+## Avaliable Replacements
+
+### ENDPOINT_COUNT
+
+`config.endpoint_count`
+
+### FIFO_REG_BIT_SIZE
+
+`config.reg_bit_size.fifo`
+
+Note: This does not change the offset.
+
+### INTR_REG_BIT_SIZE
+
+`config.reg_bit_size.intr`
+
+Note: This does not change the offset.

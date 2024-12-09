@@ -1,6 +1,6 @@
 name: std-full
 block: peri_std
-epoint_count: 16
+endpoint_count: 16
 fifo:
   type: dynamic
   total_btye_size: 256 # 2048
