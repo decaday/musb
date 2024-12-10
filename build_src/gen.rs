@@ -57,6 +57,7 @@ pub fn gen_usb_pac() -> Result<()> {
         .arg(input_path.to_str().unwrap())
         .arg("-o")
         .arg(output_path.to_str().unwrap())
+        .arg("--common")
         .status()?;
 
     // Check yaml2pac command execution status

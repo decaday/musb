@@ -1,11 +1,12 @@
 name: py32f07x
 block: py32
 endpoint_count: 6
+base_address: 0x40005c00
 fifo:
   type: fixed
   shared: true
   equal_size: false
-  btye_size_per_ep: [8, 8, 16, 16, 16, 64]
+  btye_size_endpoints: [8, 8, 16, 16, 16, 64]
 reg_bit_size:
   fifo: 8
   intr: 8

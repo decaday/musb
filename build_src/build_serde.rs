@@ -5,6 +5,7 @@ pub struct Config {
     pub name: String,
     pub block: String,
     pub endpoint_count: u8,
+    pub base_address: Option<u32>,
     pub fifo: FifoConfig,
     #[serde(default)]
     pub reg_bit_size: RegBitSize,
@@ -22,7 +23,7 @@ pub enum FifoConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DynamicFifoConfig {
-    pub total_btye_size: u32,
+    pub btye_size_total: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -30,9 +31,8 @@ pub struct FixedFifoConfig {
     pub shared: bool,
     pub equal_size: bool,
     #[serde(default = "Vec::new")]
-    pub btye_size_per_ep: Vec<u8>, // when equal_size is false
+    pub btye_size_endpoints: Vec<u8>, // when equal_size is false
     pub btye_size: Option<u8>,  // when equal_size is true
-    pub total_btye_size: Option<u32>, // when shared_fifo is true
 }
 
 #[derive(Debug, Serialize, Deserialize)]

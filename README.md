@@ -23,7 +23,7 @@ https://github.com/py32-rs/py32-hal/pull/19
 ## dependencies
 
 ``` shell
-cargo install --git https://github.com/embedded-drivers/yaml2pac --locked
+cargo install --git https://github.com/embedded-drivers/yaml2pac --rev 0b96c69a30557214ceb16bd7429ab9ca1c52fc7e --locked
 
 # On the Stable toolchain
 rustup component add rustfmt

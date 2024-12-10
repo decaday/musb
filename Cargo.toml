@@ -1,6 +1,6 @@
 [package]
 name = "musb"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 authors = ["Decaday <myDecaday@outlook.com>"]
 repository = "https://github.com/decaday/musb"
@@ -26,6 +26,13 @@ anyhow = "1.0.94"
 defmt = ["embassy-usb-driver/defmt", 
     "embassy-usb/defmt"
 ]
+
+
+builtin-py32f07x = []
+builtin-py32f403 = []
+builtin-std-full = []
+
+prebuild = []
 
 [package.metadata.docs.rs]
 features = ["defmt"]

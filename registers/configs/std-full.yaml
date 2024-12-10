@@ -1,0 +1,11 @@
+name: std_full
+block: peri_std
+endpoint_count: 16
+# Omitting the base_address field means that you need to set it 
+# in the environment variable `MUSB_BASE_ADDRESS`
+fifo:
+  type: dynamic
+  btye_size_total: 256 # 2048
+reg_bit_size:
+  fifo: 16
+  intr: 16
