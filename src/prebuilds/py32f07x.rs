@@ -1,7 +1,7 @@
-#![allow(clippy::missing_safety_doc)]
-#![allow(clippy::identity_op)]
-#![allow(clippy::unnecessary_cast)]
-#![allow(clippy::erasing_op)]
+#[inline(always)]
+pub fn USB() -> Usb {
+    unsafe { Usb::from_ptr((0x40005c00) as _ ) }
+}
 
 #[doc = "USB control and status registers for managing USB operations."]
 #[derive(Copy, Clone, Eq, PartialEq)]

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::Write;
+use std::fs::{self, File, OpenOptions};
+use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::env;
 use std::process::Command;
@@ -42,14 +42,14 @@ pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) 
 /// 2. Constructs input and output file paths
 /// 3. Executes yaml2pac to generate Rust code from YAML
 /// 4. Uses rustfmt to format the generated Rust file
-pub fn gen_usb_pac() -> Result<()> {
+pub fn gen_usb_pac(base_address: u32) -> Result<()> {
     // Retrieve OUT_DIR environment variable
     let out_dir = env::var("OUT_DIR")
         .expect("OUT_DIR environment variable not set");
 
     // Construct full paths for input and output files
     let input_path = Path::new(&out_dir).join("usb_regs.yaml");
-    let output_path = Path::new(&out_dir).join("usb_regs.rs");
+    let output_path = Path::new(&out_dir).join("usb_regs.tmp");
 
     // Execute yaml2pac command to generate Rust code from YAML
     let yaml2pac_status = Command::new("yaml2pac")
@@ -74,6 +74,30 @@ pub fn gen_usb_pac() -> Result<()> {
     // Check rustfmt command execution status
     if !rustfmt_status.success() {
         return Err(anyhow!("rustfmt command failed: {}", yaml2pac_status.code().unwrap()));
+    }
+
+    let file = File::open(output_path)?;
+    let reader = BufReader::new(file);
+
+    let mut output_file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(Path::new(&out_dir).join("usb_regs.rs"))?;
+
+    // Insert content
+    let insert_content = format!(
+        "#[inline(always)]\npub fn USB() -> Usb {{\n    unsafe {{ Usb::from_ptr(({base_address:#x}) as _ ) }}\n}}\n"
+    );
+    output_file.write_all(insert_content.as_bytes())?;
+    
+    // Ignore #![allow(clippy::xxxxx)]
+    // (Moved to src/regs.rs)
+    let lines = reader.lines().skip(4);
+
+    for line in lines {
+        output_file.write_all(line?.as_bytes())?;
+        output_file.write_all(b"\n")?;
     }
 
     Ok(())

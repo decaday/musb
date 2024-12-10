@@ -15,6 +15,7 @@ license = "Apache-2.0"
 [dependencies]
 embassy-usb-driver = "0.1.0"
 embassy-usb = "0.3.0"
+cfg-if = {version = "1.0.0", features = ["core"]}
 
 
 [build-dependencies]

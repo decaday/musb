@@ -43,6 +43,9 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+dependencies = [
+ "rustc-std-workspace-core",
+]
 
 [[package]]
 name = "critical-section"
@@ -262,6 +265,7 @@ name = "musb"
 version = "0.0.4"
 dependencies = [
  "anyhow",
+ "cfg-if",
  "embassy-usb",
  "embassy-usb-driver",
  "serde",
@@ -331,6 +335,12 @@ checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "rustc-std-workspace-core"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa9c45b374136f52f2d6311062c7146bff20fec063c3f5d46a410bd937746955"
 
 [[package]]
 name = "ryu"

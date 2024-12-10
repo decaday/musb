@@ -1,22 +1,10 @@
 use embassy_usb_driver as driver;
 
-
-#[allow(non_snake_case)]
-#[allow(unused)]
-#[allow(non_camel_case_types)]
-#[path ="prebuilds/py32f07x.rs"]
 pub mod regs;
+pub use regs::common;
+pub use regs::USB;
 
-#[path ="prebuilds/common.rs"]
-pub mod common;
-
-#[inline(always)]
-#[allow(non_snake_case)]
-pub fn USB() -> regs::Usb {
-    unsafe { regs::Usb::from_ptr((1342177280 + 1024*n) as _) }
-}
-
-fn t() {
+fn test() {
     USB().frame().read();
 }
 

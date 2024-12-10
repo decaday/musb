@@ -1,18 +1,31 @@
+#[cfg(not(feature = "prebuild"))]
 use std::collections::HashSet;
 
-
+#[cfg(not(feature = "prebuild"))]
 mod build_src;
-use build_src::gen;
-use build_src::build_serde::*;
-use build_src::fieldset::*;
-use build_src::block::*;
-use build_src::config::*;
+
+#[cfg(not(feature = "prebuild"))]
+use build_src::{gen, 
+    build_serde::*, 
+    fieldset::*,
+    block::*,
+    config::*
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=registers");
     println!("cargo:rerun-if-changed=build_src");
     println!("cargo:rerun-if-changed=build.rs");
 
+    #[cfg(not(feature = "prebuild"))]
+    build().unwrap();
+
+    // panic!("stop");
+    Ok(())
+}
+
+#[cfg(not(feature = "prebuild"))]
+fn build() -> Result<(), Box<dyn std::error::Error>> {
     let config = read_configs().unwrap();
     // println!("{:#?}", config);
 
@@ -51,8 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     gen::gen_regs_yaml(&regs_yaml_files, &config.get_replacements()).unwrap();
-    gen::gen_usb_pac().unwrap();
+    gen::gen_usb_pac(config.base_address.unwrap()).unwrap();
 
-    // panic!("stop");
     Ok(())
 }
