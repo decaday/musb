@@ -9,13 +9,13 @@ pub(super) struct EndpointData {
 }
 
 /// USB endpoint.
-pub struct Endpoint<'d, T: Instance, D> {
+pub struct Endpoint<'d, T: MusbInstance, D> {
     pub(super) _phantom: PhantomData<(&'d mut T, D)>,
     pub(super) info: EndpointInfo,
 }
 
-// impl<'d, T: Instance, > driver::Endpoint for Endpoint<'d, T, In> {
-impl<'d, T: Instance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
+// impl<'d, T: MusbInstance, > driver::Endpoint for Endpoint<'d, T, In> {
+impl<'d, T: MusbInstance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
     fn info(&self) -> &EndpointInfo {
         &self.info
     }
@@ -27,11 +27,11 @@ impl<'d, T: Instance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
             let enabled = match self.info.addr.direction() {
                 Direction::Out => {
                     EP_RX_WAKERS[index].register(cx.waker());
-                    EP_RX_ENABLED.load(Ordering::Acquire) & (index as u8) != 0
+                    EP_RX_ENABLED.load(Ordering::Acquire) & (index as u16) != 0
                 },
                 Direction::In => {
                     EP_TX_WAKERS[index].register(cx.waker());
-                    EP_TX_ENABLED.load(Ordering::Acquire) & (index as u8) != 0
+                    EP_TX_ENABLED.load(Ordering::Acquire) & (index as u16) != 0
                 }
             };
             if enabled {
@@ -45,7 +45,7 @@ impl<'d, T: Instance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
     }
 }
 
-impl<'d, T: Instance> driver::EndpointOut for Endpoint<'d, T, Out> {
+impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
     async fn read(&mut self, buf: &mut [u8]) -> Result<usize, EndpointError> {
         trace!("READ WAITING, buf.len() = {}", buf.len());
         let index = self.info.addr.index();
@@ -82,7 +82,7 @@ impl<'d, T: Instance> driver::EndpointOut for Endpoint<'d, T, Out> {
     }
 }
 
-impl<'d, T: Instance> driver::EndpointIn for Endpoint<'d, T, In> {
+impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
     async fn write(&mut self, buf: &[u8]) -> Result<(), EndpointError> {
         if buf.len() > self.info.max_packet_size as usize {
             return Err(EndpointError::BufferOverflow);

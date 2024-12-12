@@ -2,7 +2,7 @@ fieldset/INTRTX:
   bit_size: INTR_REG_BIT_SIZE
   description: Transmit Endpoint Interrupt Status Register
   fields:
-  - name: EP_TXE
+  - name: EP_TX
     description: Endpoint transmit interrupt (except EP0)
     bit_offset: 0
     bit_size: 1

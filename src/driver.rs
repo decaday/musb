@@ -1,37 +1,18 @@
 use super::*;
 
-/// USB driver.
-pub struct Driver<'d, T: Instance> {
+/// MUSB driver.
+pub struct MusbDriver<'d, T: MusbInstance> {
     phantom: PhantomData<&'d mut T>,
     alloc: [EndpointData; EP_COUNT],
 }
 
-impl<'d, T: Instance> Driver<'d, T> {
+impl<'d, T: MusbInstance> MusbDriver<'d, T> {
     /// Create a new USB driver.
-    pub fn new(
-        _usb: impl Peripheral<P = T> + 'd,
-        _irq: impl interrupt::typelevel::Binding<T::Interrupt, InterruptHandler<T>> + 'd,
-        _dp: impl Peripheral<P = impl DpPin<T>> + 'd,
-        _dm: impl Peripheral<P = impl DmPin<T>> + 'd,
-    ) -> Self {
-        let freq = T::frequency();
-        if freq.0 != 48_000_000 {
-            panic!("USB clock (PLL) must be 48MHz");
-        }
-
-        T::Interrupt::unpend();
-        unsafe { T::Interrupt::enable() };
-        rcc::enable_and_reset::<T>();
-
+    pub fn new() -> Self {
         let regs = T::regs();
         
         regs.index().write(|w| w.set_index(0));
-
-        #[cfg(feature = "time")]
-        embassy_time::block_for(embassy_time::Duration::from_millis(100));
-        #[cfg(not(feature = "time"))]
-        cortex_m::asm::delay(unsafe { crate::rcc::get_freqs() }.sys.to_hertz().unwrap().0 / 10);
-         
+        
         // Initialize the bus so that it signals that power is available
         BUS_WAKER.wake();
 
@@ -40,8 +21,8 @@ impl<'d, T: Instance> Driver<'d, T> {
             alloc: [EndpointData {
                 ep_conf: EndPointConfig {
                     ep_type: EndpointType::Bulk,
-                    in_max_fifo_size_btyes: 1,
-                    out_max_fifo_size_btyes: 1,
+                    tx_max_fifo_size_btyes: 1,
+                    rx_max_fifo_size_btyes: 1,
                 },
                 used_in: false,
                 used_out: false,
@@ -49,7 +30,7 @@ impl<'d, T: Instance> Driver<'d, T> {
         }
     }
 
-    fn alloc_endpoint<D: Dir>(
+    pub fn alloc_endpoint<D: Dir>(
         &mut self,
         ep_type: EndpointType,
         max_packet_size: u16,
@@ -75,15 +56,15 @@ impl<'d, T: Instance> Driver<'d, T> {
                 }
                 let used = ep.used_out || ep.used_in;
                 
-                #[cfg(all(not(feature = "allow-ep-shared-fifo"), py32f072))]
+                #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
                 if used { return false }
 
-                #[cfg(py32f072)]
+                #[cfg(not(feature = "_equal-fifo-size"))]
                 if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_BTYES[*i] {
                     return false;
                 }
 
-                #[cfg(py32f403)]
+                #[cfg(feature = "_equal-fifo-size")]
                 if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_BTYES {
                     panic!("max_packet_size > MAX_FIFO_SIZE");
                 }
@@ -110,13 +91,13 @@ impl<'d, T: Instance> Driver<'d, T> {
                 assert!(!ep.used_out);
                 ep.used_out = true;
 
-                ep.ep_conf.out_max_fifo_size_btyes = calc_max_fifo_size_btyes(max_packet_size);
+                ep.ep_conf.rx_max_fifo_size_btyes = calc_max_fifo_size_btyes(max_packet_size);
             }
             Direction::In => {
                 assert!(!ep.used_in);
                 ep.used_in = true;
 
-                ep.ep_conf.in_max_fifo_size_btyes = calc_max_fifo_size_btyes(max_packet_size);
+                ep.ep_conf.tx_max_fifo_size_btyes = calc_max_fifo_size_btyes(max_packet_size);
             }
         };
 
@@ -130,33 +111,8 @@ impl<'d, T: Instance> Driver<'d, T> {
             },
         })
     }
-}
 
-impl<'d, T: Instance> driver::Driver<'d> for Driver<'d, T> {
-    type EndpointOut = Endpoint<'d, T, Out>;
-    type EndpointIn = Endpoint<'d, T, In>;
-    type ControlPipe = ControlPipe<'d, T>;
-    type Bus = Bus<'d, T>;
-
-    fn alloc_endpoint_in(
-        &mut self,
-        ep_type: EndpointType,
-        max_packet_size: u16,
-        interval_ms: u8,
-    ) -> Result<Self::EndpointIn, driver::EndpointAllocError> {
-        self.alloc_endpoint(ep_type, max_packet_size, interval_ms, false)
-    }
-
-    fn alloc_endpoint_out(
-        &mut self,
-        ep_type: EndpointType,
-        max_packet_size: u16,
-        interval_ms: u8,
-    ) -> Result<Self::EndpointOut, driver::EndpointAllocError> {
-        self.alloc_endpoint(ep_type, max_packet_size, interval_ms, false)
-    }
-
-    fn start(mut self, control_max_packet_size: u16) -> (Self::Bus, Self::ControlPipe) {
+    pub fn start(mut self, control_max_packet_size: u16) -> (crate::Bus<'d, T>, crate::ControlPipe<'d, T>) {
         let ep_out = self
             .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, true)
             .unwrap();
@@ -168,8 +124,8 @@ impl<'d, T: Instance> driver::Driver<'d> for Driver<'d, T> {
 
         let mut ep_confs = [EndPointConfig {
             ep_type: EndpointType::Bulk,
-            in_max_fifo_size_btyes: 1,
-            out_max_fifo_size_btyes: 1,
+            tx_max_fifo_size_btyes: 1,
+            rx_max_fifo_size_btyes: 1,
         }; EP_COUNT];
         
         for i in 0..EP_COUNT {
@@ -191,3 +147,28 @@ impl<'d, T: Instance> driver::Driver<'d> for Driver<'d, T> {
         )
     }
 }
+
+// impl<'d, T: MusbInstance> driver::Driver<'d> for Driver<'d, T> {
+//     type EndpointOut = Endpoint<'d, T, Out>;
+//     type EndpointIn = Endpoint<'d, T, In>;
+//     type ControlPipe = ControlPipe<'d, T>;
+//     type Bus = Bus<'d, T>;
+
+//     fn alloc_endpoint_in(
+//         &mut self,
+//         ep_type: EndpointType,
+//         max_packet_size: u16,
+//         interval_ms: u8,
+//     ) -> Result<Self::EndpointIn, driver::EndpointAllocError> {
+//         self.alloc_endpoint(ep_type, max_packet_size, interval_ms, false)
+//     }
+
+//     fn alloc_endpoint_out(
+//         &mut self,
+//         ep_type: EndpointType,
+//         max_packet_size: u16,
+//         interval_ms: u8,
+//     ) -> Result<Self::EndpointOut, driver::EndpointAllocError> {
+//         self.alloc_endpoint(ep_type, max_packet_size, interval_ms, false)
+//     }
+// }

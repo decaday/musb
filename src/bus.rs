@@ -3,13 +3,13 @@ use super::*;
 use crate::regs::vals::EndpointDirection;
 
 /// USB bus.
-pub struct Bus<'d, T: Instance> {
+pub struct Bus<'d, T: MusbInstance> {
     pub(super) phantom: PhantomData<&'d mut T>,
     pub(super) ep_confs: [EndPointConfig; EP_COUNT],
     pub(super) inited: bool,
 }
 
-impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
+impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     async fn poll(&mut self) -> Event {
         poll_fn(move |cx| {
             BUS_WAKER.register(cx.waker());
@@ -176,7 +176,7 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
                         );
                     }
                     
-                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) | ep_index as u8;
+                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) | ep_index as u16;
                     EP_RX_ENABLED.store(flags, Ordering::Release);
                     // Wake `Endpoint::wait_enabled()`
                     EP_RX_WAKERS[ep_index].wake();
@@ -218,7 +218,7 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
                         );
                     }
 
-                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) | ep_index as u8;
+                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) | ep_index as u16;
                     EP_TX_ENABLED.store(flags, Ordering::Release);
                     // Wake `Endpoint::wait_enabled()`
                     EP_TX_WAKERS[ep_index].wake();
@@ -229,11 +229,11 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
             // py32 offiial CherryUsb port does nothing when disable an endpoint
             match ep_addr.direction() {
                 Direction::Out => {
-                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) & !(ep_index as u8);
+                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) & !(ep_index as u16);
                     EP_RX_ENABLED.store(flags, Ordering::Release);
                 }
                 Direction::In => {
-                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) & !(ep_index as u8);
+                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) & !(ep_index as u16);
                     EP_TX_ENABLED.store(flags, Ordering::Release);
                 }
             }

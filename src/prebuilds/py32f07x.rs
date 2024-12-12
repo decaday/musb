@@ -1,10 +1,9 @@
 pub struct UsbInstance;
-impl crate::SealedInstance for UsbInstance {
+impl crate::MusbInstance for UsbInstance {
     fn regs() -> crate::regs::Usb {
         unsafe { Usb::from_ptr((0x40005c00) as _ ) }
     }
 }
-impl crate::Instance for UsbInstance {}
 
 #[doc = "USB control and status registers for managing USB operations."]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -401,7 +400,7 @@ pub mod regs {
     impl Intrtx {
         #[doc = "Endpoint transmit interrupt (except EP0)"]
         #[inline(always)]
-        pub const fn ep_txe(&self, n: usize) -> bool {
+        pub const fn ep_tx(&self, n: usize) -> bool {
             assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
@@ -409,7 +408,7 @@ pub mod regs {
         }
         #[doc = "Endpoint transmit interrupt (except EP0)"]
         #[inline(always)]
-        pub fn set_ep_txe(&mut self, n: usize, val: bool) {
+        pub fn set_ep_tx(&mut self, n: usize, val: bool) {
             assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);

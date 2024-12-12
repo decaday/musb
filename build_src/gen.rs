@@ -88,7 +88,7 @@ pub fn gen_usb_pac(base_address: u32) -> Result<()> {
     // Insert content
     let insert_content = format!(
         "pub struct UsbInstance;
-impl crate::SealedInstance for UsbInstance {
+impl crate::MusbInstance for UsbInstance {
     fn regs() -> crate::regs::Usb {
         unsafe { Usb::from_ptr((base_address:#x) as _ ) }
     }

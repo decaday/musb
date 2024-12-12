@@ -1,7 +1,7 @@
 #![no_std]
 use core::future::poll_fn;
 use core::marker::PhantomData;
-use core::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use core::task::Poll;
 
 use embassy_sync::waitqueue::AtomicWaker;
@@ -22,7 +22,7 @@ use endpoint::{EndpointData, EndPointConfig};
 
 #[path ="driver.rs"]
 mod usb_driver;
-pub use usb_driver::Driver;
+pub use usb_driver::MusbDriver;
 
 mod bus;
 pub use bus::Bus;
@@ -49,8 +49,8 @@ static EP_RX_WAKERS: [AtomicWaker; EP_COUNT] = [NEW_AW; EP_COUNT];
 static IRQ_RESET: AtomicBool = AtomicBool::new(false);
 static IRQ_SUSPEND: AtomicBool = AtomicBool::new(false);
 static IRQ_RESUME: AtomicBool = AtomicBool::new(false);
-static EP_TX_ENABLED: AtomicU8 = AtomicU8::new(0);
-static EP_RX_ENABLED: AtomicU8 = AtomicU8::new(0);
+static EP_TX_ENABLED: AtomicU16 = AtomicU16::new(0);
+static EP_RX_ENABLED: AtomicU16 = AtomicU16::new(0);
 
 fn calc_max_fifo_size_btyes(len: u16) -> u16 {
     let btyes = ((len + 7) / 8) as u16;
@@ -61,11 +61,11 @@ fn calc_max_fifo_size_btyes(len: u16) -> u16 {
 }
 
 /// Interrupt handler.
-pub struct InterruptHandler<T: Instance> {
+pub struct InterruptHandler<T: MusbInstance> {
     _phantom: PhantomData<T>,
 }
 
-pub unsafe fn on_interrupt<T: Instance>() {
+pub unsafe fn on_interrupt<T: MusbInstance>() {
     let intrusb = T::regs().intrusb().read();
     if intrusb.reset() {
         IRQ_RESET.store(true, Ordering::SeqCst);
@@ -121,13 +121,9 @@ impl Dir for Out {
     }
 }
 
-trait SealedInstance {
+pub trait MusbInstance: 'static {
     fn regs() -> regs::Usb;
 }
-
-/// USB instance trait.
-#[allow(private_bounds)]
-pub trait Instance: SealedInstance + 'static {}
 
 // typedef volatile struct
 // {

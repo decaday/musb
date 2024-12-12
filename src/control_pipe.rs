@@ -1,14 +1,14 @@
 use super::*;
 
 /// USB control pipe.
-pub struct ControlPipe<'d, T: Instance> {
+pub struct ControlPipe<'d, T: MusbInstance> {
     pub(super) _phantom: PhantomData<&'d mut T>,
     pub(super) max_packet_size: u16,
     pub(super) ep_in: Endpoint<'d, T, In>,
     pub(super) ep_out: Endpoint<'d, T, Out>,
 }
 
-impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
+impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
     fn max_packet_size(&self) -> usize {
         usize::from(self.max_packet_size)
     }

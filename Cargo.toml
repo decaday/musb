@@ -14,8 +14,8 @@ license = "Apache-2.0"
 
 [dependencies]
 embassy-usb-driver = "0.1.0"
-embassy-usb = "0.3.0"
 cfg-if = {version = "1.0.0", features = ["core"]}
+embassy-sync = "0.6.1"
 
 
 [build-dependencies]
@@ -24,16 +24,26 @@ serde_yaml = "0.9"
 anyhow = "1.0.94"
 
 [features]
+default = ["prebuild"]
 defmt = ["embassy-usb-driver/defmt", 
-    "embassy-usb/defmt"
+    "embassy-sync/defmt",
 ]
 
+log = ["embassy-sync/log",]
 
-builtin-py32f07x = []
+
+# TODO: auto-generate interal features according to profile
+builtin-py32f07x = ["_ep-shared-fifo"]
 builtin-py32f403 = []
 builtin-std-full = []
 
 prebuild = []
+
+allow-ep-shared-fifo = []
+
+# interal features
+_ep-shared-fifo = []
+_equal-fifo-size = []
 
 [package.metadata.docs.rs]
 features = ["defmt"]
