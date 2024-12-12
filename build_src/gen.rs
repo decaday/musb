@@ -87,7 +87,13 @@ pub fn gen_usb_pac(base_address: u32) -> Result<()> {
 
     // Insert content
     let insert_content = format!(
-        "#[inline(always)]\npub fn USB() -> Usb {{\n    unsafe {{ Usb::from_ptr(({base_address:#x}) as _ ) }}\n}}\n"
+        "pub struct UsbInstance;
+impl crate::SealedInstance for UsbInstance {
+    fn regs() -> crate::regs::Usb {
+        unsafe { Usb::from_ptr((base_address:#x) as _ ) }
+    }
+}
+impl crate::Instance for UsbInstance {}"
     );
     output_file.write_all(insert_content.as_bytes())?;
     
