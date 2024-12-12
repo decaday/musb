@@ -9,7 +9,7 @@ use build_src::{gen,
     build_serde::*, 
     fieldset::*,
     block::*,
-    config::*
+    profile::*
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -26,10 +26,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(not(feature = "prebuild"))]
 fn build() -> Result<(), Box<dyn std::error::Error>> {
-    let config = read_configs().unwrap();
-    // println!("{:#?}", config);
+    let profile = read_profiles().unwrap();
+    // println!("{:#?}", profile);
 
-    let fieldsets = extract_fieldsets_from_block(&config.block).unwrap();
+    let fieldsets = extract_fieldsets_from_block(&profile.block).unwrap();
     let fieldset_db = FieldsetDatabase::new_from_file().unwrap();
 
     // for fieldset in &fieldset_db.fieldsets {
@@ -40,10 +40,10 @@ fn build() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut regs_yaml_files = Vec::new();
 
-    regs_yaml_files.push(format!("registers/blocks/{}.yaml", &config.block).to_string());
+    regs_yaml_files.push(format!("registers/blocks/{}.yaml", &profile.block).to_string());
     
     for fieldset in &fieldsets {
-        let version = if let Some(patch) = config.patches.iter()
+        let version = if let Some(patch) = profile.patches.iter()
             .find(|p| p.fieldset == *fieldset) 
         {
             patch.version.clone()
@@ -63,8 +63,8 @@ fn build() -> Result<(), Box<dyn std::error::Error>> {
         regs_yaml_files.push(path);
     }
 
-    gen::gen_regs_yaml(&regs_yaml_files, &config.get_replacements()).unwrap();
-    gen::gen_usb_pac(config.base_address.unwrap()).unwrap();
+    gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements()).unwrap();
+    gen::gen_usb_pac(profile.base_address.unwrap()).unwrap();
 
     Ok(())
 }

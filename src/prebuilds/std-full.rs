@@ -124,9 +124,9 @@ impl Usb {
     pub const fn rxcount(self) -> crate::common::Reg<regs::Rxcount, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x1cusize) as _) }
     }
-    #[doc = "Returns details of core configuration."]
+    #[doc = "Returns details of core profileuration."]
     #[inline(always)]
-    pub const fn configdata(self) -> crate::common::Reg<regs::Configdata, crate::common::RW> {
+    pub const fn profiledata(self) -> crate::common::Reg<regs::Configdata, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x1fusize) as _) }
     }
     #[doc = "FIFO for endpoints."]
@@ -137,7 +137,7 @@ impl Usb {
     }
 }
 pub mod regs {
-    #[doc = "Core configuration information register"]
+    #[doc = "Core profileuration information register"]
     #[repr(transparent)]
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Configdata(pub u8);
@@ -1107,7 +1107,7 @@ pub mod regs {
             Rxmaxp(0)
         }
     }
-    #[doc = "USB test mode configuration register"]
+    #[doc = "USB test mode profileuration register"]
     #[repr(transparent)]
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Testmode(pub u8);

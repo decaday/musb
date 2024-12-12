@@ -9,7 +9,7 @@
 
 cfg_if::cfg_if! {
     if #[cfg(not(feature = "prebuild"))] {
-        mod include!(concat!(env!("OUT_DIR"), "/usb_regs.rs"));
+        include!(concat!(env!("OUT_DIR"), "/usb_regs.rs"));
         pub mod common {
             include!(concat!(env!("OUT_DIR"), "/common.rs"));
         }
@@ -18,9 +18,9 @@ cfg_if::cfg_if! {
         #[cfg(feature = "builtin-py32f07x")] 
         include!("prebuilds/py32f07x.rs");
         #[cfg(feature = "builtin-py32f403")]
-            include!("prebuilds/py32f403.rs");
+        include!("prebuilds/py32f403.rs");
         #[cfg(feature = "builtin-std-full")]
-            include!("prebuilds/std-full.rs");
+        include!("prebuilds/std-full.rs");
 
         pub mod common {
             include!("prebuilds/common.rs");

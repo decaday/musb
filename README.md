@@ -35,16 +35,16 @@ rustup component add rustfmt --toolchain nightly
 
 ### ENDPOINT_COUNT
 
-`config.endpoint_count`
+`profile.endpoint_count`
 
 ### FIFO_REG_BIT_SIZE
 
-`config.reg_bit_size.fifo`
+`profile.reg_bit_size.fifo`
 
 Note: This does not change the offset.
 
 ### INTR_REG_BIT_SIZE
 
-`config.reg_bit_size.intr`
+`profile.reg_bit_size.intr`
 
 Note: This does not change the offset.
