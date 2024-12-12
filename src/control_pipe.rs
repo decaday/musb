@@ -18,11 +18,11 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
         loop {
             trace!("SETUP read waiting");
             poll_fn(|cx| {
-                EP_OUT_WAKERS[0].register(cx.waker());
+                EP_RX_WAKERS[0].register(cx.waker());
                 
                 regs.index().write(|w| w.set_index(0));
 
-                if regs.ep0_csr().read().out_pkt_rdy() {
+                if regs.csr0l().read().rx_pkt_rdy() {
                     Poll::Ready(())
                 } else {
                     Poll::Pending
@@ -30,8 +30,8 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
             })
             .await;
 
-            if regs.ep0_count().read().count() != 8 {
-                trace!("SETUP read failed: {:?}", regs.ep0_count().read().count());
+            if regs.count0().read().count() != 8 {
+                trace!("SETUP read failed: {:?}", regs.count0().read().count());
                 continue;
             }
 
@@ -39,7 +39,7 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
             (&mut buf).into_iter().for_each(|b|
                 *b = regs.fifo(0).read().data()
             );
-            regs.ep0_csr().modify(|w| w.set_serviced_out_pkt_rdy(true));
+            regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
 
             trace!("SETUP read ok");
             return buf;
@@ -52,11 +52,11 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
         let regs = T::regs();
 
         let _ = poll_fn(|cx| {
-            EP_OUT_WAKERS[0].register(cx.waker());
+            EP_RX_WAKERS[0].register(cx.waker());
             // STC uses same usb IP with py32 (mentor usb),
             // which said it is nessery to set index to 0
             regs.index().write(|w| w.set_index(0));
-            let ready = regs.ep0_csr().read().out_pkt_rdy();
+            let ready = regs.csr0l().read().rx_pkt_rdy();
             if ready {
                 Poll::Ready(())
             } else {
@@ -67,7 +67,7 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
 
         regs.index().write(|w| w.set_index(0));
 
-        let read_count = regs.ep0_count().read().count();
+        let read_count = regs.count0().read().count();
         if read_count as usize > buf.len() {
             return Err(EndpointError::BufferOverflow);
         }
@@ -79,7 +79,7 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
         buf.into_iter().for_each(|b|
             *b = regs.fifo(0).read().data()
         );
-        regs.ep0_csr().modify(|w| w.set_serviced_out_pkt_rdy(true));
+        regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
         trace!("READ OK, rx_len = {}", read_count);
 
         Ok(read_count as usize)
@@ -97,11 +97,11 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
         trace!("WRITE WAITING");
 
         let _ = poll_fn(|cx| {
-            EP_IN_WAKERS[0].register(cx.waker());
+            EP_TX_WAKERS[0].register(cx.waker());
             regs.index().write(|w| w.set_index(0));
 
              // TODO: use fifo_not_empty?
-            let unready = regs.ep0_csr().read().in_pkt_rdy();
+            let unready = regs.csr0l().read().tx_pkt_rdy();
 
             if unready {
                 Poll::Pending
@@ -117,8 +117,8 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
             regs.fifo(0).write(|w| w.set_data(*b))
         );
 
-        regs.ep0_csr().modify(|w| {
-            w.set_in_pkt_rdy(true);
+        regs.csr0l().modify(|w| {
+            w.set_tx_pkt_rdy(true);
             if last { w.set_data_end(true); }
         });
         Ok(())
@@ -131,17 +131,15 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
         regs.index().write(|w| w.set_index(0));
 
         // zero length
-        regs.ep0_csr().modify(|w| {
-            w.set_in_pkt_rdy(true);
+        regs.csr0l().modify(|w| {
+            w.set_tx_pkt_rdy(true);
             // w.set_data_end(true);
         });
-
-        cortex_m::asm::delay(10000);
 
         // Wait is needed, so that we don't set the address too soon, breaking the status stage.
         // (embassy-usb sets the address after accept() returns)
         poll_fn(|cx| {
-            EP_IN_WAKERS[0].register(cx.waker());
+            EP_TX_WAKERS[0].register(cx.waker());
             regs.index().write(|w| w.set_index(0));
 
             // A zero-length OUT data packet is used to indicate the end of a Control transfer. In normal operation, such packets should only 
@@ -149,8 +147,8 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
             // host sends a zero-length OUT data packet before the entire length of device request has been transferred, this signals the 
             // premature end of the transfer. In this case, the MUSBMHDRC will automatically flush any IN token loaded by CPU ready for the 
             // Data phase from the FIFO and set SetupEnd. 
-            if regs.ep0_csr().read().setup_end() {
-                regs.ep0_csr().write(|w| w.set_serviced_setup_end(false));
+            if regs.csr0l().read().setup_end() {
+                regs.csr0l().write(|w| w.set_serviced_setup_end(false));
                 Poll::Ready(())
             } else {
                 Poll::Pending
@@ -167,9 +165,9 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
 
         // Set IN+OUT to stall
         regs.index().write(|w| w.set_index(0));
-        regs.ep0_csr().modify(|w| {
+        regs.csr0l().modify(|w| {
             w.set_send_stall(true);
-            w.set_serviced_out_pkt_rdy(true);
+            w.set_serviced_rx_pkt_rdy(true);
         });
 
         // TODO: async waiting for Sent Stall?
@@ -180,6 +178,6 @@ impl<'d, T: Instance> driver::ControlPipe for ControlPipe<'d, T> {
 
         let regs = T::regs();
         trace!("setting addr: {}", addr);
-        regs.addr().write(|w| w.set_addr(addr));
+        regs.faddr().write(|w| w.set_func_addr(addr));
     }
 }

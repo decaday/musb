@@ -43,17 +43,17 @@ const NEW_AW: AtomicWaker = AtomicWaker::new();
 
 static BUS_WAKER: AtomicWaker = NEW_AW;
 
-static EP_IN_WAKERS: [AtomicWaker; EP_COUNT] = [NEW_AW; EP_COUNT];
-static EP_OUT_WAKERS: [AtomicWaker; EP_COUNT] = [NEW_AW; EP_COUNT];
+static EP_TX_WAKERS: [AtomicWaker; EP_COUNT] = [NEW_AW; EP_COUNT];
+static EP_RX_WAKERS: [AtomicWaker; EP_COUNT] = [NEW_AW; EP_COUNT];
 
 static IRQ_RESET: AtomicBool = AtomicBool::new(false);
 static IRQ_SUSPEND: AtomicBool = AtomicBool::new(false);
 static IRQ_RESUME: AtomicBool = AtomicBool::new(false);
-static EP_IN_ENABLED: AtomicU8 = AtomicU8::new(0);
-static EP_OUT_ENABLED: AtomicU8 = AtomicU8::new(0);
+static EP_TX_ENABLED: AtomicU8 = AtomicU8::new(0);
+static EP_RX_ENABLED: AtomicU8 = AtomicU8::new(0);
 
-fn calc_max_fifo_size_btyes(len: u16) -> u8 {
-    let btyes = ((len + 7) / 8) as u8;
+fn calc_max_fifo_size_btyes(len: u16) -> u16 {
+    let btyes = ((len + 7) / 8) as u16;
     if btyes > 8 {
         panic!("Invalid length: {}", len);
     }
@@ -66,42 +66,42 @@ pub struct InterruptHandler<T: Instance> {
 }
 
 pub unsafe fn on_interrupt<T: Instance>() {
-    let int_usb = T::regs().int_usb().read();
-    if int_usb.reset() {
+    let intrusb = T::regs().intrusb().read();
+    if intrusb.reset() {
         IRQ_RESET.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
-    if int_usb.suspend() {
+    if intrusb.suspend() {
         IRQ_SUSPEND.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
-    if int_usb.resume() {
+    if intrusb.resume() {
         IRQ_RESUME.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
 
-    let int_in = T::regs().int_in1().read();
-    let int_out = T::regs().int_out1().read();
-    if int_in.ep0() {
-        EP_IN_WAKERS[0].wake();
-        EP_OUT_WAKERS[0].wake();
+    let intrtx = T::regs().intrtx().read();
+    let intrrx = T::regs().intrrx().read();
+    if intrtx.ep_tx(0) {
+        EP_TX_WAKERS[0].wake();
+        EP_RX_WAKERS[0].wake();
     }
 
     for index in 1..EP_COUNT {
-        if int_in.epin(index - 1) {
-            EP_IN_WAKERS[index].wake();
+        if intrtx.ep_tx(index) {
+            EP_TX_WAKERS[index].wake();
         }
-        if int_out.epout(index - 1) {                
-            EP_OUT_WAKERS[index].wake();
+        if intrrx.ep_rx(index) {                
+            EP_RX_WAKERS[index].wake();
         }
-        if T::regs().in_csr1().read().underrun(){
-            T::regs().in_csr1().modify(|w| w.set_underrun(false));
+        if T::regs().txcsrl().read().under_run(){
+            T::regs().txcsrl().modify(|w| w.set_under_run(false));
             warn!("Underrun: ep {}", index);
         }
     }
 }
 
-trait Dir {
+pub trait Dir {
     fn dir() -> Direction;
 }
 

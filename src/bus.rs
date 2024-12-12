@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::regs::vals::EndpointDirection;
+
 /// USB bus.
 pub struct Bus<'d, T: Instance> {
     pub(super) phantom: PhantomData<&'d mut T>,
@@ -31,15 +33,15 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
                 regs.power().write(|w| w.set_suspend_mode(true));
                 // for index in 1..EP_COUNT {
                 //     regs.index().write(|w| w.set_index(index as _));
-                //     regs.in_csr1().modify(|w| w.set_flush_fifo(true));
+                //     regs.txcsrl().modify(|w| w.set_flush_fifo(true));
                 // }
 
                 trace!("RESET");
 
-                for w in &EP_IN_WAKERS {
+                for w in &EP_TX_WAKERS {
                     w.wake()
                 }
-                for w in &EP_OUT_WAKERS {
+                for w in &EP_RX_WAKERS {
                     w.wake()
                 }
 
@@ -68,47 +70,47 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
                 if ep_index == 0 {
                     // usb_ep0_state = USB_EP0_STATE_STALL;
 
-                    reg.ep0_csr().write(|w| {
+                    reg.csr0l().write(|w| {
                         w.set_send_stall(stalled);
-                        if stalled { w.set_serviced_out_pkt_rdy(true); }
+                        if stalled { w.set_serviced_rx_pkt_rdy(true); }
                     });
 
-                    // while !reg.ep0_csr().read().sent_stall() {}
+                    // while !reg.csr0l().read().sent_stall() {}
                 }
                 else {
-                    reg.in_csr1().write(|w| {
+                    reg.txcsrl().write(|w| {
                         w.set_send_stall(stalled);
                         if !stalled {
                             w.set_sent_stall(false);
                             w.set_clr_data_tog(true);
                         }
                     });
-                    // while !reg.in_csr1().read().sent_stall() {}             
+                    // while !reg.txcsrl().read().sent_stall() {}             
                 }
-                EP_IN_WAKERS[ep_addr.index()].wake();
+                EP_TX_WAKERS[ep_addr.index()].wake();
             }
             Direction::Out => {
                 if ep_index == 0 {
                     // usb_ep0_state = USB_EP0_STATE_STALL;
 
-                    reg.ep0_csr().write(|w| {
+                    reg.csr0l().write(|w| {
                         w.set_send_stall(stalled);
-                        if stalled { w.set_serviced_out_pkt_rdy(true); }
+                        if stalled { w.set_serviced_rx_pkt_rdy(true); }
                     });
-                    // while !reg.ep0_csr().read().sent_stall() {}
+                    // while !reg.csr0l().read().sent_stall() {}
                 }
                 else {
-                    reg.out_csr1().write(|w| {
+                    reg.rxcsrl().write(|w| {
                         w.set_send_stall(stalled);
                         if !stalled {
                             w.set_sent_stall(false);
                             w.set_clr_data_tog(true);
                         }
                     });
-                    // while !reg.out_csr1().read().sent_stall() {}   
+                    // while !reg.rxcsrl().read().sent_stall() {}   
                 }
-                EP_IN_WAKERS[ep_addr.index()].wake();
-                EP_OUT_WAKERS[ep_addr.index()].wake();
+                EP_TX_WAKERS[ep_addr.index()].wake();
+                EP_RX_WAKERS[ep_addr.index()].wake();
             }
         }
     }
@@ -122,11 +124,11 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
 
         if ep_index == 0 {
             // TODO: py32 offiial CherryUsb port returns false directly for EP0
-            reg.ep0_csr().read().send_stall()
+            reg.csr0l().read().send_stall()
         } else {
             match ep_addr.direction() {
-                Direction::In => reg.in_csr1().read().send_stall(),
-                Direction::Out => reg.out_csr1().read().send_stall(),
+                Direction::In => reg.txcsrl().read().send_stall(),
+                Direction::Out => reg.rxcsrl().read().send_stall(),
             }
         }
     }
@@ -140,86 +142,86 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
             match ep_addr.direction() {
                 Direction::Out => {
                     if ep_index == 0 {
-                        T::regs().int_in1e().modify(|w| 
-                            w.set_ep0(true))
+                        T::regs().intrtxe().modify(|w| 
+                            w.set_ep_txe(1, true))
                     } else {
-                        T::regs().int_out1e().modify(|w| 
-                            w.set_epout(ep_index - 1, true)
+                        T::regs().intrrxe().modify(|w| 
+                            w.set_ep_rxe(ep_index, true)
                         );
                     }
                     
-                    // T::regs().out_csr2().write(|w| {
+                    // T::regs().rxcsrh().write(|w| {
                     //     w.set_auto_clear(true);
                     // });
     
-                    T::regs().max_pkt_out().write(|w|
-                        w.set_max_pkt_size(self.ep_confs[ep_index].out_max_fifo_size_btyes)
+                    T::regs().rxmaxp().write(|w|
+                        w.set_maxp(self.ep_confs[ep_index].rx_max_fifo_size_btyes)
                     );
     
-                    T::regs().out_csr1().write(|w| {
+                    T::regs().rxcsrl().write(|w| {
                         w.set_clr_data_tog(true);
                     });
     
                     //TODO: DMA
     
                     if self.ep_confs[ep_index].ep_type == EndpointType::Isochronous {
-                        T::regs().out_csr2().write(|w| {
+                        T::regs().rxcsrh().write(|w| {
                             w.set_iso(true);
                         });
                     }
     
-                    if T::regs().out_csr1().read().out_pkt_rdy() {
-                        T::regs().out_csr1().modify(|w| 
+                    if T::regs().rxcsrl().read().rx_pkt_rdy() {
+                        T::regs().rxcsrl().modify(|w| 
                             w.set_flush_fifo(true)
                         );
                     }
                     
-                    let flags = EP_OUT_ENABLED.load(Ordering::Acquire) | ep_index as u8;
-                    EP_OUT_ENABLED.store(flags, Ordering::Release);
+                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) | ep_index as u8;
+                    EP_RX_ENABLED.store(flags, Ordering::Release);
                     // Wake `Endpoint::wait_enabled()`
-                    EP_OUT_WAKERS[ep_index].wake();
+                    EP_RX_WAKERS[ep_index].wake();
                 }
                 Direction::In => {
                     if ep_index == 0 {
-                        T::regs().int_in1e().modify(|w| 
-                            w.set_ep0(true))
+                        T::regs().intrtxe().modify(|w| 
+                            w.set_ep_txe(1, true))
                     } else {
-                        T::regs().int_in1e().modify(|w| 
-                            w.set_epin(ep_index - 1, true)
+                        T::regs().intrtxe().modify(|w| 
+                            w.set_ep_txe(ep_index, true)
                         );
                     }
     
-                    // T::regs().in_csr2().write(|w| {
+                    // T::regs().txcsrh().write(|w| {
                     //     w.set_auto_set(true);
                     // });
     
                     // TODO: DMA
     
-                    T::regs().max_pkt_in().write(|w|
-                        w.set_max_pkt_size(self.ep_confs[ep_index].in_max_fifo_size_btyes)
+                    T::regs().txmaxp().write(|w|
+                        w.set_maxp(self.ep_confs[ep_index].tx_max_fifo_size_btyes)
                     );
     
-                    T::regs().in_csr1().write(|w| {
+                    T::regs().txcsrl().write(|w| {
                         w.set_clr_data_tog(true);
                     });
     
                     if self.ep_confs[ep_index].ep_type == EndpointType::Isochronous {
-                        T::regs().in_csr2().write(|w| {
+                        T::regs().txcsrh().write(|w| {
                             w.set_iso(true);
                         });
                     }
-                    T::regs().in_csr2().write(|w| w.set_mode(Mode::IN));
+                    T::regs().txcsrh().write(|w| w.set_mode(EndpointDirection::TX));
     
-                    if T::regs().in_csr1().read().fifo_not_empty() {
-                        T::regs().in_csr1().modify(|w|    
+                    if T::regs().txcsrl().read().fifo_not_empty() {
+                        T::regs().txcsrl().modify(|w|    
                             w.set_flush_fifo(true)
                         );
                     }
 
-                    let flags = EP_IN_ENABLED.load(Ordering::Acquire) | ep_index as u8;
-                    EP_IN_ENABLED.store(flags, Ordering::Release);
+                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) | ep_index as u8;
+                    EP_TX_ENABLED.store(flags, Ordering::Release);
                     // Wake `Endpoint::wait_enabled()`
-                    EP_IN_WAKERS[ep_index].wake();
+                    EP_TX_WAKERS[ep_index].wake();
                 }
             }
         }
@@ -227,19 +229,19 @@ impl<'d, T: Instance> driver::Bus for Bus<'d, T> {
             // py32 offiial CherryUsb port does nothing when disable an endpoint
             match ep_addr.direction() {
                 Direction::Out => {
-                    let flags = EP_OUT_ENABLED.load(Ordering::Acquire) & !(ep_index as u8);
-                    EP_OUT_ENABLED.store(flags, Ordering::Release);
+                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) & !(ep_index as u8);
+                    EP_RX_ENABLED.store(flags, Ordering::Release);
                 }
                 Direction::In => {
-                    let flags = EP_IN_ENABLED.load(Ordering::Acquire) & !(ep_index as u8);
-                    EP_IN_ENABLED.store(flags, Ordering::Release);
+                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) & !(ep_index as u8);
+                    EP_TX_ENABLED.store(flags, Ordering::Release);
                 }
             }
         }
     }
 
     async fn enable(&mut self) {
-        T::regs().int_usb().write(|w| {
+        T::regs().intrusb().write(|w| {
             w.set_reset(true);
             w.set_suspend(true);
             w.set_resume(true);

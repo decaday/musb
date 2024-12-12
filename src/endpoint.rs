@@ -26,12 +26,12 @@ impl<'d, T: Instance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
 
             let enabled = match self.info.addr.direction() {
                 Direction::Out => {
-                    EP_OUT_WAKERS[index].register(cx.waker());
-                    EP_OUT_ENABLED.load(Ordering::Acquire) & (index as u8) != 0
+                    EP_RX_WAKERS[index].register(cx.waker());
+                    EP_RX_ENABLED.load(Ordering::Acquire) & (index as u8) != 0
                 },
                 Direction::In => {
-                    EP_IN_WAKERS[index].register(cx.waker());
-                    EP_IN_ENABLED.load(Ordering::Acquire) & (index as u8) != 0
+                    EP_TX_WAKERS[index].register(cx.waker());
+                    EP_TX_ENABLED.load(Ordering::Acquire) & (index as u8) != 0
                 }
             };
             if enabled {
@@ -52,9 +52,9 @@ impl<'d, T: Instance> driver::EndpointOut for Endpoint<'d, T, Out> {
         let regs = T::regs();
 
         let _ = poll_fn(|cx| {
-            EP_OUT_WAKERS[index].register(cx.waker());
+            EP_RX_WAKERS[index].register(cx.waker());
             regs.index().write(|w| w.set_index(index as _));
-            let ready = regs.out_csr1().read().out_pkt_rdy();
+            let ready = regs.rxcsrl().read().rx_pkt_rdy();
 
             if ready {
                 Poll::Ready(())
@@ -66,7 +66,7 @@ impl<'d, T: Instance> driver::EndpointOut for Endpoint<'d, T, Out> {
 
         regs.index().write(|w| w.set_index(index as _));
 
-        let read_count = regs.out_count().read().count();
+        let read_count = regs.rxcount().read().count();
         
         if read_count as usize > buf.len() {
             return Err(EndpointError::BufferOverflow);
@@ -75,7 +75,7 @@ impl<'d, T: Instance> driver::EndpointOut for Endpoint<'d, T, Out> {
         buf.into_iter().for_each(|b|
             *b = regs.fifo(index).read().data()
         );
-        regs.out_csr1().modify(|w| w.set_out_pkt_rdy(false));
+        regs.rxcsrl().modify(|w| w.set_rx_pkt_rdy(false));
         trace!("READ OK, rx_len = {}", read_count);
 
         Ok(read_count as usize)
@@ -94,10 +94,10 @@ impl<'d, T: Instance> driver::EndpointIn for Endpoint<'d, T, In> {
         trace!("WRITE WAITING len = {}", buf.len());
 
         let _ = poll_fn(|cx| {
-            EP_IN_WAKERS[index].register(cx.waker());
+            EP_TX_WAKERS[index].register(cx.waker());
             regs.index().write(|w| w.set_index(index as _));
 
-            let unready = regs.in_csr1().read().in_pkt_rdy();
+            let unready = regs.txcsrl().read().tx_pkt_rdy();
 
             if unready {
                 Poll::Pending
@@ -110,13 +110,13 @@ impl<'d, T: Instance> driver::EndpointIn for Endpoint<'d, T, In> {
         regs.index().write(|w| w.set_index(index as _));
 
         if buf.len() == 0 {
-            regs.in_csr1().modify(|w| w.set_in_pkt_rdy(true));
+            regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
         } else {
             buf.into_iter().for_each(|b|
                 regs.fifo(index).write(|w| w.set_data(*b))
             );
 
-            regs.in_csr1().modify(|w| w.set_in_pkt_rdy(true));
+            regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
         }
         trace!("WRITE OK");
 
@@ -128,6 +128,6 @@ impl<'d, T: Instance> driver::EndpointIn for Endpoint<'d, T, In> {
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub(super) struct EndPointConfig {
     pub(super) ep_type: EndpointType,
-    pub(super) in_max_fifo_size_btyes: u8,
-    pub(super) out_max_fifo_size_btyes: u8,
+    pub(super) tx_max_fifo_size_btyes: u16,
+    pub(super) rx_max_fifo_size_btyes: u16,
 }
