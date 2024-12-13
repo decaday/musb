@@ -49,10 +49,13 @@ rustup component add rustfmt --toolchain nightly
 
 These built-in profiles are used via Cargo features (see below), with only one selectable:
 
-`builtin-py32f07x`    `builtin-py32f403`    `builtin-std-full`
+`builtin-py32f07x` (contains base_address)
+`builtin-py32f403` (contains base_address)
+`builtin-std-full`
 
 These profiles include register descriptions, number of endpoints, etc.
 Base address is optional. If left blank, it reads from the `MUSB_BASE_ADDRESS` environment variable.
+If this value is in hexadecimal, it must start with `0x`.
 
 ## Prebuild
 
