@@ -18,19 +18,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=build.rs");
 
     #[cfg(not(feature = "prebuild"))]
-    build().unwrap();
+    build();
 
     // panic!("stop");
     Ok(())
 }
 
 #[cfg(not(feature = "prebuild"))]
-fn build() -> Result<(), Box<dyn std::error::Error>> {
-    let profile = read_profiles().unwrap();
+fn build() {
+    let profile = read_profiles();
     // println!("{:#?}", profile);
 
-    let fieldsets = extract_fieldsets_from_block(&profile.block).unwrap();
-    let fieldset_db = FieldsetDatabase::new_from_file().unwrap();
+    let fieldsets = extract_fieldsets_from_block(&profile.block);
+    let fieldset_db = FieldsetDatabase::new_from_file();
 
     // for fieldset in &fieldset_db.fieldsets {
     //     println!("{:?}", fieldset);
@@ -57,14 +57,12 @@ fn build() -> Result<(), Box<dyn std::error::Error>> {
             &Some(HashSet::from([version.clone()])), 
             &Some(HashSet::from(["host".to_string()])), 
             &Some(HashSet::from([mode.clone()])),
-        ).unwrap();
+        );
         
         println!("{} {} {}", fieldset, version, &path);
         regs_yaml_files.push(path);
     }
 
-    gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements()).unwrap();
-    gen::gen_usb_pac(profile.base_address.unwrap()).unwrap();
-
-    Ok(())
+    gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements());
+    gen::gen_usb_pac(profile.base_address.unwrap());
 }

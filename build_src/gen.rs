@@ -5,9 +5,7 @@ use std::path::Path;
 use std::env;
 use std::process::Command;
 
-use anyhow::{anyhow, Result};
-
-pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) -> Result<()> {
+pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) {
     // Get the OUT_DIR environment variable, defaulting to "out" directory if not set
     let out_dir = env::var("OUT_DIR").unwrap();
 
@@ -15,12 +13,12 @@ pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) 
     let output_path = Path::new(&out_dir).join("usb_regs.yaml");
 
     // Open the output file for writing
-    let mut output_file = File::create(&output_path)?;
+    let mut output_file = File::create(&output_path).unwrap();
 
     // Iterate over the list of files and perform replacements
     for file_path in files {
         // Read the content of the file
-        let content = fs::read_to_string(file_path)?;
+        let content = fs::read_to_string(file_path).unwrap();
 
         // Perform the replacement operations
         let mut modified_content = content.clone();
@@ -29,10 +27,8 @@ pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) 
         }
 
         // Write the modified content into the output file
-        write!(output_file, "{modified_content}\n")?;
+        write!(output_file, "{modified_content}\n").unwrap();
     }
-
-    Ok(())
 }
 
 /// Generate USB register Rust code from YAML using yaml2pac and format with rustfmt
@@ -42,7 +38,7 @@ pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) 
 /// 2. Constructs input and output file paths
 /// 3. Executes yaml2pac to generate Rust code from YAML
 /// 4. Uses rustfmt to format the generated Rust file
-pub fn gen_usb_pac(base_address: u32) -> Result<()> {
+pub fn gen_usb_pac(base_address: u32) {
     // Retrieve OUT_DIR environment variable
     let out_dir = env::var("OUT_DIR")
         .expect("OUT_DIR environment variable not set");
@@ -58,11 +54,12 @@ pub fn gen_usb_pac(base_address: u32) -> Result<()> {
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .arg("--common")
-        .status()?;
+        .status()
+        .unwrap();
 
     // Check yaml2pac command execution status
     if !yaml2pac_status.success() {
-        return Err(anyhow!("yaml2pac command failed: {}", yaml2pac_status.code().unwrap()));
+        panic!("yaml2pac command failed: {}", yaml2pac_status.code().unwrap());
     }
 
     // Execute rustfmt to format the generated Rust file
@@ -73,38 +70,36 @@ pub fn gen_usb_pac(base_address: u32) -> Result<()> {
 
     // Check rustfmt command execution status
     if !rustfmt_status.success() {
-        return Err(anyhow!("rustfmt command failed: {}", yaml2pac_status.code().unwrap()));
+        panic!("rustfmt command failed: {}", yaml2pac_status.code().unwrap());
     }
 
-    let file = File::open(output_path)?;
+    let file = File::open(output_path).unwrap();
     let reader = BufReader::new(file);
 
     let mut output_file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open(Path::new(&out_dir).join("usb_regs.rs"))?;
+        .open(Path::new(&out_dir).join("usb_regs.rs")).unwrap();
 
     // Insert content
     let insert_content = format!(
-        "pub struct UsbInstance;
-impl crate::MusbInstance for UsbInstance {
-    fn regs() -> crate::regs::Usb {
-        unsafe { Usb::from_ptr((base_address:#x) as _ ) }
-    }
-}
-impl crate::Instance for UsbInstance {}"
-    );
-    output_file.write_all(insert_content.as_bytes())?;
+r#"pub struct UsbInstance;
+impl crate::MusbInstance for UsbInstance {{
+    fn regs() -> crate::regs::Usb {{
+        unsafe {{ Usb::from_ptr(({base_address:#x}) as _ ) }}
+    }}
+}}
+"#);
+    
+    output_file.write_all(insert_content.as_bytes()).unwrap();
     
     // Ignore #![allow(clippy::xxxxx)]
     // (Moved to src/regs.rs)
     let lines = reader.lines().skip(4);
 
     for line in lines {
-        output_file.write_all(line?.as_bytes())?;
-        output_file.write_all(b"\n")?;
+        output_file.write_all(line.unwrap().as_bytes()).unwrap();
+        output_file.write_all(b"\n").unwrap();
     }
-
-    Ok(())
 }

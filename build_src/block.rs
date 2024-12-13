@@ -3,18 +3,17 @@ use std::fs::File;
 use std::io::Read;
 
 use crate::Block;
-use anyhow::{anyhow, Result};
 
-pub fn extract_fieldsets_from_block(block_name: &str) -> Result<Vec<String>> {
+pub fn extract_fieldsets_from_block(block_name: &str) -> Vec<String> {
     let path = format!("registers/blocks/{block_name}.yaml");
-    let mut file = File::open(path)?;
+    let mut file = File::open(path).unwrap();
     let mut content = String::new();
-    file.read_to_string(&mut content)?;
+    file.read_to_string(&mut content).unwrap();
     
-    let parsed_data: HashMap<String, Block> = serde_yaml::from_str(&content)?;
+    let parsed_data: HashMap<String, Block> = serde_yaml::from_str(&content).unwrap();
     
     parsed_data.get(&format!("block/USB")).map_or_else(
-        || Err(anyhow!("block/USB not found")),
-        |block| Ok(block.items.iter().map(|item| item.fieldset.clone()).collect()),
+        || panic!("block/USB not found"),
+        |block| block.items.iter().map(|item| item.fieldset.clone()).collect(),
     )
 }
