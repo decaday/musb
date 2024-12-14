@@ -1,0 +1,2 @@
+_fixed-fifo-size
+_ep-shared-fifo

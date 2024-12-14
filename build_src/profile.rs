@@ -5,31 +5,11 @@ use std::env;
 
 use serde_yaml;
 
-use crate::{Profile, FifoConfig};
+use crate::{Profile, FifoConfig, feature};
 
 pub fn read_profiles() -> Profile {
-    let builtin = match env::vars()
-        .map(|(a, _)| a)
-        .filter(|x| x.starts_with("CARGO_FEATURE_BUILTIN"))
-        .get_one()
-    {
-        Ok(x) => Some({
-            x.strip_prefix("CARGO_FEATURE_BUILTIN_")
-            .unwrap()
-            .to_ascii_lowercase()
-        }),
-        Err(GetOneError::None) => None,
-        Err(GetOneError::Multiple) => panic!("Multiple builtin-xxx Cargo features enabled"),
-    };
-
-    eprintln!("builtin: {builtin:?}");
-
-    let builtin = if let Some(builtin) = builtin {
-        builtin
-    } else { // TODO
-        panic!("No builtin-xxx Cargo features enabled");
-    };
-
+    let builtin = feature::get_builtin();
+    
     // Read the YAML file
     let mut file = File::open(format!("registers/profiles/{builtin}.yaml")).unwrap();
     let mut contents = String::new();
@@ -80,26 +60,5 @@ impl Profile {
             FifoConfig::Dynamic(_) => (),
         }
         features
-    }
-}
-
-enum GetOneError {
-    None,
-    Multiple,
-}
-
-trait IteratorExt: Iterator {
-    fn get_one(self) -> Result<Self::Item, GetOneError>;
-}
-
-impl<T: Iterator> IteratorExt for T {
-    fn get_one(mut self) -> Result<Self::Item, GetOneError> {
-        match self.next() {
-            None => Err(GetOneError::None),
-            Some(res) => match self.next() {
-                Some(_) => Err(GetOneError::Multiple),
-                None => Ok(res),
-            },
-        }
     }
 }

@@ -1,8 +1,8 @@
 #[cfg(not(feature = "prebuild"))]
 use std::collections::HashSet;
 
-#[cfg(not(feature = "prebuild"))]
 mod build_src;
+use build_src::feature;
 
 #[cfg(not(feature = "prebuild"))]
 use build_src::{gen, 
@@ -21,7 +21,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(not(feature = "prebuild"))]
     build();
 
-    // panic!("stop");
+    #[cfg(feature = "prebuild")]
+    feature::gen_features(&feature::get_features_from_prebuild(&feature::get_builtin()));
+    
+    panic!("stop");
     Ok(())
 }
 
@@ -63,7 +66,9 @@ fn build() {
         println!("{} {} {}", fieldset, version, &path);
         regs_yaml_files.push(path);
     }
-    gen::gen_features(&profile.get_features());
+    let features = profile.get_features();
+    feature::gen_features(&features);
+    gen::gen_feature_file(&features);
 
     gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements());
     gen::gen_usb_pac(profile.base_address.unwrap());

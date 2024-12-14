@@ -104,8 +104,14 @@ impl crate::MusbInstance for UsbInstance {{
     }
 }
 
-pub fn gen_features(features: &Vec<String>) {
+pub fn gen_feature_file(features: &Vec<String>) {
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let file_path = Path::new(&out_dir).join("features.txt");
+
+    let mut content = String::new();
     for feature in features {
-        println!("cargo:rustc-cfg=feature=\"{}\"", feature);
+        content.push_str(&format!("{}\n", feature));
     }
+
+    fs::write(&file_path, content).unwrap();
 }

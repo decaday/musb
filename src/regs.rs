@@ -16,11 +16,11 @@ cfg_if::cfg_if! {
     }
     else {
         #[cfg(feature = "builtin-py32f07x")] 
-        include!("prebuilds/py32f07x.rs");
+        include!("prebuilds/py32f07x/usb_regs.rs");
         #[cfg(feature = "builtin-py32f403")]
-        include!("prebuilds/py32f403.rs");
+        include!("prebuilds/py32f403/usb_regs.rs");
         #[cfg(feature = "builtin-std-full")]
-        include!("prebuilds/std-full.rs");
+        include!("prebuilds/std-full/usb_regs.rs");
 
         pub mod common {
             include!("prebuilds/common.rs");
