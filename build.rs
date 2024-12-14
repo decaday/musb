@@ -2,7 +2,7 @@
 use std::collections::HashSet;
 
 mod build_src;
-use build_src::feature;
+use build_src::feature::*;
 
 #[cfg(not(feature = "prebuild"))]
 use build_src::{gen, 
@@ -22,15 +22,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     build();
 
     #[cfg(feature = "prebuild")]
-    feature::gen_features(&feature::get_features_from_prebuild(&feature::get_builtin()));
+    prebuild();
     
     panic!("stop");
     Ok(())
 }
 
+#[cfg(feature = "prebuild")]
+fn prebuild() {
+    let builtin = Bulitin::get();
+
+    let features = Features::get_from_prebuild(&builtin);
+    features.gen();
+
+}
+
 #[cfg(not(feature = "prebuild"))]
 fn build() {
-    let profile = read_profiles();
+    let builtin = Bulitin::get();
+
+    let profile = read_profiles(&builtin);
     // println!("{:#?}", profile);
 
     let fieldsets = extract_fieldsets_from_block(&profile.block);
@@ -66,9 +77,10 @@ fn build() {
         println!("{} {} {}", fieldset, version, &path);
         regs_yaml_files.push(path);
     }
-    let features = profile.get_features();
-    feature::gen_features(&features);
-    gen::gen_feature_file(&features);
+
+    let features = Features::get_from_profile(&profile);
+    features.gen();
+    features.gen_file();
 
     gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements());
     gen::gen_usb_pac(profile.base_address.unwrap());

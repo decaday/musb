@@ -37,7 +37,7 @@ pub struct FixedFifoConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegBitSize {
-    #[serde(default = "default_16")]
+    #[serde(default = "default_8")]
     pub fifo: u8,
     #[serde(default = "default_16")]
     pub intr: u8,
@@ -52,7 +52,7 @@ pub struct Patch {
 impl Default for RegBitSize {
     fn default() -> Self {
         RegBitSize {
-            fifo: 16,
+            fifo: 8,
             intr: 16,
         }
     }
@@ -75,6 +75,10 @@ pub struct BlockItem {
 
 fn default_16() -> u8 {
     16
+}
+
+fn default_8() -> u8 {
+    8
 }
 
 // fn default_true() -> bool {

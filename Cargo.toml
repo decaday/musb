@@ -24,7 +24,7 @@ serde_yaml = "0.9"
 cfg-if = {version = "1.0.0"}
 
 [features]
-default = ["prebuild"]
+default = ["builtin-py32f07x", "prebuild"]
 defmt = ["embassy-usb-driver/defmt", 
     "embassy-sync/defmt",
 ]

@@ -5,10 +5,10 @@ use std::env;
 
 use serde_yaml;
 
-use crate::{Profile, FifoConfig, feature};
+use crate::{Profile, Bulitin};
 
-pub fn read_profiles() -> Profile {
-    let builtin = feature::get_builtin();
+pub fn read_profiles(builtin: &Bulitin) -> Profile {
+    let builtin = builtin.0.clone();
     
     // Read the YAML file
     let mut file = File::open(format!("registers/profiles/{builtin}.yaml")).unwrap();
@@ -43,22 +43,5 @@ impl Profile {
         replacements.insert("INTR_REG_BIT_SIZE", self.reg_bit_size.intr.to_string());
         replacements.insert("ENDPOINT_COUNT", self.endpoint_count.to_string());
         replacements
-    }
-
-    pub fn get_features(&self) -> Vec<String> {
-        let mut features = Vec::new();
-        match &self.fifo {
-            FifoConfig::Fixed(fifo) => {
-                features.push("_fixed-fifo-size".to_string());
-                if fifo.equal_size {
-                    features.push("_equal-fifo-size".to_string());
-                }
-                if fifo.shared {
-                    features.push("_ep-shared-fifo".to_string());
-                }
-            },
-            FifoConfig::Dynamic(_) => (),
-        }
-        features
     }
 }
