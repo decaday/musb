@@ -1,7 +1,7 @@
 pub struct UsbInstance;
 impl crate::MusbInstance for UsbInstance {
     fn regs() -> crate::regs::Usb {
-        unsafe { Usb::from_ptr((env!("OUT_DIR")) as _ ) }
+        unsafe { Usb::from_ptr((env!("MUSB_BASE_ADDRESS")) as _ ) }
     }
 }
 

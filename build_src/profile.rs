@@ -5,9 +5,9 @@ use std::env;
 
 use serde_yaml;
 
-use crate::Config;
+use crate::Profile;
 
-pub fn read_profiles() -> Config {
+pub fn read_profiles() -> Profile {
     let builtin = match env::vars()
         .map(|(a, _)| a)
         .filter(|x| x.starts_with("CARGO_FEATURE_BUILTIN"))
@@ -36,7 +36,7 @@ pub fn read_profiles() -> Config {
     file.read_to_string(&mut contents).unwrap();
 
     // Parse the YAML
-    let mut profile: Config = serde_yaml::from_str(&contents).unwrap();
+    let mut profile: Profile = serde_yaml::from_str(&contents).unwrap();
 
     if let Some(_) = profile.base_address {
         if let Ok(_) = env::var("MUSB_BASE_ADDRESS") {
@@ -56,7 +56,7 @@ pub fn read_profiles() -> Config {
     profile
 }
 
-impl Config {
+impl Profile {
     pub fn get_replacements(&self) -> HashMap<&str, String> {
         let mut replacements = HashMap::new();
         replacements.insert("FIFO_REG_BIT_SIZE", self.reg_bit_size.fifo.to_string());

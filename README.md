@@ -61,7 +61,7 @@ If this value is in hexadecimal, it must start with `0x`.
 
 Pre-generated Rust register code is available in `src/prebuild`, eliminating the need to rerun build scripts generating these contents.
 
-## Embed this repository into a HAL crate:
+## Integrate this crate into a HAL crate
 
 Example: [py32-hal/src/usb.rs · py32-rs/py32-hal](https://github.com/py32-rs/py32-hal/blob/main/src/usb.rs)
 

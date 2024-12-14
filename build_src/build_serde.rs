@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Config {
+pub struct Profile {
     pub name: String,
     pub block: String,
     pub endpoint_count: u8,
