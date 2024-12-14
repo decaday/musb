@@ -97,8 +97,6 @@ If you have any questions or uncertainties, feel free to create an Issue or star
 
 ## TODOs:
 
-- auto-generate interal features according to profile
-
 - Support SiFli SF32BL52
 - Other Chips
 - better support for standard musb

@@ -16,6 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=registers");
     println!("cargo:rerun-if-changed=build_src");
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=FEATURE_LIST");
 
     #[cfg(not(feature = "prebuild"))]
     build();
@@ -62,6 +63,7 @@ fn build() {
         println!("{} {} {}", fieldset, version, &path);
         regs_yaml_files.push(path);
     }
+    gen::gen_features(&profile.get_features());
 
     gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements());
     gen::gen_usb_pac(profile.base_address.unwrap());

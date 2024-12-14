@@ -5,7 +5,7 @@ use std::env;
 
 use serde_yaml;
 
-use crate::Profile;
+use crate::{Profile, FifoConfig};
 
 pub fn read_profiles() -> Profile {
     let builtin = match env::vars()
@@ -63,6 +63,23 @@ impl Profile {
         replacements.insert("INTR_REG_BIT_SIZE", self.reg_bit_size.intr.to_string());
         replacements.insert("ENDPOINT_COUNT", self.endpoint_count.to_string());
         replacements
+    }
+
+    pub fn get_features(&self) -> Vec<String> {
+        let mut features = Vec::new();
+        match &self.fifo {
+            FifoConfig::Fixed(fifo) => {
+                features.push("_fixed-fifo-size".to_string());
+                if fifo.equal_size {
+                    features.push("_equal-fifo-size".to_string());
+                }
+                if fifo.shared {
+                    features.push("_ep-shared-fifo".to_string());
+                }
+            },
+            FifoConfig::Dynamic(_) => (),
+        }
+        features
     }
 }
 

@@ -103,3 +103,9 @@ impl crate::MusbInstance for UsbInstance {{
         output_file.write_all(b"\n").unwrap();
     }
 }
+
+pub fn gen_features(features: &Vec<String>) {
+    for feature in features {
+        println!("cargo:rustc-cfg=feature=\"{}\"", feature);
+    }
+}
