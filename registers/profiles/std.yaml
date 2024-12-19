@@ -7,5 +7,5 @@ fifo:
   type: dynamic
   byte_size_total: 256 # 2048
 reg_bit_size:
-  fifo: 16
+  fifo: 8
   intr: 16

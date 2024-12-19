@@ -5,6 +5,8 @@ use std::path::Path;
 use std::env;
 use std::process::Command;
 
+use crate::{FifoConfig, Profile};
+
 pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) {
     // Get the OUT_DIR environment variable, defaulting to "out" directory if not set
     let out_dir = env::var("OUT_DIR").unwrap();
@@ -38,7 +40,7 @@ pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) 
 /// 2. Constructs input and output file paths
 /// 3. Executes yaml2pac to generate Rust code from YAML
 /// 4. Uses rustfmt to format the generated Rust file
-pub fn gen_usb_pac(base_address: Option<u32>) {
+pub fn gen_usb_pac() {
     // Retrieve OUT_DIR environment variable
     let out_dir = env::var("OUT_DIR")
         .expect("OUT_DIR environment variable not set");
@@ -82,18 +84,7 @@ pub fn gen_usb_pac(base_address: Option<u32>) {
         .truncate(true)
         .open(Path::new(&out_dir).join("usb_regs.rs")).unwrap();
 
-    if let Some(base_address) = base_address {
-        // Insert content
-        let insert_content = format!(
-r#"pub struct UsbInstance;
-impl crate::MusbInstance for UsbInstance {{
-    fn regs() -> crate::regs::Usb {{
-        unsafe {{ Usb::from_ptr(({base_address:#x}) as _ ) }}
-    }}
-}}
-"#); 
-            output_file.write_all(insert_content.as_bytes()).unwrap();
-    }
+    
 
     // Ignore #![allow(clippy::xxxxx)]
     // (Moved to src/regs.rs)
@@ -102,5 +93,58 @@ impl crate::MusbInstance for UsbInstance {{
     for line in lines {
         output_file.write_all(line.unwrap().as_bytes()).unwrap();
         output_file.write_all(b"\n").unwrap();
+    }
+}
+
+pub fn gen_info(profile: &Profile){
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let output_path = Path::new(&out_dir).join("info.rs");
+    let mut file = File::create(output_path).unwrap();
+    
+    // gen Instance
+    if let Some(base_address) = profile.base_address {
+        // Insert content
+        let insert_content = format!(
+r#"pub struct UsbInstance;
+impl crate::MusbInstance for UsbInstance {{
+    fn regs() -> crate::regs::Usb {{
+        unsafe {{ crate::regs::Usb::from_ptr(({base_address:#x}) as _ ) }}
+    }}
+}}
+"#); 
+        file.write_all(insert_content.as_bytes()).unwrap();
+    }
+
+    // Write endpoints number if specified
+    if let Some(endpoints_num) = profile.endpoints_num {
+        writeln!(file, "pub const ENDPOINTS_NUM: usize = {};", endpoints_num).unwrap();
+    }
+
+    // Generate FIFO related constants based on FifoConfig
+    match &profile.fifo {
+        FifoConfig::Fixed(config) => {
+            if config.equal_size {
+                // For fixed equal size FIFO
+                if let Some(size) = config.byte_size {
+                    writeln!(file, "pub const MAX_FIFO_SIZE_BYTE: u8 = {};", size).unwrap();
+                }
+            } else {
+                // For fixed different sizes FIFO
+                if !config.byte_size_endpoints.is_empty() {
+                    write!(file, "pub const MAX_FIFO_SIZE_BYTE: [u8; {}] = [", config.byte_size_endpoints.len()).unwrap();
+                    for (i, size) in config.byte_size_endpoints.iter().enumerate() {
+                        if i > 0 {
+                            write!(file, ", ").unwrap();
+                        }
+                        write!(file, "{}", size).unwrap();
+                    }
+                    writeln!(file, "];").unwrap();
+                }
+            }
+        },
+        FifoConfig::Dynamic(config) => {
+            // For dynamic FIFO
+            writeln!(file, "pub const TOTAL_FIFO_SIZE_BYTE: u32 = {};", config.byte_size_total).unwrap();
+        }
     }
 }

@@ -405,18 +405,18 @@ pub mod regs {
     #[doc = "FIFO Data Access Register for Endpoints"]
     #[repr(transparent)]
     #[derive(Copy, Clone, Eq, PartialEq)]
-    pub struct Fifo(pub u16);
+    pub struct Fifo(pub u8);
     impl Fifo {
         #[doc = "Data byte for FIFO read/write operation"]
         #[inline(always)]
-        pub const fn data(&self) -> u16 {
-            let val = (self.0 >> 0usize) & 0xffff;
-            val as u16
+        pub const fn data(&self) -> u8 {
+            let val = (self.0 >> 0usize) & 0xff;
+            val as u8
         }
         #[doc = "Data byte for FIFO read/write operation"]
         #[inline(always)]
-        pub fn set_data(&mut self, val: u16) {
-            self.0 = (self.0 & !(0xffff << 0usize)) | (((val as u16) & 0xffff) << 0usize);
+        pub fn set_data(&mut self, val: u8) {
+            self.0 = (self.0 & !(0xff << 0usize)) | (((val as u8) & 0xff) << 0usize);
         }
     }
     impl Default for Fifo {

@@ -14,9 +14,7 @@ mod fmt;
 
 pub mod regs;
 pub use regs::common;
-
-#[cfg(not(feature = "_gen-usb-instance"))]
-pub use regs::UsbInstance;
+pub use regs::info::*;
 
 mod endpoint;
 pub use endpoint::Endpoint;
@@ -31,15 +29,6 @@ pub use bus::Bus;
 
 mod control_pipe;
 pub use control_pipe::ControlPipe;
-
-// TODO
-const ENDPOINTS_NUM: usize = 6;
-
-const MAX_FIFO_SIZE_BYTE:u8 = 8;
-const MAX_FIFO_SIZE_BYTES: [u8; ENDPOINTS_NUM] = [8, 8, 16, 16, 16, 64];
-
-// TODO
-const MAX_FIFO_SIZE_BYTES: u8 = 8;
 
 const NEW_AW: AtomicWaker = AtomicWaker::new();
 

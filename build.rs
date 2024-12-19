@@ -82,5 +82,6 @@ fn build() {
     features.gen_file();
 
     gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements());
-    gen::gen_usb_pac(profile.base_address);
+    gen::gen_usb_pac();
+    gen::gen_info(&profile);
 }
