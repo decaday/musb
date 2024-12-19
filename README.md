@@ -3,20 +3,17 @@
 
 
 
-This crate contains register information because some manufacturers modify register offsets or mask certain registers, making it challenging for peripheral access crates (PACs) to handle these uniformly.
-
-Therefore, this crate includes built-in profiles. While standard, complete MUSB chip profiles exist, other chips are recommended to be supported by adding custom profiles.
+This crate contains register information because some manufacturers modify register offsets or mask certain registers, making it challenging for PACs to handle these uniformly.
 
 ## How to Identify a MUSB IP?
 - Registers start with POWER, FADDR (though not always at the beginning)
 - Most registers are 8-bit (some manufacturers group them into 32-bit, but it's usually clear they're composed of 8-bit registers)
-- Interrupt control and status registers are INTRRX(INTR_OUT), INTRTX(INTR_IN), INTRUSB
 - An INDEX register exists, requiring setting before endpoint operations. EP0 registers are separate, other endpoints use TXCSRH, TXCSRL, RXCSRH, RXCSRL (or IN_CSR1, IN_CSR2, OUT_CSR1, OUT_CSR2)
 - Compare with [block-peri-std](registers/blocks/peri_std.yaml) to confirm register similarity
 
-# Chips with musb IP:
+## Known chips using MUSB IP
 
-| Vendor            |                  | Chips (not fully listed)         | IP          |
+| Manufacturer      |                  | Chips (not fully listed)         | IP          |
 | ----------------- | ---------------- | -------------------------------- | ----------- |
 | Texas Instruments |                  | am335x,am1802, F2837xD, LM3S6911 | musb**      |
 | allwinner         | 全志             | F1C100S, F133                    | musb phy ip |
@@ -32,38 +29,75 @@ Therefore, this crate includes built-in profiles. While standard, complete MUSB 
 
 # Usage
 
-## dependencies
+- If your chip uses standard MUSB IP (and hasn't disabled features like Dynamic FIFO size configuration):
+  
+  You can use the [std profile](registers/profiles/std.yaml) by enabling the `builtin-std` feature. This profile doesn't include a base_address, so it won't generate a UsbInstance (explained below).
+  
+  You can then set the number of endpoints using the `endpoints-num-x` feature (e.g., `endpoints-num-8`). The total FIFO size can be configured using the `total-fifo-size-dword-x` feature (e.g., `total-fifo-size-dword-256` where 256 double-words = 2048 bytes) *(TODO)*.
+  Currently, `endpoints-num-x` and `total-fifo-size-dword-x` are **not effective** when the `prebuild` feature is enabled.
+  
+- If your chip's MUSB implementation differs significantly from the standard MUSB IP:
+  You'll need to create a new profile. You can reference [the PY32F07x profile example](registers/profiles/py32f07x.yaml). Specific details will be covered below. If your register offsets or sizes differ from existing [blocks](registers/blocks) and [fieldsets](registers/fieldsets), you'll need to add your specific blocks or fieldsets.
 
-When you don't use `prebuild` feature, you need to install:
+## Available Built-in Profiles
 
-``` shell
+These built-in profiles are used via Cargo features (see below), with only one selectable:
+- `builtin-py32f07x`
+- `builtin-py32f403`
+- `builtin-std` (excludes base_address and endpoints_num)
+
+These profiles include register descriptions, number of endpoints, etc.
+
+## Prebuild
+
+Pre-generated Rust register code for each builtin is available in `src/prebuild`, eliminating the need to rerun build scripts generating these contents.
+
+Note: `endpoints-num-x` and `total-fifo-size-dword-x` are not effective when the `prebuild` feature is enabled.
+
+When you don't use the `prebuild` feature, you need to install:
+```shell
 cargo install --git https://github.com/embedded-drivers/yaml2pac --rev 0b96c69a30557214ceb16bd7429ab9ca1c52fc7e --locked
-
 # On the Stable toolchain
 rustup component add rustfmt
 # On the Nightly toolchain
 rustup component add rustfmt --toolchain nightly
 ```
 
-## Available Built-in Profiles
-
-These built-in profiles are used via Cargo features (see below), with only one selectable:
-
-`builtin-py32f07x` (contains base_address)
-`builtin-py32f403` (contains base_address)
-`builtin-std-full`
-
-These profiles include register descriptions, number of endpoints, etc.
-Base address is optional. If left blank, it reads from the `MUSB_BASE_ADDRESS` environment variable.
-If this value is in hexadecimal, it must start with `0x`.
-
-## Prebuild
-
-Pre-generated Rust register code is available in `src/prebuild`, eliminating the need to rerun build scripts generating these contents.
-
 ## Integrate this crate into a HAL crate
 
+### Examples
 Example: [py32-hal/src/usb.rs · py32-rs/py32-hal](https://github.com/py32-rs/py32-hal/blob/main/src/usb.rs)
+
+### Instance
+
+Every struct in this crate has a generic parameter `T: MusbInstance`.
+
+```rust
+pub trait MusbInstance: 'static {
+    fn regs() -> regs::Usb;
+}
+```
+
+If the profile contains a base_address field, you can directly use:
+```rust
+let musb_driver = musb::Driver::<musb::UsbInstance>(new);
+```
+
+`musb::UsbInstance` is a struct that has already implemented the `MusbInstance` trait based on base_address.
+
+If not, you need to create this type:
+```rust
+pub struct UsbInstance;
+impl musb::MusbInstance for UsbInstance {
+    fn regs() -> musb::regs::Usb {
+        unsafe { musb::regs::Usb::from_ptr((0x40005c00) as _ ) }
+    }
+}
+```
+
+### Driver
+
+This crate includes a `MusbDriver` that has methods from `embassy_usb_driver::Driver` but doesn't implement it. The intention is for HAL libraries to create a `Driver` that wraps `MusbDriver` to handle platform-specific peripheral initialization. Please refer to the [Examples](#examples) section.
 
 # Profiles & Registers
 
@@ -71,25 +105,27 @@ Each manufacturer's SVD or manual exhibits significant register name variations,
 
 The crate describes registers using YAML, with these register description files manually maintained. It then leverages [chiptool](https://github.com/embassy-rs/chiptool) and [yaml2pac](https://github.com/embedded-drivers/yaml2pac) to generate register operation functions. These operations can be found in the `build.rs` file.
 
+To write a profile, please refer to [existing profiles](registers/profiles) and [serialization-related data types](build_src/build_serde.rs)
+
 ## Available Replacements
 
 These replacements are automatically generated from profile contents and can be used in register description YAML files.
 
-### ENDPOINT_COUNT
+- **ENDPOINTS_NUM**
 
-`profile.endpoint_count`
+  `profile.endpoints_num` OR `endpoints-num-x` feature (e.g. `endpoints-num-8`)。
 
-### FIFO_REG_BIT_SIZE
+- **FIFO_REG_BIT_SIZE** 
 
-`profile.reg_bit_size.fifo`
+  `profile.reg_bit_size.fifo`
 
-Note: This does not change the offset.
+  Note: This does not change the offset.
 
-### INTR_REG_BIT_SIZE
+- **INTR_REG_BIT_SIZE**
 
-`profile.reg_bit_size.intr`
+  `profile.reg_bit_size.intr`
 
-Note: This does not change the offset.
+  Note: This does not change the offset.
 
 # Contribute
 
@@ -97,6 +133,7 @@ If you have any questions or uncertainties, feel free to create an Issue or star
 
 ## TODOs:
 
+- Support Dynamic FIFO Size
 - Support SiFli SF32BL52
 - Other Chips
 - better support for standard musb
