@@ -33,7 +33,7 @@ log = ["embassy-sync/log",]
 
 builtin-py32f07x = []
 builtin-py32f403 = []
-builtin-std-full = []
+builtin-std = []
 
 prebuild = []
 

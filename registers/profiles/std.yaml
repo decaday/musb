@@ -1,4 +1,4 @@
-name: std_full
+name: std
 block: peri_std
 endpoints_num: 16
 # Omitting the base_address field means that you need to set it 
