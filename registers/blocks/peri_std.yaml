@@ -117,5 +117,5 @@ block/USB:
     bit_size: FIFO_REG_BIT_SIZE
     fieldset: FIFO
     array:
-      len: ENDPOINT_COUNT
+      len: ENDPOINTS_NUM
       stride: 4

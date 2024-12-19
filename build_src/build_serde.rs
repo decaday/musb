@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Profile {
     pub name: String,
     pub block: String,
-    pub endpoint_count: u8,
+    pub endpoints_num: Option<u8>,
     pub base_address: Option<u32>,
     pub fifo: FifoConfig,
     #[serde(default)]

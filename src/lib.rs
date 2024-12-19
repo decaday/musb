@@ -14,6 +14,8 @@ mod fmt;
 
 pub mod regs;
 pub use regs::common;
+
+#[cfg(not(feature = "_gen-usb-instance"))]
 pub use regs::UsbInstance;
 
 mod endpoint;

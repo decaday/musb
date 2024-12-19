@@ -38,7 +38,7 @@ pub fn gen_regs_yaml(files: &Vec<String>, replacements: &HashMap<&str, String>) 
 /// 2. Constructs input and output file paths
 /// 3. Executes yaml2pac to generate Rust code from YAML
 /// 4. Uses rustfmt to format the generated Rust file
-pub fn gen_usb_pac(base_address: u32) {
+pub fn gen_usb_pac(base_address: Option<u32>) {
     // Retrieve OUT_DIR environment variable
     let out_dir = env::var("OUT_DIR")
         .expect("OUT_DIR environment variable not set");
@@ -82,18 +82,19 @@ pub fn gen_usb_pac(base_address: u32) {
         .truncate(true)
         .open(Path::new(&out_dir).join("usb_regs.rs")).unwrap();
 
-    // Insert content
-    let insert_content = format!(
+    if let Some(base_address) = base_address {
+        // Insert content
+        let insert_content = format!(
 r#"pub struct UsbInstance;
 impl crate::MusbInstance for UsbInstance {{
     fn regs() -> crate::regs::Usb {{
         unsafe {{ Usb::from_ptr(({base_address:#x}) as _ ) }}
     }}
 }}
-"#);
-    
-    output_file.write_all(insert_content.as_bytes()).unwrap();
-    
+"#); 
+            output_file.write_all(insert_content.as_bytes()).unwrap();
+    }
+
     // Ignore #![allow(clippy::xxxxx)]
     // (Moved to src/regs.rs)
     let lines = reader.lines().skip(4);

@@ -1,6 +1,6 @@
 name: py32f07x
 block: py32
-endpoint_count: 6
+endpoints_num: 6
 base_address: 0x40005c00
 fifo:
   type: fixed

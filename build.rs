@@ -24,24 +24,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(feature = "prebuild")]
     prebuild();
     
-    panic!("stop");
+    // panic!("stop");
     Ok(())
 }
 
 #[cfg(feature = "prebuild")]
 fn prebuild() {
-    let builtin = Bulitin::get();
-
-    let features = Features::get_from_prebuild(&builtin);
+    let feature = Features::get();
+    let features = FeatureGenerator::get_from_prebuild(&feature);
     features.gen();
 
 }
 
 #[cfg(not(feature = "prebuild"))]
 fn build() {
-    let builtin = Bulitin::get();
+    let features = Features::get();
 
-    let profile = read_profiles(&builtin);
+    let profile = read_profiles(&features);
     // println!("{:#?}", profile);
 
     let fieldsets = extract_fieldsets_from_block(&profile.block);
@@ -78,10 +77,10 @@ fn build() {
         regs_yaml_files.push(path);
     }
 
-    let features = Features::get_from_profile(&profile);
+    let features = FeatureGenerator::get_from_profile(&profile);
     features.gen();
     features.gen_file();
 
     gen::gen_regs_yaml(&regs_yaml_files, &profile.get_replacements());
-    gen::gen_usb_pac(profile.base_address.unwrap());
+    gen::gen_usb_pac(profile.base_address);
 }

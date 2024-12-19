@@ -1,36 +1,47 @@
 use std::env;
 
-pub struct Bulitin(pub String);
+pub struct Features {
+    pub builtin: String,
+    pub endpoint_num: Option<u8>,
+}
 
-impl Bulitin {
-    pub fn get() -> Self {
-        let builtin = match env::vars()
+impl Features {
+    fn get_one_feature(name: &str) -> Option<String> {
+        let name_upper = name.to_ascii_uppercase();
+
+        match env::vars()
             .map(|(a, _)| a)
-            .filter(|x| x.starts_with("CARGO_FEATURE_BUILTIN"))
+            .filter(|x| x.starts_with(format!("CARGO_FEATURE_{}", &name_upper).as_str()))
             .get_one()
         {
             Ok(x) => Some({
-                x.strip_prefix("CARGO_FEATURE_BUILTIN_")
+                x.strip_prefix(&format!("CARGO_FEATURE_{}_", &name_upper))
                 .unwrap()
                 .to_ascii_lowercase()
             }),
             Err(GetOneError::None) => None,
-            Err(GetOneError::Multiple) => panic!("Multiple builtin-xxx Cargo features enabled"),
-        };
-    
-        eprintln!("builtin: {builtin:?}");
-    
-        if let Some(builtin) = builtin {
-            Self(builtin)
-        } else { // TODO
-            panic!("No builtin-xxx Cargo features enabled");
+            Err(GetOneError::Multiple) => panic!("Multiple {}-xxx Cargo features enabled", name),
         }
+    }
+
+
+    pub fn get() -> Self {
+        let builtin = Self::get_one_feature("builtin").expect("No builtin-xxx Cargo features enabled");
+
+        let endpoint_num = Self::get_one_feature("endpoint-num")
+            .map(|x| x.parse::<u8>().unwrap());
+
+        Self {
+            builtin,
+            endpoint_num,
+        }
+
     }
 }
 
-pub struct Features(pub Vec<String>);
+pub struct FeatureGenerator(pub Vec<String>);
 
-impl Features {
+impl FeatureGenerator {
     pub fn gen(&self) {
         for feature in self.0.iter() {
             println!("cargo:rustc-cfg=feature=\"{}\"", feature);
@@ -54,17 +65,21 @@ impl Features {
             },
             FifoConfig::Dynamic(_) => (),
         }
+
+        if let Some(_) = profile.base_address {
+            features.push("_gen-usb-instance".to_string());
+        }
         Self(features)
     }
     
     #[cfg(feature = "prebuild")]
-    pub fn get_from_prebuild(builtin: &Bulitin) -> Self {
+    pub fn get_from_prebuild(features: &Features) -> Self {
         use std::path::Path;
         use std::fs::File;
         use std::io::BufReader;
         use std::io::BufRead;
     
-        let file_path = format!("src/prebuilds/{}/features.txt", builtin.0);
+        let file_path = format!("src/prebuilds/{}/features.txt", features.builtin);
         let path = Path::new(&file_path);
         
         // Open the file in read-only mode.
@@ -99,6 +114,8 @@ impl Features {
         fs::write(&file_path, content).unwrap();
     }
 }
+
+
 
 enum GetOneError {
     None,
