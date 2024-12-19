@@ -155,7 +155,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     // });
     
                     T::regs().rxmaxp().write(|w|
-                        w.set_maxp(self.ep_confs[ep_index].rx_max_fifo_size_byte)
+                        w.set_maxp(self.ep_confs[ep_index].rx_max_fifo_size_dword)
                     );
     
                     T::regs().rxcsrl().write(|w| {
@@ -198,7 +198,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     // TODO: DMA
     
                     T::regs().txmaxp().write(|w|
-                        w.set_maxp(self.ep_confs[ep_index].tx_max_fifo_size_byte)
+                        w.set_maxp(self.ep_confs[ep_index].tx_max_fifo_size_dword)
                     );
     
                     T::regs().txcsrl().write(|w| {

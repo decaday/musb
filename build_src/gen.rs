@@ -125,14 +125,14 @@ impl crate::MusbInstance for UsbInstance {{
         FifoConfig::Fixed(config) => {
             if config.equal_size {
                 // For fixed equal size FIFO
-                if let Some(size) = config.byte_size {
-                    writeln!(file, "pub const MAX_FIFO_SIZE_BYTE: u8 = {};", size).unwrap();
+                if let Some(size) = config.dword_size {
+                    writeln!(file, "pub const MAX_FIFO_SIZE_DWPRD: u8 = {};", size).unwrap();
                 }
             } else {
                 // For fixed different sizes FIFO
-                if !config.byte_size_endpoints.is_empty() {
-                    write!(file, "pub const MAX_FIFO_SIZE_BYTE: [u8; {}] = [", config.byte_size_endpoints.len()).unwrap();
-                    for (i, size) in config.byte_size_endpoints.iter().enumerate() {
+                if !config.dword_size_endpoints.is_empty() {
+                    write!(file, "pub const MAX_FIFO_SIZE_DWPRD: [u8; {}] = [", config.dword_size_endpoints.len()).unwrap();
+                    for (i, size) in config.dword_size_endpoints.iter().enumerate() {
                         if i > 0 {
                             write!(file, ", ").unwrap();
                         }
@@ -144,7 +144,7 @@ impl crate::MusbInstance for UsbInstance {{
         },
         FifoConfig::Dynamic(config) => {
             // For dynamic FIFO
-            writeln!(file, "pub const TOTAL_FIFO_SIZE_BYTE: u32 = {};", config.byte_size_total).unwrap();
+            writeln!(file, "pub const TOTAL_FIFO_SIZE_DWPRD: u32 = {};", config.dword_size_total).unwrap();
         }
     }
 }

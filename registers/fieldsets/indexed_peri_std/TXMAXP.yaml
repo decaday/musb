@@ -3,6 +3,6 @@ fieldset/TXMAXP:
   description: Maximum payload size for TX endpoint
   fields:
   - name: maxp
-    description: Maximum payload in bytes
+    description: Maximum payload in 8bytes
     bit_offset: 0
     bit_size: 11

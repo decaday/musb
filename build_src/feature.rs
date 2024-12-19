@@ -2,7 +2,7 @@ use std::env;
 
 pub struct Features {
     pub builtin: String,
-    pub endpoint_num: Option<u8>,
+    pub endpoints_num: Option<u8>,
 }
 
 impl Features {
@@ -28,12 +28,12 @@ impl Features {
     pub fn get() -> Self {
         let builtin = Self::get_one_feature("builtin").expect("No builtin-xxx Cargo features enabled");
 
-        let endpoint_num = Self::get_one_feature("endpoint-num")
+        let endpoints_num = Self::get_one_feature("endpoints_num")
             .map(|x| x.parse::<u8>().unwrap());
 
         Self {
             builtin,
-            endpoint_num,
+            endpoints_num,
         }
 
     }

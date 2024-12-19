@@ -43,12 +43,12 @@ static IRQ_RESUME: AtomicBool = AtomicBool::new(false);
 static EP_TX_ENABLED: AtomicU16 = AtomicU16::new(0);
 static EP_RX_ENABLED: AtomicU16 = AtomicU16::new(0);
 
-fn calc_max_fifo_size_byte(len: u16) -> u16 {
-    let bytes = ((len + 7) / 8) as u16;
-    if bytes > 8 {
+fn calc_max_fifo_size_dword(len: u16) -> u16 {
+    let dwords = ((len + 7) / 8) as u16;
+    if dwords > 8 {
         panic!("Invalid length: {}", len);
     }
-    bytes
+    dwords
 }
 
 /// Interrupt handler.

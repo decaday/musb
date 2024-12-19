@@ -19,15 +19,15 @@ pub fn read_profiles(features: &Features) -> Profile {
     let mut profile: Profile = serde_yaml::from_str(&contents).unwrap();
 
     if let Some(_) = profile.endpoints_num {
-        if let Some(_) = features.endpoint_num {
-            panic!("The endpoints_num field in profie exists and the endpoint_num_x feature is enabled.");
+        if let Some(_) = features.endpoints_num {
+            panic!("The endpoints_num field in profie exists and the endpoints_num_x feature is enabled.");
         }
     }
     else {
-        if let None = features.endpoint_num {
-            panic!("The endpoints_num field in profie does not exist and the endpoint_num_x feature is not enabled.");
+        if let None = features.endpoints_num {
+            panic!("The endpoints_num field in profie does not exist and the endpoints_num_x feature is not enabled.");
         }
-        profile.endpoints_num = features.endpoint_num;
+        profile.endpoints_num = features.endpoints_num;
     }
     
     profile
