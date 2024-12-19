@@ -3,7 +3,7 @@ use super::*;
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {
     phantom: PhantomData<&'d mut T>,
-    alloc: [EndpointData; EP_COUNT],
+    alloc: [EndpointData; ENDPOINTS_NUM],
 }
 
 impl<'d, T: MusbInstance> MusbDriver<'d, T> {
@@ -21,12 +21,12 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             alloc: [EndpointData {
                 ep_conf: EndPointConfig {
                     ep_type: EndpointType::Bulk,
-                    tx_max_fifo_size_btyes: 1,
-                    rx_max_fifo_size_btyes: 1,
+                    tx_max_fifo_size_byte: 1,
+                    rx_max_fifo_size_byte: 1,
                 },
                 used_in: false,
                 used_out: false,
-            }; EP_COUNT],
+            }; ENDPOINTS_NUM],
         }
     }
 
@@ -60,12 +60,12 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
                 if used { return false }
 
                 #[cfg(not(feature = "_equal-fifo-size"))]
-                if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_BTYES[*i] {
+                if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_BYTE[*i] {
                     return false;
                 }
 
                 #[cfg(feature = "_equal-fifo-size")]
-                if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_BTYES {
+                if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_BYTE {
                     panic!("max_packet_size > MAX_FIFO_SIZE");
                 }
 
@@ -91,13 +91,13 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
                 assert!(!ep.used_out);
                 ep.used_out = true;
 
-                ep.ep_conf.rx_max_fifo_size_btyes = calc_max_fifo_size_btyes(max_packet_size);
+                ep.ep_conf.rx_max_fifo_size_byte = calc_max_fifo_size_byte(max_packet_size);
             }
             Direction::In => {
                 assert!(!ep.used_in);
                 ep.used_in = true;
 
-                ep.ep_conf.tx_max_fifo_size_btyes = calc_max_fifo_size_btyes(max_packet_size);
+                ep.ep_conf.tx_max_fifo_size_byte = calc_max_fifo_size_byte(max_packet_size);
             }
         };
 
@@ -124,11 +124,11 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
 
         let mut ep_confs = [EndPointConfig {
             ep_type: EndpointType::Bulk,
-            tx_max_fifo_size_btyes: 1,
-            rx_max_fifo_size_btyes: 1,
-        }; EP_COUNT];
+            tx_max_fifo_size_byte: 1,
+            rx_max_fifo_size_byte: 1,
+        }; ENDPOINTS_NUM];
         
-        for i in 0..EP_COUNT {
+        for i in 0..ENDPOINTS_NUM {
             ep_confs[i] = self.alloc[i].ep_conf;
         }
 

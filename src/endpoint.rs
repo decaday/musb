@@ -128,6 +128,6 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub(super) struct EndPointConfig {
     pub(super) ep_type: EndpointType,
-    pub(super) tx_max_fifo_size_btyes: u16,
-    pub(super) rx_max_fifo_size_btyes: u16,
+    pub(super) tx_max_fifo_size_byte: u16,
+    pub(super) rx_max_fifo_size_byte: u16,
 }

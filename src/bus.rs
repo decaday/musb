@@ -5,7 +5,7 @@ use crate::regs::vals::EndpointDirection;
 /// USB bus.
 pub struct Bus<'d, T: MusbInstance> {
     pub(super) phantom: PhantomData<&'d mut T>,
-    pub(super) ep_confs: [EndPointConfig; EP_COUNT],
+    pub(super) ep_confs: [EndPointConfig; ENDPOINTS_NUM],
     pub(super) inited: bool,
 }
 
@@ -31,7 +31,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                 IRQ_RESET.store(false, Ordering::Relaxed);
 
                 regs.power().write(|w| w.set_suspend_mode(true));
-                // for index in 1..EP_COUNT {
+                // for index in 1..ENDPOINTS_NUM {
                 //     regs.index().write(|w| w.set_index(index as _));
                 //     regs.txcsrl().modify(|w| w.set_flush_fifo(true));
                 // }
@@ -155,7 +155,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     // });
     
                     T::regs().rxmaxp().write(|w|
-                        w.set_maxp(self.ep_confs[ep_index].rx_max_fifo_size_btyes)
+                        w.set_maxp(self.ep_confs[ep_index].rx_max_fifo_size_byte)
                     );
     
                     T::regs().rxcsrl().write(|w| {
@@ -198,7 +198,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     // TODO: DMA
     
                     T::regs().txmaxp().write(|w|
-                        w.set_maxp(self.ep_confs[ep_index].tx_max_fifo_size_btyes)
+                        w.set_maxp(self.ep_confs[ep_index].tx_max_fifo_size_byte)
                     );
     
                     T::regs().txcsrl().write(|w| {

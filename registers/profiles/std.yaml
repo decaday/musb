@@ -5,7 +5,7 @@ endpoints_num: 16
 # in the environment variable `MUSB_BASE_ADDRESS`
 fifo:
   type: dynamic
-  btye_size_total: 256 # 2048
+  byte_size_total: 256 # 2048
 reg_bit_size:
   fifo: 16
   intr: 16

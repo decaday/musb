@@ -12,6 +12,7 @@ pub struct Profile {
     #[serde(default = "Vec::new")]
     pub patches: Vec<Patch>,
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum FifoConfig {
@@ -23,7 +24,7 @@ pub enum FifoConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DynamicFifoConfig {
-    pub btye_size_total: u32,
+    pub byte_size_total: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,8 +32,8 @@ pub struct FixedFifoConfig {
     pub shared: bool,
     pub equal_size: bool,
     #[serde(default = "Vec::new")]
-    pub btye_size_endpoints: Vec<u8>, // when equal_size is false
-    pub btye_size: Option<u8>,  // when equal_size is true
+    pub byte_size_endpoints: Vec<u8>, // when equal_size is false
+    pub byte_size: Option<u8>,  // when equal_size is true
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -6,7 +6,7 @@ fifo:
   type: fixed
   shared: false
   equal_size: true
-  btye_size: 8
+  byte_size: 8
 reg_bit_size:
   fifo: 8
   intr: 8
