@@ -88,13 +88,13 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         T::regs().index().write(|w| w.set_index(index as u8));
         match D::dir() {
             Direction::Out => {
-                assert!(!ep.used_out);
+                self::assert!(!ep.used_out);
                 ep.used_out = true;
 
                 ep.ep_conf.rx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
             }
             Direction::In => {
-                assert!(!ep.used_in);
+                self::assert!(!ep.used_in);
                 ep.used_in = true;
 
                 ep.ep_conf.tx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);

@@ -16,7 +16,7 @@ license = "Apache-2.0"
 embassy-usb-driver = "0.1.0"
 cfg-if = {version = "1.0.0", features = ["core"]}
 embassy-sync = "0.6.1"
-
+defmt = { version = "0.3", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -24,9 +24,10 @@ serde_yaml = "0.9"
 cfg-if = {version = "1.0.0"}
 
 [features]
-default = ["builtin-py32f07x", "prebuild"]
+default = ["prebuild"]
 defmt = ["embassy-usb-driver/defmt", 
     "embassy-sync/defmt",
+    "dep:defmt",
 ]
 
 log = ["embassy-sync/log",]
@@ -55,5 +56,5 @@ _fixed-fifo-size = []
 _gen-usb-instance = []
 
 [package.metadata.docs.rs]
-features = ["defmt"]
+features = ["defmt", "builtin-std", "endpoints-num-16"]
 targets = ["thumbv7em-none-eabihf"]
