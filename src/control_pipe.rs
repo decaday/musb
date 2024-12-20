@@ -126,55 +126,23 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
     async fn accept(&mut self) {
         trace!("control: accept");
-        
-        let regs = T::regs();
-        regs.index().write(|w| w.set_index(0));
-
-        // zero length
-        regs.csr0l().modify(|w| {
-            w.set_tx_pkt_rdy(true);
-            // w.set_data_end(true);
-        });
-
-        // Wait is needed, so that we don't set the address too soon, breaking the status stage.
-        // (embassy-usb sets the address after accept() returns)
-        poll_fn(|cx| {
-            EP_TX_WAKERS[0].register(cx.waker());
-            regs.index().write(|w| w.set_index(0));
-
-            // A zero-length OUT data packet is used to indicate the end of a Control transfer. In normal operation, such packets should only 
-            // be received after the entire length of the device request has been transferred (i.e. after the CPU has set DataEnd). If, however, the 
-            // host sends a zero-length OUT data packet before the entire length of device request has been transferred, this signals the 
-            // premature end of the transfer. In this case, the MUSBMHDRC will automatically flush any IN token loaded by CPU ready for the 
-            // Data phase from the FIFO and set SetupEnd. 
-            if regs.csr0l().read().setup_end() {
-                regs.csr0l().write(|w| w.set_serviced_setup_end(false));
-                Poll::Ready(())
-            } else {
-                Poll::Pending
-            }
-        })
-        .await;
-
-        trace!("control: accept OK");
+        // If SendStall is not set, Musb will automatically send ACK
     }
 
     async fn reject(&mut self) {
         let regs = T::regs();
         trace!("control: reject");
 
-        // Set IN+OUT to stall
         regs.index().write(|w| w.set_index(0));
         regs.csr0l().modify(|w| {
             w.set_send_stall(true);
             w.set_serviced_rx_pkt_rdy(true);
         });
 
-        // TODO: async waiting for Sent Stall?
     }
 
     async fn accept_set_address(&mut self, addr: u8) {
-        self.accept().await;
+        // self.accept().await;
 
         let regs = T::regs();
         trace!("setting addr: {}", addr);
