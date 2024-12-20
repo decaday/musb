@@ -109,15 +109,12 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
 
         regs.index().write(|w| w.set_index(index as _));
 
-        if buf.len() == 0 {
-            regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
-        } else {
-            buf.into_iter().for_each(|b|
-                regs.fifo(index).write(|w| w.set_data(*b))
-            );
 
-            regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
-        }
+        buf.into_iter().for_each(|b|
+            regs.fifo(index).write(|w| w.set_data(*b))
+        );
+
+        regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
         trace!("WRITE OK");
 
         Ok(())

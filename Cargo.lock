@@ -189,6 +189,7 @@ name = "musb"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
+ "defmt",
  "embassy-sync",
  "embassy-usb-driver",
  "serde",

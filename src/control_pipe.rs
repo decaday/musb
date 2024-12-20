@@ -30,6 +30,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             })
             .await;
 
+            regs.index().write(|w| w.set_index(0));
             if regs.count0().read().count() != 8 {
                 trace!("SETUP read failed: {:?}", regs.count0().read().count());
                 continue;
@@ -53,8 +54,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
         let _ = poll_fn(|cx| {
             EP_RX_WAKERS[0].register(cx.waker());
-            // STC uses same usb IP with py32 (mentor usb),
-            // which said it is nessery to set index to 0
+
             regs.index().write(|w| w.set_index(0));
             let ready = regs.csr0l().read().rx_pkt_rdy();
             if ready {
@@ -66,7 +66,6 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         .await;
 
         regs.index().write(|w| w.set_index(0));
-
         let read_count = regs.count0().read().count();
         if read_count as usize > buf.len() {
             return Err(EndpointError::BufferOverflow);
@@ -79,7 +78,10 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         buf.into_iter().for_each(|b|
             *b = regs.fifo(0).read().data()
         );
-        regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
+        regs.csr0l().modify(|w| {
+            w.set_serviced_rx_pkt_rdy(true);
+            if last { w.set_data_end(true); }
+        });
         trace!("READ OK, rx_len = {}", read_count);
 
         Ok(read_count as usize)
