@@ -133,7 +133,7 @@ If you have any questions or uncertainties, feel free to create an Issue or star
 
 ## TODOs:
 
-- Support Dynamic FIFO Size
+- **Support Dynamic FIFO Size**
 - Support SiFli SF32BL52
 - Other Chips
 - better support for standard musb
