@@ -1,4 +1,5 @@
 use super::*;
+use crate::panic;
 
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {

@@ -13,9 +13,11 @@ readme = "README.md"
 license = "Apache-2.0"
 
 [dependencies]
-embassy-usb-driver = "0.1.0"
+embassy-usb-driver = { version = "0.1.0", optional = true }
+embassy-sync = { version = "0.6.1", optional = true }
+usb-device = { version = "0.3.2", optional = true }
+
 cfg-if = {version = "1.0.0", features = ["core"]}
-embassy-sync = "0.6.1"
 defmt = { version = "0.3", optional = true }
 
 [build-dependencies]
@@ -25,12 +27,17 @@ cfg-if = {version = "1.0.0"}
 
 [features]
 default = ["prebuild"]
+
+embassy-usb-driver-impl = ["embassy-usb-driver", "embassy-sync"]
+usb-device-impl = ["usb-device"]
+
 defmt = ["embassy-usb-driver/defmt", 
     "embassy-sync/defmt",
+    "usb-device/defmt",
     "dep:defmt",
 ]
 
-log = ["embassy-sync/log",]
+log = ["embassy-sync/log", "usb-device/log"]
 
 builtin-py32f07x = []
 builtin-py32f403 = []
