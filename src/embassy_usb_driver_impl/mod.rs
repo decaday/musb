@@ -6,14 +6,13 @@ use core::task::Poll;
 use embassy_sync::waitqueue::AtomicWaker;
 use embassy_usb_driver as driver;
 use embassy_usb_driver::{
-    Direction, EndpointAddress, EndpointAllocError, EndpointError, EndpointInfo, EndpointType, Event, Unsupported,
+    Direction, EndpointAddress, EndpointError, EndpointInfo, EndpointType, Event, Unsupported,
 };
 
 use crate::*;
 
 mod endpoint;
 pub use endpoint::Endpoint;
-use endpoint::{EndpointData, EndPointConfig};
 
 #[path ="driver.rs"]
 mod usb_driver;

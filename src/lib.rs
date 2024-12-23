@@ -10,17 +10,15 @@ mod embassy_usb_driver_impl;
 #[cfg(feature = "embassy-usb-driver-impl")]
 pub use embassy_usb_driver_impl::*;
 
+#[cfg(feature = "usb-device-impl")]
+mod usb_device_impl;
+#[cfg(feature = "usb-device-impl")]
+pub use usb_device_impl::*;
 
-fn calc_max_fifo_size_dword(len: u16) -> u16 {
-    let dwords = ((len + 7) / 8) as u16;
-    if dwords > 8 {
-        panic!("Invalid length: {}", len);
-    }
-    dwords
-}
+mod alloc_endpoint;
 
 
 
-pub trait MusbInstance: 'static {
+pub trait MusbInstance: 'static + Send + Sync {
     fn regs() -> regs::Usb;
 }

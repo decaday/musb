@@ -5,4 +5,4 @@ impl crate::MusbInstance for UsbInstance {
     }
 }
 pub const ENDPOINTS_NUM: usize = 8;
-pub const MAX_FIFO_SIZE_DWPRD: u8 = 8;
+pub const MAX_FIFO_SIZE_DWORD: u8 = 8;

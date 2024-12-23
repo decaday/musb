@@ -1,13 +1,5 @@
 use super::*;
 
-#[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub(super) struct EndpointData {
-    pub(super) ep_conf: EndPointConfig, // only valid if used_in || used_out
-    pub(super) used_in: bool,
-    pub(super) used_out: bool,
-}
-
 /// USB endpoint.
 pub struct Endpoint<'d, T: MusbInstance, D> {
     pub(super) _phantom: PhantomData<(&'d mut T, D)>,
@@ -119,12 +111,4 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
 
         Ok(())
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub(super) struct EndPointConfig {
-    pub(super) ep_type: EndpointType,
-    pub(super) tx_max_fifo_size_dword: u16,
-    pub(super) rx_max_fifo_size_dword: u16,
 }

@@ -1,5 +1,6 @@
 use super::*;
 
+use crate::alloc_endpoint::EndPointConfig;
 use crate::regs::vals::EndpointDirection;
 
 /// USB bus.

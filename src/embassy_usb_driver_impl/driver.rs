@@ -1,5 +1,5 @@
 use super::*;
-use crate::panic;
+use crate::alloc_endpoint::{self, EndpointData, EndPointConfig};
 
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {
@@ -36,7 +36,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         ep_type: EndpointType,
         max_packet_size: u16,
         interval_ms: u8,
-        is_ep0: bool,
+        ep_index: Option<u8>,
     ) -> Result<Endpoint<'d, T, D>, driver::EndpointAllocError> {
         trace!(
             "allocating type={:?} mps={:?} interval_ms={}, dir={:?}",
@@ -46,66 +46,12 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             D::dir()
         );
 
-
-        let index = if is_ep0 {
-            Some((0, &mut self.alloc[0]))
-        }
-        else {
-            self.alloc.iter_mut().enumerate().find(|(i, ep)| {
-                if *i == 0 {
-                    return false; // reserved for control pipe
-                }
-                let used = ep.used_out || ep.used_in;
-                
-                #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
-                if used { return false }
-
-                #[cfg(not(feature = "_equal-fifo-size"))]
-                if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWPRD[*i] {
-                    return false;
-                }
-
-                #[cfg(feature = "_equal-fifo-size")]
-                if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWPRD {
-                    panic!("max_packet_size > MAX_FIFO_SIZE");
-                }
-
-                let used_dir = match D::dir() {
-                    Direction::Out => ep.used_out,
-                    Direction::In => ep.used_in,
-                };
-                !used || (ep.ep_conf.ep_type == ep_type && !used_dir)
-            })
-        };
-
-        let (index, ep) = match index {
-            Some(x) => x,
-            None => return Err(EndpointAllocError),
-        };
-
-        ep.ep_conf.ep_type = ep_type;
-        
-
-        T::regs().index().write(|w| w.set_index(index as u8));
-        match D::dir() {
-            Direction::Out => {
-                self::assert!(!ep.used_out);
-                ep.used_out = true;
-
-                ep.ep_conf.rx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
-            }
-            Direction::In => {
-                self::assert!(!ep.used_in);
-                ep.used_in = true;
-
-                ep.ep_conf.tx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
-            }
-        };
+        let index = alloc_endpoint::alloc_endpoint(&mut self.alloc, ep_type, ep_index, D::dir(), max_packet_size)?;
 
         Ok(Endpoint {
             _phantom: PhantomData,
             info: EndpointInfo {
-                addr: EndpointAddress::from_parts(index, D::dir()),
+                addr: EndpointAddress::from_parts(index as usize, D::dir()),
                 ep_type,
                 max_packet_size,
                 interval_ms,
@@ -115,10 +61,10 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
 
     pub fn start(mut self, control_max_packet_size: u16) -> (crate::Bus<'d, T>, crate::ControlPipe<'d, T>) {
         let ep_out = self
-            .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, true)
+            .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, Some(0))
             .unwrap();
         let ep_in = self
-            .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, true)
+            .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, Some(0))
             .unwrap();
         
         trace!("enabled");
