@@ -1,5 +1,5 @@
 use super::*;
-use crate::alloc_endpoint::{self, EndpointData, EndPointConfig};
+use crate::alloc_endpoint::{self, EndpointData, EndpointConfig};
 
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {
@@ -20,13 +20,13 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         Self {
             phantom: PhantomData,
             alloc: [EndpointData {
-                ep_conf: EndPointConfig {
+                ep_conf: EndpointConfig {
                     ep_type: EndpointType::Bulk,
                     tx_max_fifo_size_dword: 1,
                     rx_max_fifo_size_dword: 1,
                 },
-                used_in: false,
-                used_out: false,
+                used_tx: false,
+                used_rx: false,
             }; ENDPOINTS_NUM],
         }
     }
@@ -46,7 +46,8 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             D::dir()
         );
 
-        let index = alloc_endpoint::alloc_endpoint(&mut self.alloc, ep_type, ep_index, D::dir(), max_packet_size)?;
+        let index = alloc_endpoint::alloc_endpoint(&mut self.alloc, ep_type, ep_index, D::dir(), max_packet_size)
+            .map_err(|_| driver::EndpointAllocError)?;
 
         Ok(Endpoint {
             _phantom: PhantomData,
@@ -69,7 +70,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         
         trace!("enabled");
 
-        let mut ep_confs = [EndPointConfig {
+        let mut ep_confs = [EndpointConfig {
             ep_type: EndpointType::Bulk,
             tx_max_fifo_size_dword: 1,
             rx_max_fifo_size_dword: 1,

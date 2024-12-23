@@ -1,12 +1,12 @@
 use super::*;
 
-use crate::alloc_endpoint::EndPointConfig;
-use crate::regs::vals::EndpointDirection;
+use crate::common_impl;
+use crate::alloc_endpoint::EndpointConfig;
 
 /// USB bus.
 pub struct Bus<'d, T: MusbInstance> {
     pub(super) phantom: PhantomData<&'d mut T>,
-    pub(super) ep_confs: [EndPointConfig; ENDPOINTS_NUM],
+    pub(super) ep_confs: [EndpointConfig; ENDPOINTS_NUM],
     pub(super) inited: bool,
 }
 
@@ -61,55 +61,14 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
 
     fn endpoint_set_stalled(&mut self, ep_addr: EndpointAddress, stalled: bool) {
         // This can race, so do a retry loop.
-        let reg = T::regs();
         let ep_index = ep_addr.index();
-        if ep_index != 0 {
-            reg.index().write(|w| w.set_index(ep_index as _));
-        }
         match ep_addr.direction() {
             Direction::In => {
-                if ep_index == 0 {
-                    // usb_ep0_state = USB_EP0_STATE_STALL;
-
-                    reg.csr0l().write(|w| {
-                        w.set_send_stall(stalled);
-                        if stalled { w.set_serviced_rx_pkt_rdy(true); }
-                    });
-
-                    // while !reg.csr0l().read().sent_stall() {}
-                }
-                else {
-                    reg.txcsrl().write(|w| {
-                        w.set_send_stall(stalled);
-                        if !stalled {
-                            w.set_sent_stall(false);
-                            w.set_clr_data_tog(true);
-                        }
-                    });
-                    // while !reg.txcsrl().read().sent_stall() {}             
-                }
+                common_impl::ep_tx_stall::<T>(ep_index as _, stalled);
                 EP_TX_WAKERS[ep_addr.index()].wake();
             }
             Direction::Out => {
-                if ep_index == 0 {
-                    // usb_ep0_state = USB_EP0_STATE_STALL;
-
-                    reg.csr0l().write(|w| {
-                        w.set_send_stall(stalled);
-                        if stalled { w.set_serviced_rx_pkt_rdy(true); }
-                    });
-                    // while !reg.csr0l().read().sent_stall() {}
-                }
-                else {
-                    reg.rxcsrl().write(|w| {
-                        w.set_send_stall(stalled);
-                        if !stalled {
-                            w.set_sent_stall(false);
-                            w.set_clr_data_tog(true);
-                        }
-                    });
-                    // while !reg.rxcsrl().read().sent_stall() {}   
-                }
+                common_impl::ep_rx_stall::<T>(ep_index as _, stalled);
                 EP_TX_WAKERS[ep_addr.index()].wake();
                 EP_RX_WAKERS[ep_addr.index()].wake();
             }
@@ -117,20 +76,9 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     }
 
     fn endpoint_is_stalled(&mut self, ep_addr: EndpointAddress) -> bool {
-        let reg = T::regs();
-        let ep_index = ep_addr.index();
-        if ep_index != 0 {
-            reg.index().write(|w| w.set_index(ep_index as _));
-        }
-
-        if ep_index == 0 {
-            // TODO: py32 offiial CherryUsb port returns false directly for EP0
-            reg.csr0l().read().send_stall()
-        } else {
-            match ep_addr.direction() {
-                Direction::In => reg.txcsrl().read().send_stall(),
-                Direction::Out => reg.rxcsrl().read().send_stall(),
-            }
+        match ep_addr.direction() {
+            Direction::In => common_impl::ep_tx_is_stalled::<T>(ep_addr.index() as _),
+            Direction::Out => common_impl::ep_rx_is_stalled::<T>(ep_addr.index() as _),
         }
     }
 
@@ -142,40 +90,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
             T::regs().index().write(|w| w.set_index(ep_index as u8));
             match ep_addr.direction() {
                 Direction::Out => {
-                    if ep_index == 0 {
-                        T::regs().intrtxe().modify(|w| 
-                            w.set_ep_txe(1, true))
-                    } else {
-                        T::regs().intrrxe().modify(|w| 
-                            w.set_ep_rxe(ep_index, true)
-                        );
-                    }
-                    
-                    // T::regs().rxcsrh().write(|w| {
-                    //     w.set_auto_clear(true);
-                    // });
-    
-                    T::regs().rxmaxp().write(|w|
-                        w.set_maxp(self.ep_confs[ep_index].rx_max_fifo_size_dword)
-                    );
-    
-                    T::regs().rxcsrl().write(|w| {
-                        w.set_clr_data_tog(true);
-                    });
-    
-                    //TODO: DMA
-    
-                    if self.ep_confs[ep_index].ep_type == EndpointType::Isochronous {
-                        T::regs().rxcsrh().write(|w| {
-                            w.set_iso(true);
-                        });
-                    }
-    
-                    if T::regs().rxcsrl().read().rx_pkt_rdy() {
-                        T::regs().rxcsrl().modify(|w| 
-                            w.set_flush_fifo(true)
-                        );
-                    }
+                    common_impl::ep_rx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
                     
                     let flags = EP_RX_ENABLED.load(Ordering::Acquire) | ep_index as u16;
                     EP_RX_ENABLED.store(flags, Ordering::Release);
@@ -183,41 +98,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     EP_RX_WAKERS[ep_index].wake();
                 }
                 Direction::In => {
-                    if ep_index == 0 {
-                        T::regs().intrtxe().modify(|w| 
-                            w.set_ep_txe(1, true))
-                    } else {
-                        T::regs().intrtxe().modify(|w| 
-                            w.set_ep_txe(ep_index, true)
-                        );
-                    }
-    
-                    // T::regs().txcsrh().write(|w| {
-                    //     w.set_auto_set(true);
-                    // });
-    
-                    // TODO: DMA
-    
-                    T::regs().txmaxp().write(|w|
-                        w.set_maxp(self.ep_confs[ep_index].tx_max_fifo_size_dword)
-                    );
-    
-                    T::regs().txcsrl().write(|w| {
-                        w.set_clr_data_tog(true);
-                    });
-    
-                    if self.ep_confs[ep_index].ep_type == EndpointType::Isochronous {
-                        T::regs().txcsrh().write(|w| {
-                            w.set_iso(true);
-                        });
-                    }
-                    T::regs().txcsrh().write(|w| w.set_mode(EndpointDirection::TX));
-    
-                    if T::regs().txcsrl().read().fifo_not_empty() {
-                        T::regs().txcsrl().modify(|w|    
-                            w.set_flush_fifo(true)
-                        );
-                    }
+                    common_impl::ep_tx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
 
                     let flags = EP_TX_ENABLED.load(Ordering::Acquire) | ep_index as u16;
                     EP_TX_ENABLED.store(flags, Ordering::Release);
@@ -242,11 +123,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     }
 
     async fn enable(&mut self) {
-        T::regs().intrusb().write(|w| {
-            w.set_reset(true);
-            w.set_suspend(true);
-            w.set_resume(true);
-        });
+        common_impl::bus_enable::<T>();
     }
     async fn disable(&mut self) {}
 

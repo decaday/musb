@@ -1,21 +1,28 @@
-use embassy_usb_driver::{Direction, EndpointAllocError, EndpointType};
+use embassy_usb_driver::{Direction, EndpointType};
 
 use crate::{ENDPOINTS_NUM, MAX_FIFO_SIZE_DWORD};
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub(crate) struct EndpointData {
-    pub(crate) ep_conf: EndPointConfig, // only valid if used_in || used_out
-    pub(crate) used_in: bool,
-    pub(crate) used_out: bool,
+    pub(crate) ep_conf: EndpointConfig, // only valid if used_tx || used_rx
+    pub(crate) used_tx: bool,
+    pub(crate) used_rx: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub(crate) struct EndPointConfig {
+pub(crate) struct EndpointConfig {
     pub(crate) ep_type: EndpointType,
     pub(crate) tx_max_fifo_size_dword: u16,
     pub(crate) rx_max_fifo_size_dword: u16,
+}
+
+pub(crate) enum EndpointAllocError {
+    EndpointOverflow,
+    InvalidEndpoint,
+    #[cfg(not(feature = "_equal-fifo-size"))]
+    BufferOverflow,
 }
 
 pub(crate) fn alloc_endpoint(
@@ -27,7 +34,7 @@ pub(crate) fn alloc_endpoint(
 ) -> Result<u8, EndpointAllocError> {
     let res = if let Some(index) = ep_index {
         if index >= ENDPOINTS_NUM as u8 {
-            return Err(EndpointAllocError);
+            return Err(EndpointAllocError::EndpointOverflow);
         }
         if index == 0 {
             Some((0, &mut alloc[0]))
@@ -37,7 +44,7 @@ pub(crate) fn alloc_endpoint(
                 Some((index as usize, &mut alloc[index as usize]))
             }
             else {
-                return Err(EndpointAllocError);
+                return Err(EndpointAllocError::InvalidEndpoint);
             }
         }
 
@@ -52,20 +59,20 @@ pub(crate) fn alloc_endpoint(
 
     let (index, ep) = match res {
         Some(x) => x,
-        None => return Err(EndpointAllocError),
+        None => return Err(EndpointAllocError::EndpointOverflow),
     };
 
     ep.ep_conf.ep_type = ep_type;
     
     match direction {
         Direction::Out => {
-            assert!(!ep.used_out);
-            ep.used_out = true;
+            assert!(!ep.used_rx);
+            ep.used_rx = true;
             ep.ep_conf.rx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
         }
         Direction::In => {
-            assert!(!ep.used_in);
-            ep.used_in = true;
+            assert!(!ep.used_tx);
+            ep.used_tx = true;
 
             ep.ep_conf.tx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
         }
@@ -79,7 +86,7 @@ fn check_endpoint(ep: &EndpointData,
     direction: Direction,
     max_packet_size: u16,
 ) -> bool {
-    let used = ep.used_out || ep.used_in;
+    let used = ep.used_rx || ep.used_tx;
             
     #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
     if used && ep.index{ return false }
@@ -95,8 +102,8 @@ fn check_endpoint(ep: &EndpointData,
     }
 
     let used_dir = match direction {
-        Direction::Out => ep.used_out,
-        Direction::In => ep.used_in,
+        Direction::Out => ep.used_rx,
+        Direction::In => ep.used_tx,
     };
     !used || (ep.ep_conf.ep_type == ep_type && !used_dir)
 }

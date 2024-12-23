@@ -5,6 +5,7 @@ pub mod regs;
 pub use regs::common;
 pub use regs::info::*;
 
+
 #[cfg(feature = "embassy-usb-driver-impl")]
 mod embassy_usb_driver_impl;
 #[cfg(feature = "embassy-usb-driver-impl")]
@@ -16,7 +17,7 @@ mod usb_device_impl;
 pub use usb_device_impl::*;
 
 mod alloc_endpoint;
-
+mod common_impl;
 
 
 pub trait MusbInstance: 'static + Send + Sync {
