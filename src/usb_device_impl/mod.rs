@@ -1,3 +1,13 @@
+/// `usb-device` implementation.
+
+// In EP0 control transfers, the DataEnd bit needs to be set when 
+// reading or writing the last data packet. However, usb-device 
+// doesn't provide us with this state information.
+// Additionally, musb doesn't have dedicated status registers for 
+// Setup packets - it only has RxPktRdy to indicate packet reception.
+// Therefore, in this implementation, I used a state machine to handle
+// control transfers. However, there are still some issues, and the operation 
+// is not stable at present.
 
 use core::marker::PhantomData;
 use core::sync::atomic::{AtomicBool, AtomicU16, Ordering};
