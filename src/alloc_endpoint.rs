@@ -89,8 +89,8 @@ fn check_endpoint(ep: &EndpointData,
 ) -> bool {
     let used = ep.used_rx || ep.used_tx;
             
-    #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
-    if used && index != 0 { return false }
+    // #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
+    // if used && index != 0 { return false }
 
     #[cfg(not(feature = "_equal-fifo-size"))]
     if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWORD[index as usize] {
@@ -100,6 +100,10 @@ fn check_endpoint(ep: &EndpointData,
     #[cfg(feature = "_equal-fifo-size")]
     if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWORD {
         panic!("max_packet_size > MAX_FIFO_SIZE");
+    }
+
+    if ep_type == EndpointType::Bulk && used {
+        return false;
     }
 
     let used_dir = match direction {

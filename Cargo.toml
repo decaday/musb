@@ -45,8 +45,6 @@ builtin-std = []
 
 prebuild = []
 
-allow-ep-shared-fifo = []
-
 endpoints-num-2 = []
 endpoints-num-4 = []
 endpoints-num-6 = []
