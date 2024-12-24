@@ -92,7 +92,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                 Direction::Out => {
                     common_impl::ep_rx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
                     
-                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) | ep_index as u16;
+                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) | (1 << ep_index) as u16;
                     EP_RX_ENABLED.store(flags, Ordering::Release);
                     // Wake `Endpoint::wait_enabled()`
                     EP_RX_WAKERS[ep_index].wake();
@@ -100,7 +100,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                 Direction::In => {
                     common_impl::ep_tx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
 
-                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) | ep_index as u16;
+                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) | (1 << ep_index) as u16;
                     EP_TX_ENABLED.store(flags, Ordering::Release);
                     // Wake `Endpoint::wait_enabled()`
                     EP_TX_WAKERS[ep_index].wake();
@@ -111,11 +111,11 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
             // py32 offiial CherryUsb port does nothing when disable an endpoint
             match ep_addr.direction() {
                 Direction::Out => {
-                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) & !(ep_index as u16);
+                    let flags = EP_RX_ENABLED.load(Ordering::Acquire) & !((1 << ep_index) as u16);
                     EP_RX_ENABLED.store(flags, Ordering::Release);
                 }
                 Direction::In => {
-                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) & !(ep_index as u16);
+                    let flags = EP_TX_ENABLED.load(Ordering::Acquire) & !((1 << ep_index) as u16);
                     EP_TX_ENABLED.store(flags, Ordering::Release);
                 }
             }

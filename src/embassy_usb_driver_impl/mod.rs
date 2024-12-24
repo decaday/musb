@@ -61,16 +61,20 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
     }
 
     for index in 1..ENDPOINTS_NUM {
+        
         if intrtx.ep_tx(index) {
             EP_TX_WAKERS[index].wake();
         }
         if intrrx.ep_rx(index) {                
             EP_RX_WAKERS[index].wake();
         }
-        if T::regs().txcsrl().read().under_run(){
-            T::regs().txcsrl().modify(|w| w.set_under_run(false));
-            warn!("Underrun: ep {}", index);
-        }
+
+        // TODO: move to another location
+        // T::regs().index().write(|w| w.set_index(index as _));
+        // if T::regs().txcsrl().read().under_run(){
+        //     T::regs().txcsrl().modify(|w| w.set_under_run(false));
+        //     warn!("Underrun: ep {}", index);
+        // }
     }
 }
 

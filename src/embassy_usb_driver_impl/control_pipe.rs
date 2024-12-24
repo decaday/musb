@@ -101,10 +101,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[0].register(cx.waker());
             regs.index().write(|w| w.set_index(0));
-
-             // TODO: use fifo_not_empty?
             let unready = regs.csr0l().read().tx_pkt_rdy();
-
             if unready {
                 Poll::Pending
             } else {
@@ -112,7 +109,6 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             }
         })
         .await;
-
         regs.index().write(|w| w.set_index(0));
 
         data.into_iter().for_each(|b|

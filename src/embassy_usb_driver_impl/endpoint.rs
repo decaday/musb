@@ -19,11 +19,11 @@ impl<'d, T: MusbInstance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
             let enabled = match self.info.addr.direction() {
                 Direction::Out => {
                     EP_RX_WAKERS[index].register(cx.waker());
-                    EP_RX_ENABLED.load(Ordering::Acquire) & (index as u16) != 0
+                    EP_RX_ENABLED.load(Ordering::Acquire) & ((1 << index) as u16) != 0
                 },
                 Direction::In => {
                     EP_TX_WAKERS[index].register(cx.waker());
-                    EP_TX_ENABLED.load(Ordering::Acquire) & (index as u16) != 0
+                    EP_TX_ENABLED.load(Ordering::Acquire) & ((1 << index) as u16) != 0
                 }
             };
             if enabled {

@@ -5,6 +5,10 @@ pub mod regs;
 pub use regs::common;
 pub use regs::info::*;
 
+#[cfg(all(feature = "embassy-usb-driver-impl", feature = "usb-device-impl"))]
+compile_error!(
+    "The `embassy-usb-driver-impl` feature is incompatible with the `usb-device-impl` feature. "
+);
 
 #[cfg(feature = "embassy-usb-driver-impl")]
 mod embassy_usb_driver_impl;
