@@ -9,13 +9,31 @@ use usb_device::{UsbDirection, UsbError};
 use crate::common_impl;
 use crate::{trace, warn};
 use crate::{alloc_endpoint, MusbInstance, ENDPOINTS_NUM};
-use crate::alloc_endpoint::{EndpointAllocError, EndpointData};
+use crate::alloc_endpoint::{EndpointAllocError, EndpointConfig, EndpointData};
 
 
 pub struct UsbdBus<T: MusbInstance> {
     phantom: PhantomData<T>,
     alloc: [EndpointData; ENDPOINTS_NUM],
 }
+
+impl<T: MusbInstance> UsbdBus<T> {
+    pub fn new() -> Self {
+        Self {
+            phantom: PhantomData,
+            alloc: [EndpointData {
+                ep_conf: EndpointConfig {
+                    ep_type: EndpointType::Bulk,
+                    tx_max_fifo_size_dword: 1,
+                    rx_max_fifo_size_dword: 1,
+                },
+                used_tx: false,
+                used_rx: false,
+            }; ENDPOINTS_NUM],
+        }
+    }
+}
+
 impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
     fn alloc_ep(
         &mut self,
@@ -41,43 +59,47 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             .map_err(|e| match e {
                 EndpointAllocError::EndpointOverflow => UsbError::EndpointOverflow,
                 EndpointAllocError::InvalidEndpoint => UsbError::InvalidEndpoint,
-                #[cfg(not(feature = "_equal-fifo-size"))]
+                #[cfg(not(feature = "_fixed-fifo-size"))]
                 EndpointAllocError::BufferOverflow => UsbError::EndpointOverflow,
             })
             .map(|index| usb_device::endpoint::EndpointAddress::from_parts(index as usize, ep_dir))
     }
 
     fn enable(&mut self) {
+        trace!("call enable");
         common_impl::bus_enable::<T>();
     }
 
     fn reset(&self) {
+        trace!("call reset");
         T::regs().power().write(|w| w.set_suspend_mode(true));
 
         self.alloc.iter().enumerate().for_each(|(index, ep)| {
             if ep.used_tx { 
+                trace!("call ep_tx_enable, index = {}", index);
                 common_impl::ep_tx_enable::<T>(index as _, &ep.ep_conf);
             }
             if ep.used_rx {
+                trace!("call ep_rx_enable, index = {}", index);
                 common_impl::ep_rx_enable::<T>(index as _, &ep.ep_conf);
             }
         });
     }
 
     fn set_device_address(&self, addr: u8) {
+        trace!("call set_device_address: {}", addr);
         T::regs().faddr().write(|w| w.set_func_addr(addr));
     }
 
     fn write(&self, ep_addr: usb_device::endpoint::EndpointAddress, buf: &[u8]) -> usb_device::Result<usize> {
-        trace!("WRITE WAITING len = {}", buf.len());
-        
         let index = ep_addr.index();
+        trace!("WRITE len = {}, index = {} ", buf.len(), index);
         let regs = T::regs();
         regs.index().write(|w| w.set_index(index as _));
 
-        if buf.len() > self.alloc[index].ep_conf.tx_max_fifo_size_dword as usize {
-            return Err(UsbError::BufferOverflow);
-        }
+        // if buf.len() > self.alloc[index].ep_conf.tx_max_fifo_size_dword as usize * 8 {
+        //     return Err(UsbError::BufferOverflow);
+        // }
         let unready = if index == 0 {
             regs.csr0l().read().tx_pkt_rdy()
         } else {
@@ -87,13 +109,18 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             return Err(UsbError::WouldBlock);
         }
 
-
         buf.into_iter().for_each(|b|
             regs.fifo(index).write(|w| w.set_data(*b))
         );
         
         if index == 0 {
             regs.csr0l().modify(|w| w.set_tx_pkt_rdy(true));
+            // necessary
+            if buf.len() < self.alloc[0].ep_conf.tx_max_fifo_size_dword as usize * 8 {
+                // Last Package. include ZLP
+                regs.csr0l().modify(|w| w.set_data_end(true));
+                CONTROL_TRANSACTION.store(false, Ordering::Release);
+            }
         } else {
             regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
         }
@@ -102,9 +129,9 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
     }
 
     fn read(&self, ep_addr: usb_device::endpoint::EndpointAddress, buf: &mut [u8]) -> usb_device::Result<usize> {
-        trace!("READ WAITING, buf.len() = {}", buf.len());
-        
         let index = ep_addr.index();
+        trace!("READ, buf.len() = {}, index = {}", buf.len(), index);
+
         let regs = T::regs();
         regs.index().write(|w| w.set_index(index as _));
 
@@ -114,20 +141,37 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             !regs.rxcsrl().read().rx_pkt_rdy()
         };
         if unready {
+            trace!("unready");
             return Err(UsbError::WouldBlock);
         }
 
-        let read_count = regs.rxcount().read().count();
-        if read_count as usize > buf.len() {
-            return Err(UsbError::BufferOverflow);
-        }
+        let read_count = if index == 0 {
+            regs.count0().read().count() as u16
+        } 
+        else { 
+            regs.rxcount().read().count()
+        };
+        trace!("read_count = {}", read_count);
+        // if read_count as usize > buf.len() {
+        //     panic!("read_count > buf.len()");
+        //     return Err(UsbError::BufferOverflow);
+        // }
 
         buf.into_iter().for_each(|b|
             *b = regs.fifo(index).read().data()
         );
 
         if index == 0 {
-            regs.csr0l().modify(|w| w.set_rx_pkt_rdy(false));
+            regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
+            if SETUP.load(Ordering::Acquire) {
+                SETUP.store(false, Ordering::Release);
+            }
+
+            if buf.len() < self.alloc[0].ep_conf.rx_max_fifo_size_dword as usize * 8 {
+                // Last Package. include ZLP
+                regs.csr0l().modify(|w| w.set_data_end(true));
+                CONTROL_TRANSACTION.store(false, Ordering::Release);
+            }
         } else {
             regs.rxcsrl().modify(|w| w.set_rx_pkt_rdy(false));
         }
@@ -186,18 +230,48 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                     let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
                     IRQ_EP_TX.store(flags, Ordering::Release);
                     IRQ_EP0.store(false, Ordering::Release);
+
+                    let flags = IRQ_EP_RX.load(Ordering::Acquire) & !1u16;
+                    IRQ_EP_RX.store(flags, Ordering::SeqCst);
                 },
                 (true, _) => {
-                    setup = true;
+                    if CONTROL_TRANSACTION.load(Ordering::Acquire) {
+                        let flags = IRQ_EP_RX.load(Ordering::Acquire) | 1u16;
+                        IRQ_EP_RX.store(flags, Ordering::Release);
+                    } else {
+                        let count = regs.count0().read().count();
+                        match count {
+                            0 => {
+                                // ZLP?
+                                // Last Package. include ZLP
+                                regs.csr0l().modify(|w| w.set_data_end(true));
+                                CONTROL_TRANSACTION.store(false, Ordering::Release);
+                            },
+                            8 => {
+                                setup = true;
+                                SETUP.store(true, Ordering::Release);
+                                CONTROL_TRANSACTION.store(true, Ordering::Release);
+                            }
+                            _ => {
+                                warn!("setup packet not 8 bytes long, count = {}", count);
+                                CONTROL_TRANSACTION.store(true, Ordering::Release);
+                            }
+                        }
+                    }
                 },
                 (false, true) => {
                     IRQ_EP0.store(false, Ordering::Release);
+                    let flags = IRQ_EP_RX.load(Ordering::Acquire) & !1u16;
+                    IRQ_EP_RX.store(flags, Ordering::SeqCst);
                 }
             }
         }
         
         let rx_flags = IRQ_EP_RX.load(Ordering::Acquire);
         for index in BitIter(rx_flags) {
+            if index == 0 {
+                continue;
+            }
             regs.index().write(|w| w.set_index(index as _));
             
             // clean flags after packet was read, rx_pkt_rdy == false
@@ -224,7 +298,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         Err(UsbError::Unsupported)
     }
     
-    const QUIRK_SET_ADDRESS_BEFORE_STATUS: bool = false;
+    const QUIRK_SET_ADDRESS_BEFORE_STATUS: bool = true;
 }
 
 static IRQ_RESET: AtomicBool = AtomicBool::new(false);
@@ -234,6 +308,8 @@ static IRQ_RESUME: AtomicBool = AtomicBool::new(false);
 static IRQ_EP_TX: AtomicU16 = AtomicU16::new(0);
 static IRQ_EP_RX: AtomicU16 = AtomicU16::new(0);
 static IRQ_EP0: AtomicBool = AtomicBool::new(false);
+static SETUP: AtomicBool = AtomicBool::new(false);
+static CONTROL_TRANSACTION: AtomicBool = AtomicBool::new(false);
 
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
@@ -253,20 +329,26 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
     if intrtx.ep_tx(0) {
         IRQ_EP0.store(true, Ordering::SeqCst);
     }
+    
+    let intrtxe = T::regs().intrtxe().read();
+    crate::info!("intrtx: {:b}, intrrx: {:b}, intrtxe: {:b}", intrtx.0, intrrx.0, intrtxe.0);
 
     for index in 1..ENDPOINTS_NUM {
         if intrtx.ep_tx(index) {
             let flags = IRQ_EP_TX.load(Ordering::Acquire) | ( 1 << index ) as u16;
             IRQ_EP_TX.store(flags, Ordering::Release);
         }
-        if intrrx.ep_rx(index) {                
+        if intrrx.ep_rx(index) {             
             let flags = IRQ_EP_RX.load(Ordering::Acquire) | ( 1 << index ) as u16;
             IRQ_EP_RX.store(flags, Ordering::Release);
         }
-        if T::regs().txcsrl().read().under_run(){
-            T::regs().txcsrl().modify(|w| w.set_under_run(false));
-            warn!("Underrun: ep {}", index);
-        }
+
+        // TODO: move to another location
+        // T::regs().index().write(|w| w.set_index(index as _));
+        // if T::regs().txcsrl().read().under_run(){
+        //     T::regs().txcsrl().modify(|w| w.set_under_run(false));
+        //     warn!("Underrun: ep {}", index);
+        // }
     }
 }
 
