@@ -21,7 +21,7 @@ pub(crate) struct EndpointConfig {
 pub(crate) enum EndpointAllocError {
     EndpointOverflow,
     InvalidEndpoint,
-    #[cfg(not(feature = "_equal-fifo-size"))]
+    #[cfg(not(feature = "_fixed-fifo-size"))]
     BufferOverflow,
 }
 
@@ -40,7 +40,7 @@ pub(crate) fn alloc_endpoint(
             Some((0, &mut alloc[0]))
         }
         else {
-            if check_endpoint(&alloc[index as usize], ep_type, direction, max_packet_size) {
+            if check_endpoint(&alloc[index as usize], ep_type, index, direction, max_packet_size) {
                 Some((index as usize, &mut alloc[index as usize]))
             }
             else {
@@ -53,7 +53,7 @@ pub(crate) fn alloc_endpoint(
             if *i == 0 {
                 return false; // reserved for control pipe
             }
-            check_endpoint(ep, ep_type, direction, max_packet_size)
+            check_endpoint(ep, ep_type, *i as _, direction, max_packet_size)
         })
     };
 
@@ -83,16 +83,17 @@ pub(crate) fn alloc_endpoint(
 
 fn check_endpoint(ep: &EndpointData,
     ep_type: EndpointType,
+    index: u8,
     direction: Direction,
     max_packet_size: u16,
 ) -> bool {
     let used = ep.used_rx || ep.used_tx;
             
     #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
-    if used && ep.index{ return false }
+    if used && index != 0 { return false }
 
     #[cfg(not(feature = "_equal-fifo-size"))]
-    if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWORD[*i] {
+    if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWORD[index as usize] {
         return false;
     }
 

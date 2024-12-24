@@ -5,10 +5,10 @@ use crate::MusbInstance;
 use crate::alloc_endpoint::EndpointConfig;
 
 pub(crate) fn bus_enable<T: MusbInstance>() {
-    T::regs().intrusb().write(|w| {
-        w.set_reset(true);
-        w.set_suspend(true);
-        w.set_resume(true);
+    T::regs().intrusbe().write(|w| {
+        w.set_reset_enable(true);
+        w.set_suspend_enable(true);
+        w.set_resume_enable(true);
     });
 }
 
@@ -82,10 +82,10 @@ pub(crate) fn ep_tx_is_stalled<T: MusbInstance>(index: u8) -> bool {
 }
 
 pub(crate) fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
-    T::regs().index().write(|w| w.set_index(index as u8));
+    T::regs().index().write(|w| w.set_index(index));
     if index == 0 {
         T::regs().intrtxe().modify(|w| 
-            w.set_ep_txe(1, true))
+            w.set_ep_txe(0, true))
     } else {
         T::regs().intrtxe().modify(|w| 
             w.set_ep_txe(index as _, true)
@@ -114,19 +114,22 @@ pub(crate) fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
     T::regs().txcsrh().write(|w| w.set_mode(EndpointDirection::TX));
 
     if T::regs().txcsrl().read().fifo_not_empty() {
-        T::regs().txcsrl().modify(|w|    
+        T::regs().txcsrl().modify(|w|
+            w.set_flush_fifo(true)
+        );
+        T::regs().txcsrl().modify(|w|
             w.set_flush_fifo(true)
         );
     }
 }
 
 pub(crate) fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
-    T::regs().index().write(|w| w.set_index(index as u8));
+    T::regs().index().write(|w| w.set_index(index));
 
     if index == 0 {
         T::regs().intrtxe().modify(|w| 
             // EP0 has only one interrupt enable register
-            w.set_ep_txe(1, true))
+            w.set_ep_txe(0, true))
     } else {
         T::regs().intrrxe().modify(|w| 
             w.set_ep_rxe(index as _, true)
@@ -154,6 +157,9 @@ pub(crate) fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
     }
 
     if T::regs().rxcsrl().read().rx_pkt_rdy() {
+        T::regs().rxcsrl().modify(|w| 
+            w.set_flush_fifo(true)
+        );
         T::regs().rxcsrl().modify(|w| 
             w.set_flush_fifo(true)
         );
