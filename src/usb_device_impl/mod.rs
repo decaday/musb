@@ -166,8 +166,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         //     panic!("read_count > buf.len()");
         //     return Err(UsbError::BufferOverflow);
         // }
-
-        buf.into_iter().for_each(|b|
+        buf.into_iter().take(read_count as _).for_each(|b| 
             *b = regs.fifo(index).read().data()
         );
 

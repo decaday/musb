@@ -75,7 +75,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             return Err(EndpointError::BufferOverflow);
         }
 
-        buf.into_iter().for_each(|b|
+        buf.into_iter().take(read_count as _).for_each(|b|
             *b = regs.fifo(0).read().data()
         );
         regs.csr0l().modify(|w| {

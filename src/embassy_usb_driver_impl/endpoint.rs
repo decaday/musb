@@ -64,7 +64,7 @@ impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
             return Err(EndpointError::BufferOverflow);
         }
 
-        buf.into_iter().for_each(|b|
+        buf.into_iter().take(read_count as _).for_each(|b|
             *b = regs.fifo(index).read().data()
         );
         regs.rxcsrl().modify(|w| w.set_rx_pkt_rdy(false));
