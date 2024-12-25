@@ -10,7 +10,7 @@
 // is not stable at present.
 
 use core::marker::PhantomData;
-use core::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicU8, Ordering};
 
 use embassy_usb_driver::{Direction, EndpointType};
 use usb_device::bus::PollResult;
@@ -21,17 +21,71 @@ use crate::{trace, warn};
 use crate::{alloc_endpoint, MusbInstance, ENDPOINTS_NUM};
 use crate::alloc_endpoint::{EndpointAllocError, EndpointConfig, EndpointData};
 
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum ControlStateEnum {
+    Idle,
+    Setup,
+    DataIn,
+    DataOut,
+    NodataPhase,
+    // Error,
+}
+
+impl From<u8> for ControlStateEnum {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => ControlStateEnum::Idle,
+            1 => ControlStateEnum::Setup,
+            2 => ControlStateEnum::DataIn,
+            3 => ControlStateEnum::DataOut,
+            4 => ControlStateEnum::NodataPhase,
+            _ => unreachable!(),
+        }
+    }
+}
+
+struct ControlState {
+    state: AtomicU8,
+    remain: AtomicU32,
+}
+
+impl ControlState {
+    const fn new() -> Self {
+        Self {
+            state: AtomicU8::new(ControlStateEnum::Idle as u8),
+            remain: AtomicU32::new(0),
+        }
+    }
+
+    fn set_state(&self, state: ControlStateEnum) {
+        self.state.store(state as u8, Ordering::SeqCst);
+    }
+
+    fn get_state(&self) -> ControlStateEnum {
+        ControlStateEnum::from(self.state.load(Ordering::SeqCst))
+    }
+
+    fn set_remain(&self, remain: u32) {
+        self.remain.store(remain, Ordering::SeqCst);
+    }
+
+    fn get_remain(&self) -> u32 {
+        self.remain.load(Ordering::SeqCst)
+    }
+}
 
 pub struct UsbdBus<T: MusbInstance> {
     phantom: PhantomData<T>,
-    alloc: [EndpointData; ENDPOINTS_NUM],
+    endpoints: [EndpointData; ENDPOINTS_NUM],
+    control_state:ControlState,
 }
 
 impl<T: MusbInstance> UsbdBus<T> {
     pub fn new() -> Self {
         Self {
             phantom: PhantomData,
-            alloc: [EndpointData {
+            endpoints: [EndpointData {
                 ep_conf: EndpointConfig {
                     ep_type: EndpointType::Bulk,
                     tx_max_fifo_size_dword: 1,
@@ -40,6 +94,7 @@ impl<T: MusbInstance> UsbdBus<T> {
                 used_tx: false,
                 used_rx: false,
             }; ENDPOINTS_NUM],
+            control_state: ControlState::new(),
         }
     }
 }
@@ -65,7 +120,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             usb_device::UsbDirection::Out => Direction::Out,
         };
 
-        alloc_endpoint::alloc_endpoint(&mut self.alloc, ep_type, index, dir, max_packet_size)
+        alloc_endpoint::alloc_endpoint(&mut self.endpoints, ep_type, index, dir, max_packet_size)
             .map_err(|e| match e {
                 EndpointAllocError::EndpointOverflow => UsbError::EndpointOverflow,
                 EndpointAllocError::InvalidEndpoint => UsbError::InvalidEndpoint,
@@ -84,7 +139,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         trace!("call reset");
         T::regs().power().write(|w| w.set_suspend_mode(true));
 
-        self.alloc.iter().enumerate().for_each(|(index, ep)| {
+        self.endpoints.iter().enumerate().for_each(|(index, ep)| {
             if ep.used_tx { 
                 trace!("call ep_tx_enable, index = {}", index);
                 common_impl::ep_tx_enable::<T>(index as _, &ep.ep_conf);
@@ -107,7 +162,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         let regs = T::regs();
         regs.index().write(|w| w.set_index(index as _));
 
-        // if buf.len() > self.alloc[index].ep_conf.tx_max_fifo_size_dword as usize * 8 {
+        // if buf.len() > self.endpoints[index].ep_conf.tx_max_fifo_size_dword as usize * 8 {
         //     return Err(UsbError::BufferOverflow);
         // }
         let unready = if index == 0 {
@@ -119,17 +174,40 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             return Err(UsbError::WouldBlock);
         }
 
-        buf.into_iter().for_each(|b|
-            regs.fifo(index).write(|w| w.set_data(*b))
-        );
+        if buf.len() != 0 {
+            buf.into_iter().for_each(|b|
+                regs.fifo(index).write(|w| w.set_data(*b))
+            );
+        }
         
         if index == 0 {
-            regs.csr0l().modify(|w| w.set_tx_pkt_rdy(true));
-            // necessary
-            if buf.len() < self.alloc[0].ep_conf.tx_max_fifo_size_dword as usize * 8 {
-                // Last Package. include ZLP
-                regs.csr0l().modify(|w| w.set_data_end(true));
-                CONTROL_TRANSACTION.store(false, Ordering::Release);
+            match self.control_state.get_state() {
+                ControlStateEnum::NodataPhase => {
+                    if buf.len() != 0 {
+                        panic!("NodataPhase, write buf.len() != 0");
+                    }
+                    trace!("NodataPhase, buf.len() = 0");
+                    self.control_state.set_state(ControlStateEnum::Idle);
+                    let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1 as u16;
+                    IRQ_EP_TX.store(flags, Ordering::Release);
+                },
+                ControlStateEnum::DataIn => {
+                    regs.csr0l().modify(|w| w.set_tx_pkt_rdy(true));
+                    if buf.len() < self.endpoints[0].ep_conf.tx_max_fifo_size_dword as usize * 8 {
+                        // Last Package. include ZLP
+                        regs.csr0l().modify(|w| w.set_data_end(true));
+                        self.control_state.set_state(ControlStateEnum::Idle);
+                        trace!("WRITE END, buf.len() = {}", buf.len());
+                    }
+                },
+                ControlStateEnum::DataOut => {
+                    if buf.len() != 0 {
+                        panic!("DataOut, but write buf.len() != 0");
+                    }
+                }
+                _ => {
+                    panic!("Writing, Invalid state: {:?}", self.control_state.get_state());
+                }
             }
         } else {
             regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
@@ -169,18 +247,42 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         buf.into_iter().take(read_count as _).for_each(|b| 
             *b = regs.fifo(index).read().data()
         );
-
         if index == 0 {
             regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
-            if SETUP.load(Ordering::Acquire) {
-                SETUP.store(false, Ordering::Release);
+            match self.control_state.get_state() {
+                ControlStateEnum::Setup => {
+                    assert!(read_count == 8);
+                    let direction = buf[0] & 0x80;
+                    let w_length = buf[6];
+                    if direction == 0 { // OUT
+                        if w_length == 0 {
+                            regs.csr0l().modify(|w| w.set_data_end(true));
+                            self.control_state.set_state(ControlStateEnum::NodataPhase);
+                        } else {
+                            self.control_state.set_state(ControlStateEnum::DataOut);
+                            // self.control_state.set_remain(read_count as _);
+                        }
+                    } else { // IN
+                        if w_length == 0 {
+                            regs.csr0l().modify(|w| w.set_data_end(true));
+                            self.control_state.set_state(ControlStateEnum::NodataPhase);
+                        } else {
+                            self.control_state.set_state(ControlStateEnum::DataIn);
+                        }
+                    }
+                },
+                ControlStateEnum::DataOut => {
+                    if buf.len() < self.endpoints[0].ep_conf.rx_max_fifo_size_dword as usize * 8 {
+                        // Last Package. include ZLP
+                        regs.csr0l().modify(|w| w.set_data_end(true));
+                        self.control_state.set_state(ControlStateEnum::Idle);
+                    }
+                },
+                _ => {
+                    panic!("Unknown control state when reading: {:?}", self.control_state.get_state());
+                }
             }
 
-            if buf.len() < self.alloc[0].ep_conf.rx_max_fifo_size_dword as usize * 8 {
-                // Last Package. include ZLP
-                regs.csr0l().modify(|w| w.set_data_end(true));
-                CONTROL_TRANSACTION.store(false, Ordering::Release);
-            }
         } else {
             regs.rxcsrl().modify(|w| w.set_rx_pkt_rdy(false));
         }
@@ -195,6 +297,11 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         match ep_addr.direction() {
             UsbDirection::In => common_impl::ep_tx_stall::<T>(index as _, stalled),
             UsbDirection::Out => common_impl::ep_rx_stall::<T>(index as _, stalled),
+        }
+        if index == 0 {
+            if stalled {
+                self.control_state.set_state(ControlStateEnum::Idle);
+            }
         }
     }
 
@@ -244,27 +351,26 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                     IRQ_EP_RX.store(flags, Ordering::SeqCst);
                 },
                 (true, _) => {
-                    if CONTROL_TRANSACTION.load(Ordering::Acquire) {
-                        let flags = IRQ_EP_RX.load(Ordering::Acquire) | 1u16;
-                        IRQ_EP_RX.store(flags, Ordering::Release);
-                    } else {
-                        let count = regs.count0().read().count();
-                        match count {
-                            0 => {
-                                // ZLP?
-                                // Last Package. include ZLP
-                                regs.csr0l().modify(|w| w.set_data_end(true));
-                                CONTROL_TRANSACTION.store(false, Ordering::Release);
-                            },
-                            8 => {
-                                setup = true;
-                                SETUP.store(true, Ordering::Release);
-                                CONTROL_TRANSACTION.store(true, Ordering::Release);
+                    let count = regs.count0().read().count();
+
+                    match self.control_state.get_state() {
+                        ControlStateEnum::Idle => {
+                            match count {
+                                8 => {
+                                    self.control_state.set_state(ControlStateEnum::Setup);
+                                    setup = true;
+                                }
+                                _ => {
+                                    warn!("setup packet not 8 bytes long, count = {}", count);
+                                }
                             }
-                            _ => {
-                                warn!("setup packet not 8 bytes long, count = {}", count);
-                                CONTROL_TRANSACTION.store(true, Ordering::Release);
-                            }
+                        },
+                        ControlStateEnum::DataOut => {
+                            let flags = IRQ_EP_RX.load(Ordering::Acquire) | 1u16;
+                            IRQ_EP_RX.store(flags, Ordering::Release);
+                        }
+                        _ => {
+                            warn!("Unknown control state when reading: {:?}", self.control_state.get_state());
                         }
                     }
                 },
@@ -317,8 +423,6 @@ static IRQ_RESUME: AtomicBool = AtomicBool::new(false);
 static IRQ_EP_TX: AtomicU16 = AtomicU16::new(0);
 static IRQ_EP_RX: AtomicU16 = AtomicU16::new(0);
 static IRQ_EP0: AtomicBool = AtomicBool::new(false);
-static SETUP: AtomicBool = AtomicBool::new(false);
-static CONTROL_TRANSACTION: AtomicBool = AtomicBool::new(false);
 
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
@@ -340,7 +444,7 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
     }
     
     let intrtxe = T::regs().intrtxe().read();
-    crate::info!("intrtx: {:b}, intrrx: {:b}, intrtxe: {:b}", intrtx.0, intrrx.0, intrtxe.0);
+    trace!("intrtx: {:b}, intrrx: {:b}, intrtxe: {:b}", intrtx.0, intrrx.0, intrtxe.0);
 
     for index in 1..ENDPOINTS_NUM {
         if intrtx.ep_tx(index) {
