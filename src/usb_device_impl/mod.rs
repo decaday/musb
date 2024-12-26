@@ -1,13 +1,20 @@
 /// `usb-device` implementation.
 
-// In EP0 control transfers, the DataEnd bit needs to be set when 
-// reading or writing the last data packet. However, usb-device 
-// doesn't provide us with this state information.
-// Additionally, musb doesn't have dedicated status registers for 
-// Setup packets - it only has RxPktRdy to indicate packet reception.
-// Therefore, in this implementation, I used a state machine to handle
-// control transfers. However, there are still some issues, and the operation 
-// is not stable at present.
+// Although MUSB's control transfer has a state machine, there are no 
+// corresponding registers. This makes it impossible to determine if 
+// a packet is a Setup packet without knowing the state.
+//
+// The state of the `usb-device`'s control transfer state machine 
+// cannot be accessed at the porting layer, so we need to manually
+// determine whether to set the data_end bit.
+//
+// `usb-device` sends a zero-length packet after receiving data in 
+// control transfer, while MUSB doesn't need this behavior, we still 
+// need to tell `usb-device` that this packet was sent successfully.
+// (see ControlStateEnum::Accepted)
+
+// Therefore, this porting layer maintains its own state machine: 
+// `UsbdBus.control_state`.
 
 use core::marker::PhantomData;
 use core::sync::atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicU8, Ordering};
@@ -379,9 +386,9 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                     IRQ_EP0.store(false, Ordering::Release);
                     match self.control_state.get_state() {
                         ControlStateEnum::DataIn => {
-                    // interrupt generated due to a packet has been transmitted
-                    let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
-                    IRQ_EP_TX.store(flags, Ordering::Release);
+                            // interrupt generated due to a packet has been transmitted
+                            let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
+                            IRQ_EP_TX.store(flags, Ordering::Release);
                         },
                         _ => {}
                     }
@@ -395,6 +402,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                             match count {
                                 8 => {
                                     self.control_state.set_state(ControlStateEnum::Setup);
+                                    regs.csr0l().modify(|w| w.set_serviced_setup_end(true));
                                     setup = true;
                                 }
                                 _ => {
@@ -405,6 +413,28 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                         ControlStateEnum::DataOut => {
                             let flags = IRQ_EP_RX.load(Ordering::Acquire) | 1u16;
                             IRQ_EP_RX.store(flags, Ordering::Release);
+                        }
+                        ControlStateEnum::Accepted => { }
+                        ControlStateEnum::DataIn => {
+                            if regs.csr0l().read().setup_end(){
+                                warn!("setup end, count = {}", count);
+                                regs.csr0l().modify(|w| w.set_serviced_setup_end(true));
+                                self.control_state.set_state(ControlStateEnum::Idle);
+                                self.control_state.reset_tx_len();
+
+                                match count {
+                                    8 => {
+                                        self.control_state.set_state(ControlStateEnum::Setup);
+                                        setup = true;
+                                    }
+                                    _ => {
+                                        warn!("setup packet not 8 bytes long, count = {}", count);
+                                    }
+                                }
+                            } else {
+                                warn!("Unknown control state when reading: {:?}", self.control_state.get_state());
+                            }
+
                         }
                         _ => {
                             warn!("Unknown control state when reading: {:?}", self.control_state.get_state());
@@ -427,7 +457,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 trace!("Accepted with IRQ_EP_RX != 0");
                 IRQ_EP0.store(true, Ordering::Release);
                 IRQ_EP_RX.store(flags & !1u16, Ordering::SeqCst);
-                }
+            }
 
             let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
             IRQ_EP_TX.store(flags, Ordering::Release);
