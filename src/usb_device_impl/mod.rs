@@ -28,6 +28,7 @@ enum ControlStateEnum {
     Setup,
     DataIn,
     DataOut,
+    Accepted,
     NodataPhase,
     // Error,
 }
@@ -39,7 +40,8 @@ impl From<u8> for ControlStateEnum {
             1 => ControlStateEnum::Setup,
             2 => ControlStateEnum::DataIn,
             3 => ControlStateEnum::DataOut,
-            4 => ControlStateEnum::NodataPhase,
+            4 => ControlStateEnum::Accepted,
+            5 => ControlStateEnum::NodataPhase,
             _ => unreachable!(),
         }
     }
@@ -158,7 +160,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
 
     fn write(&self, ep_addr: usb_device::endpoint::EndpointAddress, buf: &[u8]) -> usb_device::Result<usize> {
         let index = ep_addr.index();
-        trace!("WRITE len = {}, index = {} ", buf.len(), index);
+        trace!("WRITE len = {}, index = {} ,control state = {:?}", buf.len(), index, self.control_state.get_state());
         let regs = T::regs();
         regs.index().write(|w| w.set_index(index as _));
 
@@ -200,10 +202,13 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                         trace!("WRITE END, buf.len() = {}", buf.len());
                     }
                 },
-                ControlStateEnum::DataOut => {
+                ControlStateEnum::Idle => {
                     if buf.len() != 0 {
                         panic!("DataOut, but write buf.len() != 0");
                     }
+                    // In complete
+                    self.control_state.set_state(ControlStateEnum::Accepted);
+
                 }
                 _ => {
                     panic!("Writing, Invalid state: {:?}", self.control_state.get_state());
@@ -229,7 +234,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             !regs.rxcsrl().read().rx_pkt_rdy()
         };
         if unready {
-            trace!("unready");
+            // trace!("unready");
             return Err(UsbError::WouldBlock);
         }
 
@@ -239,7 +244,6 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         else { 
             regs.rxcount().read().count()
         };
-        trace!("read_count = {}", read_count);
         // if read_count as usize > buf.len() {
         //     panic!("read_count > buf.len()");
         //     return Err(UsbError::BufferOverflow);
@@ -344,15 +348,18 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
 
             match (rx_pkt_rdy, tx_pkt_rdy) {
                 (false, false) => {
+                    IRQ_EP0.store(false, Ordering::Release);
+                    match self.control_state.get_state() {
+                        ControlStateEnum::DataIn => {
                     // interrupt generated due to a packet has been transmitted
                     let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
                     IRQ_EP_TX.store(flags, Ordering::Release);
-                    IRQ_EP0.store(false, Ordering::Release);
-
-                    let flags = IRQ_EP_RX.load(Ordering::Acquire) & !1u16;
-                    IRQ_EP_RX.store(flags, Ordering::SeqCst);
+                        },
+                        _ => {}
+                    }
                 },
                 (true, _) => {
+                    IRQ_EP0.store(false, Ordering::Release);
                     let count = regs.count0().read().count();
 
                     match self.control_state.get_state() {
@@ -381,18 +388,23 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                     let flags = IRQ_EP_RX.load(Ordering::Acquire) & !1u16;
                     IRQ_EP_RX.store(flags, Ordering::SeqCst);
                 }
-            }
+
+            let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
+            IRQ_EP_TX.store(flags, Ordering::Release);
+
+            self.control_state.set_state(ControlStateEnum::Idle);
         }
         
         let rx_flags = IRQ_EP_RX.load(Ordering::Acquire);
         for index in BitIter(rx_flags) {
-            if index == 0 {
-                continue;
-            }
             regs.index().write(|w| w.set_index(index as _));
-            
+            let rdy = if index == 0 {
+                regs.csr0l().read().rx_pkt_rdy()
+            } else {
+                regs.rxcsrl().read().rx_pkt_rdy()
+            };
             // clean flags after packet was read, rx_pkt_rdy == false
-            if !regs.rxcsrl().read().rx_pkt_rdy() {
+            if !rdy {
                 IRQ_EP_RX.store(rx_flags & !((1 << index) as u16), Ordering::SeqCst);
             }
         }
@@ -444,9 +456,6 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
     if intrtx.ep_tx(0) {
         IRQ_EP0.store(true, Ordering::SeqCst);
     }
-    
-    let intrtxe = T::regs().intrtxe().read();
-    trace!("intrtx: {:b}, intrrx: {:b}, intrtxe: {:b}", intrtx.0, intrrx.0, intrtxe.0);
 
     for index in 1..ENDPOINTS_NUM {
         if intrtx.ep_tx(index) {
