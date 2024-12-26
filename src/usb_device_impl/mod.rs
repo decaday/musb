@@ -322,6 +322,8 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         let regs = T::regs();
         let mut setup = false;
 
+        common_impl::check_underrun::<T>();
+
         if IRQ_RESET.load(Ordering::Acquire) {
             IRQ_RESET.store(false, Ordering::Release);
             return PollResult::Reset;
@@ -455,13 +457,6 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
             let flags = IRQ_EP_RX.load(Ordering::Acquire) | ( 1 << index ) as u16;
             IRQ_EP_RX.store(flags, Ordering::Release);
         }
-
-        // TODO: move to another location
-        // T::regs().index().write(|w| w.set_index(index as _));
-        // if T::regs().txcsrl().read().under_run(){
-        //     T::regs().txcsrl().modify(|w| w.set_under_run(false));
-        //     warn!("Underrun: ep {}", index);
-        // }
     }
 }
 

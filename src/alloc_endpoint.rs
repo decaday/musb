@@ -82,12 +82,13 @@ pub(crate) fn alloc_endpoint(
 }
 
 fn check_endpoint(ep: &EndpointData,
-    ep_type: EndpointType,
+    alloc_ep_type: EndpointType,
     index: u8,
     direction: Direction,
     max_packet_size: u16,
 ) -> bool {
     let used = ep.used_rx || ep.used_tx;
+    let _ = index;
             
     // #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
     // if used && index != 0 { return false }
@@ -102,7 +103,7 @@ fn check_endpoint(ep: &EndpointData,
         panic!("max_packet_size > MAX_FIFO_SIZE");
     }
 
-    if ep_type == EndpointType::Bulk && used {
+    if alloc_ep_type == EndpointType::Bulk && used {
         return false;
     }
 
@@ -110,7 +111,7 @@ fn check_endpoint(ep: &EndpointData,
         Direction::Out => ep.used_rx,
         Direction::In => ep.used_tx,
     };
-    !used || (ep.ep_conf.ep_type == ep_type && !used_dir)
+    !used || (ep.ep_conf.ep_type == alloc_ep_type && !used_dir)
 }
 
 fn calc_max_fifo_size_dword(len: u16) -> u16 {
