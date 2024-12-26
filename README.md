@@ -1,6 +1,8 @@
 # MUSB
 
-`Musbmhdrc` IP Registers and `embassy-usb-driver` , `usb-device` Implementation.
+musb(Mentor USB) Registers and `embassy-usb-driver` , `usb-device` Implementation.
+
+The MUSBMHDRC (musb) is a USB 2.0 Multi-Point, Dual-Role Controller designed by Mentor Graphics Corp. It is widely used by various manufacturers in microcontrollers and SoCs, including companies like TI, MediaTek, Puya, Allwinner, and others.
 
 This crate contains register information because some manufacturers modify register offsets or mask certain registers, making it challenging for PACs to handle these uniformly.
 
@@ -13,16 +15,18 @@ This crate contains register information because some manufacturers modify regis
 
 ## Known chips using MUSB IP
 
-| Manufacturer      |            | Chips (not fully listed)         | IP          |
-| ----------------- | ---------- | -------------------------------- | ----------- |
-| Texas Instruments |            | am335x,am1802, F2837xD, LM3S6911 | musb**      |
-| allwinner         | 全志         | F1C100S, F133                    | musb phy ip |
-| SiFli             | 思澈         | SF32LB52x                        | musb std*   |
-| beken             | 北科微 or 小博通 | beken725x                        | musb std*   |
-| essemi            | 东软载波微      | ES32F027x                        | musb std*   |
-| jieli             | 杰理         |                                  | musb**      |
-| Puya              | 普冉         | py32f071, py32f403               | musb mini*  |
-| STC               | 姚永平        | stc8, stc32, ai8051u             | musb mini*  |
+| Manufacturer       | Chips (not fully listed)         | IP          |
+| ------------------ | -------------------------------- | ----------- |
+| Texas Instruments  | am335x,am1802, F2837xD, LM3S6911 | musb**      |
+| Allwinner(全志)      | F1C100S, F133                    | musb phy ip |
+| SiFli (思澈)         | SF32LB52x                        | musb std*   |
+| beken (北科微 or 小博通) | beken725x                        | musb std*   |
+| essemi (东软载波微)     | ES32F027x                        | musb std*   |
+| jieli (杰理)         |                                  | musb**      |
+| SPRD               | sp7862                           | musb**      |
+| MediaTek           | MT6735                           | musb**      |
+| Puya (普冉)          | py32f071, py32f403               | musb mini*  |
+| STC (姚永平)          | stc8, stc32, ai8051u             | musb mini*  |
 
 *: Not sure about the IP name
 
@@ -44,11 +48,11 @@ This crate contains register information because some manufacturers modify regis
 
 `embassy-usb-driver-impl`: Enables [embassy-usb-driver](https://crates.io/crates/embassy-usb-driver) implementation.
 
-`usb-device-impl`: Enables [usb-device](https://crates.io/crates/usb-device) implementation (currently unstable).
+`usb-device-impl`: Enables [usb-device](https://crates.io/crates/usb-device) implementation.
 
 Note: Only one of these two implementations can be enabled at a time.
 
-`prebuild`: Uses pre-generated PAC (Peripheral Access Crate).
+`prebuild`(on by default): Uses pre-generated PAC (Peripheral Access Crate).
 
 `builtin-xxxx`: Uses builtin profile.
 
@@ -89,6 +93,10 @@ rustup component add rustfmt --toolchain nightly
 ### Examples
 
 Example: [py32-hal/src/usb.rs · py32-rs/py32-hal](https://github.com/py32-rs/py32-hal/blob/main/src/usb.rs)
+
+embassy-usb: [py32-hal/examples/py32f072](https://github.com/py32-rs/py32-hal/tree/main/examples/py32f072)
+
+usb-device: [py32-hal/examples/usbd-f072](https://github.com/py32-rs/py32-hal/tree/main/examples/usbd-f072)
 
 ### Instance
 
@@ -139,17 +147,15 @@ These replacements are automatically generated from profile contents and can be 
   
   `profile.endpoints_num` OR `endpoints-num-x` feature (e.g. `endpoints-num-8`)。
 
-- **FIFO_REG_BIT_SIZE** 
+- **FIFO_REG_BIT_SIZE** (does not change the offset)
   
   `profile.reg_bit_size.fifo`
   
   Note: This does not change the offset.
 
-- **INTR_REG_BIT_SIZE**
+- **INTR_REG_BIT_SIZE** (does not change the offset)
   
   `profile.reg_bit_size.intr`
-  
-  Note: This does not change the offset.
 
 # Contribute
 

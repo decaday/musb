@@ -1,5 +1,6 @@
 use std::env;
 
+#[allow(dead_code)]
 pub struct Features {
     pub builtin: String,
     pub endpoints_num: Option<u8>,
