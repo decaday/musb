@@ -18,8 +18,8 @@ use usb_device::{UsbDirection, UsbError};
 
 use crate::common_impl;
 use crate::{trace, warn};
-use crate::{alloc_endpoint, MusbInstance, ENDPOINTS_NUM};
-use crate::alloc_endpoint::{EndpointAllocError, EndpointConfig, EndpointData};
+use crate::{MusbInstance, ENDPOINTS_NUM};
+use crate::alloc_endpoint::{self, EndpointAllocError, EndpointConfig, EndpointData};
 
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -49,14 +49,14 @@ impl From<u8> for ControlStateEnum {
 
 struct ControlState {
     state: AtomicU8,
-    remain: AtomicU32,
+    tx_len: AtomicU32,
 }
 
 impl ControlState {
     const fn new() -> Self {
         Self {
             state: AtomicU8::new(ControlStateEnum::Idle as u8),
-            remain: AtomicU32::new(0),
+            tx_len: AtomicU32::new(0),
         }
     }
 
@@ -68,12 +68,27 @@ impl ControlState {
         ControlStateEnum::from(self.state.load(Ordering::SeqCst))
     }
 
-    fn set_remain(&self, remain: u32) {
-        self.remain.store(remain, Ordering::SeqCst);
+    fn reset_tx_len(&self) {
+        self.tx_len.store(0, Ordering::SeqCst);
     }
 
-    fn get_remain(&self) -> u32 {
-        self.remain.load(Ordering::SeqCst)
+    fn set_tx_len(&self, tx_len: u32) {
+        self.tx_len.store(tx_len, Ordering::SeqCst);
+    }
+
+    fn decrease_tx_len(&self, len: u32) {
+        let tx_len = self.tx_len.load(Ordering::SeqCst);
+        if len > tx_len {
+            warn!("decrease_tx_len: len {} > tx_len {}", len, tx_len);
+            self.tx_len.store(0, Ordering::SeqCst);
+        }
+        else {
+            self.tx_len.store(tx_len - len, Ordering::SeqCst);
+        }
+    }
+
+    fn get_tx_len(&self) -> u32 {
+        self.tx_len.load(Ordering::SeqCst)
     }
 }
 
@@ -151,6 +166,9 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 common_impl::ep_rx_enable::<T>(index as _, &ep.ep_conf);
             }
         });
+
+        self.control_state.set_state(ControlStateEnum::Idle);
+        self.control_state.reset_tx_len();
     }
 
     fn set_device_address(&self, addr: u8) {
@@ -195,16 +213,23 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 },
                 ControlStateEnum::DataIn => {
                     regs.csr0l().modify(|w| w.set_tx_pkt_rdy(true));
-                    if buf.len() < self.endpoints[0].ep_conf.tx_max_fifo_size_dword as usize * 8 {
+                    self.control_state.decrease_tx_len(buf.len() as u32);
+                    if self.control_state.get_tx_len() == 0 {
+                        regs.csr0l().modify(|w| w.set_data_end(true));
+                        self.control_state.set_state(ControlStateEnum::Idle);
+                        // trace!("WRITE END, tx_len = 0, buf.len() = {}", buf.len());
+                    } 
+                    else if buf.len() < self.endpoints[0].ep_conf.tx_max_fifo_size_dword as usize * 8 {
                         // Last Package. include ZLP
                         regs.csr0l().modify(|w| w.set_data_end(true));
                         self.control_state.set_state(ControlStateEnum::Idle);
-                        trace!("WRITE END, buf.len() = {}", buf.len());
+                        self.control_state.reset_tx_len();
+                        // trace!("WRITE END, buf.len() = {}", buf.len());
                     }
                 },
                 ControlStateEnum::Idle => {
                     if buf.len() != 0 {
-                        panic!("DataOut, but write buf.len() != 0");
+                        panic!("Idle, but write buf.len() != 0");
                     }
                     // In complete
                     self.control_state.set_state(ControlStateEnum::Accepted);
@@ -257,14 +282,14 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 ControlStateEnum::Setup => {
                     assert!(read_count == 8);
                     let direction = buf[0] & 0x80;
-                    let w_length = buf[6];
+                    let w_length = buf[6] as u16 | (buf[7] as u16) << 8;
                     if direction == 0 { // OUT
                         if w_length == 0 {
                             regs.csr0l().modify(|w| w.set_data_end(true));
                             self.control_state.set_state(ControlStateEnum::NodataPhase);
                         } else {
                             self.control_state.set_state(ControlStateEnum::DataOut);
-                            // self.control_state.set_remain(read_count as _);
+                            // self.control_state.set_rx_len(w_length as _);
                         }
                     } else { // IN
                         if w_length == 0 {
@@ -272,14 +297,16 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                             self.control_state.set_state(ControlStateEnum::NodataPhase);
                         } else {
                             self.control_state.set_state(ControlStateEnum::DataIn);
+                            self.control_state.set_tx_len(w_length as _);
                         }
                     }
                 },
                 ControlStateEnum::DataOut => {
-                    if buf.len() < self.endpoints[0].ep_conf.rx_max_fifo_size_dword as usize * 8 {
+                    if (read_count as u32) < self.endpoints[0].ep_conf.rx_max_fifo_size_dword as u32 * 8 {
                         // Last Package. include ZLP
                         regs.csr0l().modify(|w| w.set_data_end(true));
                         self.control_state.set_state(ControlStateEnum::Idle);
+                        trace!("READ END, buf.len() = {}", buf.len());
                     }
                 },
                 _ => {
@@ -305,6 +332,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         if index == 0 {
             if stalled {
                 self.control_state.set_state(ControlStateEnum::Idle);
+                self.control_state.reset_tx_len();
             }
         }
     }
@@ -385,8 +413,20 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 },
                 (false, true) => {
                     IRQ_EP0.store(false, Ordering::Release);
-                    let flags = IRQ_EP_RX.load(Ordering::Acquire) & !1u16;
-                    IRQ_EP_RX.store(flags, Ordering::SeqCst);
+
+                    // let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
+                    // IRQ_EP_TX.store(flags, Ordering::Release);
+                }
+            }
+        }
+
+        if self.control_state.get_state() == ControlStateEnum::Accepted {
+            // // Ignore RX. This will be addressed in the next poll.
+            let flags = IRQ_EP_RX.load(Ordering::Acquire);
+            if flags & 1u16 != 0 {
+                trace!("Accepted with IRQ_EP_RX != 0");
+                IRQ_EP0.store(true, Ordering::Release);
+                IRQ_EP_RX.store(flags & !1u16, Ordering::SeqCst);
                 }
 
             let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
