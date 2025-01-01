@@ -23,7 +23,6 @@ pub use usb_device_impl::*;
 mod alloc_endpoint;
 mod common_impl;
 
-
 pub trait MusbInstance: 'static + Send + Sync {
     fn regs() -> regs::Usb;
 }

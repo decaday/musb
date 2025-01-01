@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 #![allow(non_camel_case_types)]
-
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::identity_op)]
 #![allow(clippy::unnecessary_cast)]
@@ -18,13 +17,13 @@ cfg_if::cfg_if! {
         }
     }
     else {
-        #[cfg(feature = "builtin-py32f07x")] 
+        #[cfg(feature = "builtin-py32f07x")]
         include!("prebuilds/py32f07x/usb_regs.rs");
-        #[cfg(feature = "builtin-py32f07x")] 
+        #[cfg(feature = "builtin-py32f07x")]
         pub mod info {
             include!("prebuilds/py32f07x/info.rs");
         }
-        
+
 
         #[cfg(feature = "builtin-py32f403")]
         include!("prebuilds/py32f403/usb_regs.rs");

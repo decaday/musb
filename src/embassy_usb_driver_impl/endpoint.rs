@@ -20,7 +20,7 @@ impl<'d, T: MusbInstance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
                 Direction::Out => {
                     EP_RX_WAKERS[index].register(cx.waker());
                     EP_RX_ENABLED.load(Ordering::Acquire) & ((1 << index) as u16) != 0
-                },
+                }
                 Direction::In => {
                     EP_TX_WAKERS[index].register(cx.waker());
                     EP_TX_ENABLED.load(Ordering::Acquire) & ((1 << index) as u16) != 0
@@ -57,16 +57,14 @@ impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
         .await;
 
         regs.index().write(|w| w.set_index(index as _));
-
         let read_count = regs.rxcount().read().count();
-        
         if read_count as usize > buf.len() {
             return Err(EndpointError::BufferOverflow);
         }
 
-        buf.into_iter().take(read_count as _).for_each(|b|
-            *b = regs.fifo(index).read().data()
-        );
+        buf.into_iter()
+            .take(read_count as _)
+            .for_each(|b| *b = regs.fifo(index).read().data());
         regs.rxcsrl().modify(|w| w.set_rx_pkt_rdy(false));
         trace!("READ OK, rx_len = {}", read_count);
 
@@ -100,15 +98,11 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
         .await;
 
         regs.index().write(|w| w.set_index(index as _));
-
-
-        buf.into_iter().for_each(|b|
-            regs.fifo(index).write(|w| w.set_data(*b))
-        );
+        buf.into_iter()
+            .for_each(|b| regs.fifo(index).write(|w| w.set_data(*b)));
 
         regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
         trace!("WRITE OK");
-
         Ok(())
     }
 }

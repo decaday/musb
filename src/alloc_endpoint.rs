@@ -26,7 +26,7 @@ pub(crate) enum EndpointAllocError {
 }
 
 pub(crate) fn alloc_endpoint(
-    alloc: &mut [EndpointData; ENDPOINTS_NUM], 
+    alloc: &mut [EndpointData; ENDPOINTS_NUM],
     ep_type: EndpointType,
     ep_index: Option<u8>,
     direction: Direction,
@@ -38,16 +38,19 @@ pub(crate) fn alloc_endpoint(
         }
         if index == 0 {
             Some((0, &mut alloc[0]))
-        }
-        else {
-            if check_endpoint(&alloc[index as usize], ep_type, index, direction, max_packet_size) {
+        } else {
+            if check_endpoint(
+                &alloc[index as usize],
+                ep_type,
+                index,
+                direction,
+                max_packet_size,
+            ) {
                 Some((index as usize, &mut alloc[index as usize]))
-            }
-            else {
+            } else {
                 return Err(EndpointAllocError::InvalidEndpoint);
             }
         }
-
     } else {
         alloc.iter_mut().enumerate().find(|(i, ep)| {
             if *i == 0 {
@@ -63,7 +66,7 @@ pub(crate) fn alloc_endpoint(
     };
 
     ep.ep_conf.ep_type = ep_type;
-    
+
     match direction {
         Direction::Out => {
             assert!(!ep.used_rx);
@@ -81,7 +84,8 @@ pub(crate) fn alloc_endpoint(
     Ok(index as u8)
 }
 
-fn check_endpoint(ep: &EndpointData,
+fn check_endpoint(
+    ep: &EndpointData,
     alloc_ep_type: EndpointType,
     index: u8,
     direction: Direction,
@@ -89,7 +93,7 @@ fn check_endpoint(ep: &EndpointData,
 ) -> bool {
     let used = ep.used_rx || ep.used_tx;
     let _ = index;
-            
+
     // #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
     // if used && index != 0 { return false }
 

@@ -1,7 +1,7 @@
 use super::*;
 
-use crate::common_impl;
 use crate::alloc_endpoint::EndpointConfig;
+use crate::common_impl;
 
 /// USB bus.
 pub struct Bus<'d, T: MusbInstance> {
@@ -85,13 +85,13 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     fn endpoint_set_enabled(&mut self, ep_addr: EndpointAddress, enabled: bool) {
         trace!("set_enabled {:x} {}", ep_addr, enabled);
         let ep_index = ep_addr.index();
-        
+
         if enabled {
             T::regs().index().write(|w| w.set_index(ep_index as u8));
             match ep_addr.direction() {
                 Direction::Out => {
                     common_impl::ep_rx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
-                    
+
                     let flags = EP_RX_ENABLED.load(Ordering::Acquire) | (1 << ep_index) as u16;
                     EP_RX_ENABLED.store(flags, Ordering::Release);
                     // Wake `Endpoint::wait_enabled()`
@@ -106,9 +106,8 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     EP_TX_WAKERS[ep_index].wake();
                 }
             }
-        }
-        else {
-            // py32 offiial CherryUsb port does nothing when disable an endpoint
+        } else {
+            // py32 official CherryUsb port does nothing when disable an endpoint
             match ep_addr.direction() {
                 Direction::Out => {
                     let flags = EP_RX_ENABLED.load(Ordering::Acquire) & !((1 << ep_index) as u16);

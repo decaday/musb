@@ -33,7 +33,7 @@ pub struct FixedFifoConfig {
     pub equal_size: bool,
     #[serde(default = "Vec::new")]
     pub dword_size_endpoints: Vec<u8>, // when equal_size is false
-    pub dword_size: Option<u8>,  // when equal_size is true
+    pub dword_size: Option<u8>, // when equal_size is true
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -52,10 +52,7 @@ pub struct Patch {
 
 impl Default for RegBitSize {
     fn default() -> Self {
-        RegBitSize {
-            fifo: 8,
-            intr: 16,
-        }
+        RegBitSize { fifo: 8, intr: 16 }
     }
 }
 

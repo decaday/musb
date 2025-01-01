@@ -19,7 +19,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             trace!("SETUP read waiting");
             poll_fn(|cx| {
                 EP_RX_WAKERS[0].register(cx.waker());
-                
+
                 regs.index().write(|w| w.set_index(0));
 
                 if regs.csr0l().read().rx_pkt_rdy() {
@@ -37,9 +37,9 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             }
 
             let mut buf = [0; 8];
-            (&mut buf).into_iter().for_each(|b|
-                *b = regs.fifo(0).read().data()
-            );
+            (&mut buf)
+                .into_iter()
+                .for_each(|b| *b = regs.fifo(0).read().data());
             regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
 
             trace!("SETUP read ok");
@@ -47,8 +47,18 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         }
     }
 
-    async fn data_out(&mut self, buf: &mut [u8], first: bool, last: bool) -> Result<usize, EndpointError> {
-        trace!("control: data_out len={} first={} last={}", buf.len(), first, last);
+    async fn data_out(
+        &mut self,
+        buf: &mut [u8],
+        first: bool,
+        last: bool,
+    ) -> Result<usize, EndpointError> {
+        trace!(
+            "control: data_out len={} first={} last={}",
+            buf.len(),
+            first,
+            last
+        );
 
         let regs = T::regs();
 
@@ -75,12 +85,14 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             return Err(EndpointError::BufferOverflow);
         }
 
-        buf.into_iter().take(read_count as _).for_each(|b|
-            *b = regs.fifo(0).read().data()
-        );
+        buf.into_iter()
+            .take(read_count as _)
+            .for_each(|b| *b = regs.fifo(0).read().data());
         regs.csr0l().modify(|w| {
             w.set_serviced_rx_pkt_rdy(true);
-            if last { w.set_data_end(true); }
+            if last {
+                w.set_data_end(true);
+            }
         });
         trace!("READ OK, rx_len = {}", read_count);
 
@@ -88,7 +100,12 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
     }
 
     async fn data_in(&mut self, data: &[u8], first: bool, last: bool) -> Result<(), EndpointError> {
-        trace!("control: data_in len={} first={} last={}", data.len(), first, last);
+        trace!(
+            "control: data_in len={} first={} last={}",
+            data.len(),
+            first,
+            last
+        );
 
         if data.len() > self.ep_in.info.max_packet_size as usize {
             return Err(EndpointError::BufferOverflow);
@@ -111,13 +128,14 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         .await;
         regs.index().write(|w| w.set_index(0));
 
-        data.into_iter().for_each(|b|
-            regs.fifo(0).write(|w| w.set_data(*b))
-        );
+        data.into_iter()
+            .for_each(|b| regs.fifo(0).write(|w| w.set_data(*b)));
 
         regs.csr0l().modify(|w| {
             w.set_tx_pkt_rdy(true);
-            if last { w.set_data_end(true); }
+            if last {
+                w.set_data_end(true);
+            }
         });
         Ok(())
     }
@@ -136,7 +154,6 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             w.set_send_stall(true);
             w.set_serviced_rx_pkt_rdy(true);
         });
-
     }
 
     async fn accept_set_address(&mut self, addr: u8) {

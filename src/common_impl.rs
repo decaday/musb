@@ -1,8 +1,8 @@
 use embassy_usb_driver::EndpointType;
 
+use crate::alloc_endpoint::EndpointConfig;
 use crate::regs::vals::EndpointDirection;
 use crate::{warn, MusbInstance, ENDPOINTS_NUM};
-use crate::alloc_endpoint::EndpointConfig;
 
 pub(crate) fn bus_enable<T: MusbInstance>() {
     T::regs().intrusbe().write(|w| {
@@ -15,22 +15,21 @@ pub(crate) fn bus_enable<T: MusbInstance>() {
 pub(crate) fn ep_tx_stall<T: MusbInstance>(index: u8, stalled: bool) {
     let regs = T::regs();
     regs.index().write(|w| w.set_index(index as _));
-    
+
     if index == 0 {
         regs.csr0l().write(|w| {
             w.set_send_stall(stalled);
             // TODO
             // if stalled { w.set_serviced_tx_pkt_rdy(true); }
         });
-    }
-    else {
+    } else {
         regs.txcsrl().write(|w| {
             w.set_send_stall(stalled);
             if !stalled {
                 w.set_sent_stall(false);
                 w.set_clr_data_tog(true);
             }
-        });         
+        });
     }
 }
 
@@ -41,10 +40,11 @@ pub(crate) fn ep_rx_stall<T: MusbInstance>(index: u8, stalled: bool) {
     if index == 0 {
         regs.csr0l().write(|w| {
             w.set_send_stall(stalled);
-            if stalled { w.set_serviced_rx_pkt_rdy(true); }
+            if stalled {
+                w.set_serviced_rx_pkt_rdy(true);
+            }
         });
-    }
-    else {
+    } else {
         regs.rxcsrl().write(|w| {
             w.set_send_stall(stalled);
             if !stalled {
@@ -84,12 +84,11 @@ pub(crate) fn ep_tx_is_stalled<T: MusbInstance>(index: u8) -> bool {
 pub(crate) fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     T::regs().index().write(|w| w.set_index(index));
     if index == 0 {
-        T::regs().intrtxe().modify(|w| 
-            w.set_ep_txe(0, true))
+        T::regs().intrtxe().modify(|w| w.set_ep_txe(0, true))
     } else {
-        T::regs().intrtxe().modify(|w| 
-            w.set_ep_txe(index as _, true)
-        );
+        T::regs()
+            .intrtxe()
+            .modify(|w| w.set_ep_txe(index as _, true));
     }
 
     // T::regs().txcsrh().write(|w| {
@@ -98,9 +97,9 @@ pub(crate) fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
 
     // TODO: DMA
 
-    T::regs().txmaxp().write(|w|
-        w.set_maxp(config.tx_max_fifo_size_dword)
-    );
+    T::regs()
+        .txmaxp()
+        .write(|w| w.set_maxp(config.tx_max_fifo_size_dword));
 
     T::regs().txcsrl().write(|w| {
         w.set_clr_data_tog(true);
@@ -111,15 +110,13 @@ pub(crate) fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
             w.set_iso(true);
         });
     }
-    T::regs().txcsrh().write(|w| w.set_mode(EndpointDirection::TX));
+    T::regs()
+        .txcsrh()
+        .write(|w| w.set_mode(EndpointDirection::TX));
 
     if T::regs().txcsrl().read().fifo_not_empty() {
-        T::regs().txcsrl().modify(|w|
-            w.set_flush_fifo(true)
-        );
-        T::regs().txcsrl().modify(|w|
-            w.set_flush_fifo(true)
-        );
+        T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
+        T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
     }
 }
 
@@ -127,22 +124,22 @@ pub(crate) fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
     T::regs().index().write(|w| w.set_index(index));
 
     if index == 0 {
-        T::regs().intrtxe().modify(|w| 
+        T::regs().intrtxe().modify(|w|
             // EP0 has only one interrupt enable register
             w.set_ep_txe(0, true))
     } else {
-        T::regs().intrrxe().modify(|w| 
-            w.set_ep_rxe(index as _, true)
-        );
+        T::regs()
+            .intrrxe()
+            .modify(|w| w.set_ep_rxe(index as _, true));
     }
-    
+
     // T::regs().rxcsrh().write(|w| {
     //     w.set_auto_clear(true);
     // });
 
-    T::regs().rxmaxp().write(|w|
-        w.set_maxp(config.rx_max_fifo_size_dword)
-    );
+    T::regs()
+        .rxmaxp()
+        .write(|w| w.set_maxp(config.rx_max_fifo_size_dword));
 
     T::regs().rxcsrl().write(|w| {
         w.set_clr_data_tog(true);
@@ -157,15 +154,10 @@ pub(crate) fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
     }
 
     if T::regs().rxcsrl().read().rx_pkt_rdy() {
-        T::regs().rxcsrl().modify(|w| 
-            w.set_flush_fifo(true)
-        );
-        T::regs().rxcsrl().modify(|w| 
-            w.set_flush_fifo(true)
-        );
+        T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
+        T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
     }
 }
-
 
 pub(crate) fn check_underrun<T: MusbInstance>() {
     let regs = T::regs();

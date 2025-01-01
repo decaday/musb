@@ -14,7 +14,7 @@ use crate::*;
 mod endpoint;
 pub use endpoint::Endpoint;
 
-#[path ="driver.rs"]
+#[path = "driver.rs"]
 mod usb_driver;
 pub use usb_driver::MusbDriver;
 
@@ -61,11 +61,10 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
     }
 
     for index in 1..ENDPOINTS_NUM {
-        
         if intrtx.ep_tx(index) {
             EP_TX_WAKERS[index].wake();
         }
-        if intrrx.ep_rx(index) {                
+        if intrrx.ep_rx(index) {
             EP_RX_WAKERS[index].wake();
         }
 
@@ -77,8 +76,6 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         // }
     }
 }
-
-
 
 pub trait Dir {
     fn dir() -> Direction;

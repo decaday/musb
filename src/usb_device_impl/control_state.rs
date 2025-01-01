@@ -1,5 +1,5 @@
-use core::sync::atomic::{AtomicU32, AtomicU8, Ordering};
 use crate::warn;
+use core::sync::atomic::{AtomicU32, AtomicU8, Ordering};
 
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -61,8 +61,7 @@ impl ControlState {
         if len > tx_len {
             warn!("decrease_tx_len: len {} > tx_len {}", len, tx_len);
             self.tx_len.store(0, Ordering::SeqCst);
-        }
-        else {
+        } else {
             self.tx_len.store(tx_len - len, Ordering::SeqCst);
         }
     }

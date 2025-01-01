@@ -25,7 +25,9 @@ pub struct FieldsetDatabase {
 
 impl FieldsetDatabase {
     pub fn new() -> Self {
-        Self { fieldsets: Vec::new() }
+        Self {
+            fieldsets: Vec::new(),
+        }
     }
 
     /// Process the directory and build the database
@@ -55,7 +57,7 @@ impl FieldsetDatabase {
             if fieldset.name != name {
                 continue;
             }
-        
+
             // Check if the Fieldset contains all must-have tags
             if let Some(tags) = must_have_tags {
                 if !tags.is_subset(&fieldset.tags) {
@@ -85,30 +87,34 @@ impl FieldsetDatabase {
         // If there are multiple matching results, return an error
         if matching_files.len() > 1 {
             let best_files: Vec<String> = matching_files
-            .iter()
-            .filter(|(_, is_true)| *is_true)
-            .map(|(file, _)| file.clone())
-            .collect();
-    
+                .iter()
+                .filter(|(_, is_true)| *is_true)
+                .map(|(file, _)| file.clone())
+                .collect();
+
             if best_files.len() == 1 {
                 best_files.into_iter().next().unwrap()
             } else {
                 panic!("Invalid list: {matching_files:?}\nExpected exactly one file with true value in the list")
             }
-
         } else if matching_files.is_empty() {
-            panic!("No matching file found for {name}. must_have_tags: {must_have_tags:?},
+            panic!(
+                "No matching file found for {name}. must_have_tags: {must_have_tags:?},
                 must_not_have_tags: {must_not_have_tags:?},
-                best_have_tags: {best_have_tags:?}")
+                best_have_tags: {best_have_tags:?}"
+            )
         } else {
             matching_files[0].0.clone() // Return the single file path
         }
     }
 }
 
-
 /// Recursively walks through the directory and processes files
-fn process_directory<P: AsRef<Path>>(path: P, parent_tags: HashSet<String>, db: &mut FieldsetDatabase) {
+fn process_directory<P: AsRef<Path>>(
+    path: P,
+    parent_tags: HashSet<String>,
+    db: &mut FieldsetDatabase,
+) {
     let entries = fs::read_dir(path).unwrap();
 
     for entry in entries {
@@ -116,7 +122,11 @@ fn process_directory<P: AsRef<Path>>(path: P, parent_tags: HashSet<String>, db: 
         let entry_path = entry.path();
         if entry_path.is_dir() {
             // For directories, split the directory name and apply tags to its files
-            let folder_name = entry_path.file_name().unwrap().to_string_lossy().to_string();
+            let folder_name = entry_path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
             let mut folder_tags = parent_tags.clone();
             let _ = add_tags_from_name(&folder_name, &mut folder_tags);
 
@@ -124,10 +134,18 @@ fn process_directory<P: AsRef<Path>>(path: P, parent_tags: HashSet<String>, db: 
             process_directory(entry_path, folder_tags, db);
         } else if entry_path.is_file() {
             // For files, process the file
-            let file_name = entry_path.file_stem().unwrap().to_string_lossy().to_string();
+            let file_name = entry_path
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
             let mut file_tags = parent_tags.clone();
             let name = add_tags_from_name(&file_name, &mut file_tags);
-            db.add_fieldset(Fieldset::new(&name, file_tags, &entry_path.to_string_lossy()));
+            db.add_fieldset(Fieldset::new(
+                &name,
+                file_tags,
+                &entry_path.to_string_lossy(),
+            ));
         }
     }
 }
@@ -141,4 +159,3 @@ fn add_tags_from_name<'a>(name: &'a str, tags: &mut HashSet<String>) -> &'a str 
     }
     parts.get(0).unwrap()
 }
-

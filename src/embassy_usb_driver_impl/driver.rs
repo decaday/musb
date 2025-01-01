@@ -1,5 +1,5 @@
 use super::*;
-use crate::alloc_endpoint::{self, EndpointData, EndpointConfig};
+use crate::alloc_endpoint::{self, EndpointConfig, EndpointData};
 
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {
@@ -11,9 +11,9 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
     /// Create a new USB driver.
     pub fn new() -> Self {
         let regs = T::regs();
-        
+
         regs.index().write(|w| w.set_index(0));
-        
+
         // Initialize the bus so that it signals that power is available
         BUS_WAKER.wake();
 
@@ -46,8 +46,14 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             D::dir()
         );
 
-        let index = alloc_endpoint::alloc_endpoint(&mut self.alloc, ep_type, ep_index, D::dir(), max_packet_size)
-            .map_err(|_| driver::EndpointAllocError)?;
+        let index = alloc_endpoint::alloc_endpoint(
+            &mut self.alloc,
+            ep_type,
+            ep_index,
+            D::dir(),
+            max_packet_size,
+        )
+        .map_err(|_| driver::EndpointAllocError)?;
 
         Ok(Endpoint {
             _phantom: PhantomData,
@@ -60,14 +66,17 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         })
     }
 
-    pub fn start(mut self, control_max_packet_size: u16) -> (crate::Bus<'d, T>, crate::ControlPipe<'d, T>) {
+    pub fn start(
+        mut self,
+        control_max_packet_size: u16,
+    ) -> (crate::Bus<'d, T>, crate::ControlPipe<'d, T>) {
         let ep_out = self
             .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, Some(0))
             .unwrap();
         let ep_in = self
             .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, Some(0))
             .unwrap();
-        
+
         trace!("enabled");
 
         let mut ep_confs = [EndpointConfig {
@@ -75,7 +84,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             tx_max_fifo_size_dword: 1,
             rx_max_fifo_size_dword: 1,
         }; ENDPOINTS_NUM];
-        
+
         for i in 0..ENDPOINTS_NUM {
             ep_confs[i] = self.alloc[i].ep_conf;
         }

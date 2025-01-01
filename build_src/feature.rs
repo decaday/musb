@@ -17,26 +17,25 @@ impl Features {
         {
             Ok(x) => Some({
                 x.strip_prefix(&format!("CARGO_FEATURE_{}_", &name_upper))
-                .unwrap()
-                .to_ascii_lowercase()
+                    .unwrap()
+                    .to_ascii_lowercase()
             }),
             Err(GetOneError::None) => None,
             Err(GetOneError::Multiple) => panic!("Multiple {}-xxx Cargo features enabled", name),
         }
     }
 
-
     pub fn get() -> Self {
-        let builtin = Self::get_one_feature("builtin").expect("No builtin-xxx Cargo features enabled");
+        let builtin =
+            Self::get_one_feature("builtin").expect("No builtin-xxx Cargo features enabled");
 
-        let endpoints_num = Self::get_one_feature("endpoints_num")
-            .map(|x| x.parse::<u8>().unwrap());
+        let endpoints_num =
+            Self::get_one_feature("endpoints_num").map(|x| x.parse::<u8>().unwrap());
 
         Self {
             builtin,
             endpoints_num,
         }
-
     }
 }
 
@@ -63,7 +62,7 @@ impl FeatureGenerator {
                 if fifo.shared {
                     features.push("_ep-shared-fifo".to_string());
                 }
-            },
+            }
             FifoConfig::Dynamic(_) => (),
         }
 
@@ -72,21 +71,21 @@ impl FeatureGenerator {
         }
         Self(features)
     }
-    
+
     #[cfg(feature = "prebuild")]
     pub fn get_from_prebuild(features: &Features) -> Self {
-        use std::path::Path;
         use std::fs::File;
-        use std::io::BufReader;
         use std::io::BufRead;
-    
+        use std::io::BufReader;
+        use std::path::Path;
+
         let file_path = format!("src/prebuilds/{}/features.txt", features.builtin);
         let path = Path::new(&file_path);
-        
+
         // Open the file in read-only mode.
         let file = File::open(path).unwrap();
         let reader = BufReader::new(file);
-    
+
         // Read lines, filter out empty ones, and collect into a Vec<String>.
         let features: Vec<String> = reader
             .lines()
@@ -94,29 +93,27 @@ impl FeatureGenerator {
             .map(|line| line.trim().to_string()) // Trim whitespace
             .filter(|line| !line.is_empty()) // Remove empty lines
             .collect();
-    
+
         Self(features)
     }
 
     #[cfg(not(feature = "prebuild"))]
     pub fn gen_file(&self) {
-        use std::path::Path;
-        use std::fs;
         use std::env;
+        use std::fs;
+        use std::path::Path;
 
         let out_dir = env::var("OUT_DIR").unwrap();
         let file_path = Path::new(&out_dir).join("features.txt");
-    
+
         let mut content = String::new();
         for feature in self.0.iter() {
             content.push_str(&format!("{}\n", feature));
         }
-    
+
         fs::write(&file_path, content).unwrap();
     }
 }
-
-
 
 enum GetOneError {
     None,
