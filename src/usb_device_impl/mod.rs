@@ -17,7 +17,7 @@
 // `UsbdBus.control_state`.
 
 use core::marker::PhantomData;
-use core::sync::atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicU8, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 
 use embassy_usb_driver::{Direction, EndpointType};
 use usb_device::bus::PollResult;
@@ -28,76 +28,8 @@ use crate::{trace, warn};
 use crate::{MusbInstance, ENDPOINTS_NUM};
 use crate::alloc_endpoint::{self, EndpointAllocError, EndpointConfig, EndpointData};
 
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum ControlStateEnum {
-    Idle,
-    Setup,
-    DataIn,
-    DataOut,
-    Accepted,
-    NodataPhase,
-    // Error,
-}
-
-impl From<u8> for ControlStateEnum {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => ControlStateEnum::Idle,
-            1 => ControlStateEnum::Setup,
-            2 => ControlStateEnum::DataIn,
-            3 => ControlStateEnum::DataOut,
-            4 => ControlStateEnum::Accepted,
-            5 => ControlStateEnum::NodataPhase,
-            _ => unreachable!(),
-        }
-    }
-}
-
-struct ControlState {
-    state: AtomicU8,
-    tx_len: AtomicU32,
-}
-
-impl ControlState {
-    const fn new() -> Self {
-        Self {
-            state: AtomicU8::new(ControlStateEnum::Idle as u8),
-            tx_len: AtomicU32::new(0),
-        }
-    }
-
-    fn set_state(&self, state: ControlStateEnum) {
-        self.state.store(state as u8, Ordering::SeqCst);
-    }
-
-    fn get_state(&self) -> ControlStateEnum {
-        ControlStateEnum::from(self.state.load(Ordering::SeqCst))
-    }
-
-    fn reset_tx_len(&self) {
-        self.tx_len.store(0, Ordering::SeqCst);
-    }
-
-    fn set_tx_len(&self, tx_len: u32) {
-        self.tx_len.store(tx_len, Ordering::SeqCst);
-    }
-
-    fn decrease_tx_len(&self, len: u32) {
-        let tx_len = self.tx_len.load(Ordering::SeqCst);
-        if len > tx_len {
-            warn!("decrease_tx_len: len {} > tx_len {}", len, tx_len);
-            self.tx_len.store(0, Ordering::SeqCst);
-        }
-        else {
-            self.tx_len.store(tx_len - len, Ordering::SeqCst);
-        }
-    }
-
-    fn get_tx_len(&self) -> u32 {
-        self.tx_len.load(Ordering::SeqCst)
-    }
-}
+mod control_state;
+use control_state::{ControlState, ControlStateEnum};
 
 pub struct UsbdBus<T: MusbInstance> {
     phantom: PhantomData<T>,
