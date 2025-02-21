@@ -86,4 +86,4 @@ If you have any questions or uncertainties, feel free to create an Issue or star
 
 ## License
 
-This project is under Apache License, Version 2.0 ([LICENSE-APACHE](../LICENSE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+This project is under Apache License, Version 2.0 ([LICENSE](../LICENSE) or <http://www.apache.org/licenses/LICENSE-2.0>)
