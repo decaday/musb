@@ -24,14 +24,15 @@ use usb_device::{UsbDirection, UsbError};
 use crate::alloc_endpoint::{self, EndpointAllocError, EndpointConfig, EndpointData};
 use crate::common_impl;
 use crate::{trace, warn};
-use crate::{MusbInstance, ENDPOINTS_NUM};
+use crate::MusbInstance;
+use crate::info::ENDPOINTS;
 
 mod control_state;
 use control_state::{ControlState, ControlStateEnum};
 
 pub struct UsbdBus<T: MusbInstance> {
     phantom: PhantomData<T>,
-    endpoints: [EndpointData; ENDPOINTS_NUM],
+    endpoints: [EndpointData; ENDPOINTS.len()],
     control_state: ControlState,
 }
 
@@ -47,7 +48,7 @@ impl<T: MusbInstance> UsbdBus<T> {
                 },
                 used_tx: false,
                 used_rx: false,
-            }; ENDPOINTS_NUM],
+            }; ENDPOINTS.len()],
             control_state: ControlState::new(),
         }
     }
@@ -309,7 +310,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         let regs = T::regs();
         let mut setup = false;
 
-        common_impl::check_underrun::<T>();
+        common_impl::check_overrun::<T>();
 
         if IRQ_RESET.load(Ordering::Acquire) {
             IRQ_RESET.store(false, Ordering::Release);
@@ -478,7 +479,7 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         IRQ_EP0.store(true, Ordering::SeqCst);
     }
 
-    for index in 1..ENDPOINTS_NUM {
+    for index in 1..ENDPOINTS.len() {
         if intrtx.ep_tx(index) {
             let flags = IRQ_EP_TX.load(Ordering::Acquire) | (1 << index) as u16;
             IRQ_EP_TX.store(flags, Ordering::Release);

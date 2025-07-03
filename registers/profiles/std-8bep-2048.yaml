@@ -1,12 +1,11 @@
-name: py32f403
-block: py32
-base_address: 0x40005c00
+name: std-8bep-2048
+block: peri_std
 fifo:
-  type: fixed
-  shared: false
+  type: dynamic
+  total_size_dword: 256 # 2048 KBytes
 reg_bit_size:
   fifo: 8
-  intr: 8
+  intr: 16
 endpoints:
   - type: rxtx
     max_packet_size_dword: 8
@@ -20,17 +19,7 @@ endpoints:
     max_packet_size_dword: 8
   - type: rxtx
     max_packet_size_dword: 8
-patches:
-  - fieldset: POWER
-    version: mini
-  - fieldset: INTRUSB
-    version: mini
-  - fieldset: INTRUSBE
-    version: mini
-  - fieldset: TXCSRL
-    version: mini
-  - fieldset: RXCSRH
-    version: mini
-
-
-    
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 8

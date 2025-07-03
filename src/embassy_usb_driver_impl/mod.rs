@@ -10,6 +10,7 @@ use embassy_usb_driver::{
 };
 
 use crate::*;
+use crate::info::ENDPOINTS;
 
 mod endpoint;
 pub use endpoint::Endpoint;
@@ -28,8 +29,8 @@ const NEW_AW: AtomicWaker = AtomicWaker::new();
 
 static BUS_WAKER: AtomicWaker = NEW_AW;
 
-static EP_TX_WAKERS: [AtomicWaker; ENDPOINTS_NUM] = [NEW_AW; ENDPOINTS_NUM];
-static EP_RX_WAKERS: [AtomicWaker; ENDPOINTS_NUM] = [NEW_AW; ENDPOINTS_NUM];
+static EP_TX_WAKERS: [AtomicWaker; ENDPOINTS.len()] = [NEW_AW; ENDPOINTS.len()];
+static EP_RX_WAKERS: [AtomicWaker; ENDPOINTS.len()] = [NEW_AW; ENDPOINTS.len()];
 
 static IRQ_RESET: AtomicBool = AtomicBool::new(false);
 static IRQ_SUSPEND: AtomicBool = AtomicBool::new(false);
@@ -60,7 +61,7 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         EP_RX_WAKERS[0].wake();
     }
 
-    for index in 1..ENDPOINTS_NUM {
+    for index in 1..ENDPOINTS.len() {
         if intrtx.ep_tx(index) {
             EP_TX_WAKERS[index].wake();
         }

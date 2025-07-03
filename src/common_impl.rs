@@ -2,7 +2,8 @@ use embassy_usb_driver::EndpointType;
 
 use crate::alloc_endpoint::EndpointConfig;
 use crate::regs::vals::EndpointDirection;
-use crate::{warn, MusbInstance, ENDPOINTS_NUM};
+use crate::{warn, MusbInstance};
+use crate::info::ENDPOINTS;
 
 pub(crate) fn bus_enable<T: MusbInstance>() {
     T::regs().intrusbe().write(|w| {
@@ -159,10 +160,11 @@ pub(crate) fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
     }
 }
 
-pub(crate) fn check_underrun<T: MusbInstance>() {
+#[allow(unused)]
+pub(crate) fn check_overrun<T: MusbInstance>() {
     let regs = T::regs();
 
-    for index in 1..ENDPOINTS_NUM {
+    for index in 1..ENDPOINTS.len() {
         regs.index().write(|w| w.set_index(index as _));
         if regs.txcsrl().read().under_run() {
             regs.txcsrl().modify(|w| w.set_under_run(false));

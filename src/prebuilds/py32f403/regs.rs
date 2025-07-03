@@ -1,9 +1,3 @@
-pub struct UsbInstance;
-impl crate::MusbInstance for UsbInstance {
-    fn regs() -> crate::regs::Usb {
-        unsafe { Usb::from_ptr((0x40005c00) as _ ) }
-    }
-}
 
 #[doc = "USB control and status registers for managing USB operations."]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -119,7 +113,7 @@ impl Usb {
     #[doc = "FIFO for endpoints."]
     #[inline(always)]
     pub const fn fifo(self, n: usize) -> crate::common::Reg<regs::Fifo, crate::common::RW> {
-        assert!(n < 6usize);
+        assert!(n < 8usize);
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x20usize + n * 4usize) as _) }
     }
 }
@@ -347,7 +341,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt (except EP0)"]
         #[inline(always)]
         pub const fn ep_rx(&self, n: usize) -> bool {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -355,7 +349,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt (except EP0)"]
         #[inline(always)]
         pub fn set_ep_rx(&mut self, n: usize, val: bool) {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }
@@ -374,7 +368,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (except EP0)"]
         #[inline(always)]
         pub const fn ep_rxe(&self, n: usize) -> bool {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -382,7 +376,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (except EP0)"]
         #[inline(always)]
         pub fn set_ep_rxe(&mut self, n: usize, val: bool) {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }
@@ -401,7 +395,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt (except EP0)"]
         #[inline(always)]
         pub const fn ep_tx(&self, n: usize) -> bool {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -409,7 +403,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt (except EP0)"]
         #[inline(always)]
         pub fn set_ep_tx(&mut self, n: usize, val: bool) {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }
@@ -428,7 +422,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (EP0:TXE_RXE)"]
         #[inline(always)]
         pub const fn ep_txe(&self, n: usize) -> bool {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -436,7 +430,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (EP0:TXE_RXE)"]
         #[inline(always)]
         pub fn set_ep_txe(&mut self, n: usize, val: bool) {
-            assert!(n < 6usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }

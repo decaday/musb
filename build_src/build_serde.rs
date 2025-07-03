@@ -4,13 +4,28 @@ use serde::{Deserialize, Serialize};
 pub struct Profile {
     pub name: String,
     pub block: String,
-    pub endpoints_num: Option<u8>,
     pub base_address: Option<u32>,
     pub fifo: FifoConfig,
     #[serde(default)]
     pub reg_bit_size: RegBitSize,
+    pub endpoints: Vec<EndpointConfig>,
     #[serde(default = "Vec::new")]
     pub patches: Vec<Patch>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EndpointConfig {
+    #[serde(rename = "type")]
+    pub ep_direction: EndpointDirection,
+    pub max_packet_size_dword: u8,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum EndpointDirection {
+    TX,
+    RX,
+    RXTX,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,16 +39,12 @@ pub enum FifoConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DynamicFifoConfig {
-    pub dword_size_total: u32,
+    pub total_size_dword: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FixedFifoConfig {
     pub shared: bool,
-    pub equal_size: bool,
-    #[serde(default = "Vec::new")]
-    pub dword_size_endpoints: Vec<u8>, // when equal_size is false
-    pub dword_size: Option<u8>, // when equal_size is true
 }
 
 #[derive(Debug, Serialize, Deserialize)]
