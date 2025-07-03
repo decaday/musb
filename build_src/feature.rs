@@ -3,7 +3,6 @@ use std::env;
 #[allow(dead_code)]
 pub struct Features {
     pub builtin: String,
-    pub endpoints_num: Option<u8>,
 }
 
 impl Features {
@@ -27,15 +26,10 @@ impl Features {
 
     pub fn get() -> Self {
         let builtin =
-            Self::get_one_feature("builtin").expect("No builtin-xxx Cargo features enabled");
-
-        let endpoints_num =
-            Self::get_one_feature("endpoints_num").map(|x| x.parse::<u8>().unwrap());
-
-        Self {
-            builtin,
-            endpoints_num,
-        }
+            Self::get_one_feature("builtin")
+                .expect("No builtin-xxx Cargo features enabled")
+                .replace('_', "-"); // Replace underscores with dashes for consistency
+        Self { builtin }
     }
 }
 

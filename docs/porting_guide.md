@@ -28,11 +28,12 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
 ## Creating a New Profile
 
 1. **Identify Your Chip**
+   
    - Registers start with POWER, FADDR (though not always at the beginning)
    - Most registers are 8-bit (some manufacturers group them into 32-bit, but it's usually clear they're composed of 8-bit registers)
    - An INDEX register exists, requiring setting before endpoint operations. EP0 registers are separate, other endpoints use TXCSRH, TXCSRL, RXCSRH, RXCSRL (or IN_CSR1, IN_CSR2, OUT_CSR1, OUT_CSR2)
    - Compare with [block-peri-std](../registers/blocks/peri_std.yaml) to confirm register similarity
-
+   
 2. **Create Profile YAML**
 
    To write a profile, please refer to [existing profiles](../registers/profiles) and [serialization-related data types](../build_src/build_serde.rs)
@@ -42,11 +43,21 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
    ```yaml
    # Example profile structure
    name: my_chip
+   block: peri_std
    base_address: 0x40005c00
-   endpoints_num: 8
+   base_address: 0x40005c00
+   fifo:
+     type: fixed
+     shared: false
    reg_bit_size:
-     fifo: 32
-     intr: 32
+     fifo: 8
+     intr: 8
+   endpoints:
+     - type: rxtx
+       max_packet_size_dword: 8
+     - type: rxtx
+       max_packet_size_dword: 8
+   
    ```
 
 3. **Register Definitions**
@@ -59,17 +70,19 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
 
    - **ENDPOINTS_NUM**
 
-     `profile.endpoints_num` OR `endpoints-num-x` feature (e.g. `endpoints-num-8`)。
+     `profile.endpoints.len()`
 
-   - **FIFO_REG_BIT_SIZE** (does not change the offset)
+   - **FIFO_REG_BIT_SIZE**
 
      `profile.reg_bit_size.fifo`
 
-     Note: This does not change the offset.
+     **Note**: This does not change the offset.
 
-   - **INTR_REG_BIT_SIZE** (does not change the offset)
+   - **INTR_REG_BIT_SIZE**
 
      `profile.reg_bit_size.intr`
+     
+     **Note**: This does not change the offset.
 
 ## Integrate this crate into a HAL crate
 
@@ -79,7 +92,7 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
 
 ### Instance
 
-Every struct in this crate has a generic parameter `T: MusbInstance`.
+Every struct in this crate has a generic parameter `T: MusbInstance`:
 
 ```rust
 pub trait MusbInstance: 'static {

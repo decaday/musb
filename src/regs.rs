@@ -32,11 +32,11 @@ cfg_if::cfg_if! {
             include!("prebuilds/py32f403/info.rs");
         }
 
-        #[cfg(feature = "builtin-std")]
-        include!("prebuilds/std/usb_regs.rs");
-        #[cfg(feature = "builtin-std")]
+        #[cfg(feature = "builtin-std-8bep-2048")]
+        include!("prebuilds/std-8bep-2048/usb_regs.rs");
+        #[cfg(feature = "builtin-std-8bep-2048")]
         pub mod info {
-            include!("prebuilds/std/info.rs");
+            include!("prebuilds/std-8bep-2048/info.rs");
         }
 
         pub mod common {

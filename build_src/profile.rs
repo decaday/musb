@@ -1,40 +1,22 @@
-use core::panic;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 
 use serde_yaml;
 
-use crate::{Features, Profile, EndpointDirection, EndpointConfig};
+use crate::{Features, Profile};
 
-pub fn read_profiles(features: &Features) -> Profile {
+pub fn read_profile(features: &Features) -> Profile {
     let builtin = features.builtin.clone();
 
     // Read the YAML file
+    println!("registers/profiles/{builtin}.yaml");
     let mut file = File::open(format!("registers/profiles/{builtin}.yaml")).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
     // Parse the YAML
-    let mut profile: Profile = serde_yaml::from_str(&contents).unwrap();
-
-    if profile.endpoints.len() != 0 {
-        if let Some(_) = features.endpoints_num {
-            panic!("The endpoints_num field in profie exists and the endpoints_num_x feature is enabled.");
-        }
-    } else {
-        if None == features.endpoints_num {
-            panic!("The endpoints_num field in profie does not exist and the endpoints_num_x feature is not enabled.");
-        }
-        if let Some(num) = features.endpoints_num {
-            profile.endpoints = vec![EndpointConfig {
-                ep_direction: EndpointDirection::RXTX,
-                max_packet_size_dword: num,
-            }];
-        }
-    }
-
-    profile
+    serde_yaml::from_str(&contents).unwrap()
 }
 
 impl Profile {

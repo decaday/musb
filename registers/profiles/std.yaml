@@ -1,8 +1,0 @@
-name: std
-block: peri_std
-fifo:
-  type: dynamic
-  total_size_dword: 256 # 2048
-reg_bit_size:
-  fifo: 8
-  intr: 16

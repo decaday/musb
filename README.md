@@ -17,25 +17,24 @@ The MUSBMHDRC (musb) is a USB 2.0 Multi-Point, Dual-Role Controller designed by 
 
  (and hasn't disabled features like Dynamic FIFO size configuration)
 
-Add musb to your `Cargo.toml`:
 
-```toml
-[dependencies]
-musb = { version = "0.1.0", features = ["builtin-std"] }
-```
-
-You can use the [std profile](registers/profiles/std.yaml) by enabling the `builtin-std` feature. This profile doesn't include a base_address, so it won't generate a UsbInstance (explained below).
-
-You can then set the number of endpoints using the `endpoints-num-x` feature (e.g., `endpoints-num-8`). The total FIFO size can be configured using the `total-fifo-size-dword-x` feature (e.g., `total-fifo-size-dword-256` where 256 double-words = 2048 bytes) *(TODO)*.
-Currently, `endpoints-num-x` and `total-fifo-size-dword-x` are **not effective** when the `prebuild` feature is enabled.
 
 ### If your chip's IP differs from the standard MUSB IP
 
 These built-in profiles are used via Cargo features (see below), with only one selectable:
 
-- `builtin-py32f07x`
+- `builtin-py32f07x` (py32m070, py32f071, py32f072)
 - `builtin-py32f403`
-- `builtin-std` (excludes base_address and endpoints_num)
+- `builtin-std-8bep-2048` (excludes base_address, 8 bidirectional endpoints, 2048K FIFO size in total)
+
+Add musb to your `Cargo.toml`:
+
+```toml
+[dependencies]
+musb = { version = "0.1.0", features = ["builtin-std-8bep-2048"] }
+```
+
+You can use the [std profile](registers/profiles/) by enabling the `builtin-std-xxx` feature. This profile doesn't include a base_address, so it won't generate a `UsbInstance` (explained in [Porting Guide](docs/porting_guide.md)).
 
 If your chip is not included, you'll need to create a new profile. Refer to the [Porting Guide](docs/porting_guide.md) for more details.
 
@@ -49,9 +48,7 @@ Note: Only one of these two implementations can be enabled at a time.
 
 `prebuild`(on by default): Uses pre-generated PAC (Peripheral Access Crate).
 
-`builtin-xxxx`: Uses builtin profile.
-
-`endpoints-num-x`: Specifies the number of endpoints. Only needs to be set when this information is not provided in the profile.
+`builtin-xxxx: Uses builtin profile.
 
 `total-fifo-size-dword-x`: Specifies the total FIFO size. Only needs to be set when using dynamic FIFO sizing and this information is not provided in the profile.
 

@@ -38,6 +38,7 @@ mod info {
         pub max_packet_size_dword: u8,
     }
 }
+#[cfg(feature = "_gen-usb-instance")]
 pub use info::UsbInstance;
 
 pub trait MusbInstance: 'static + Send + Sync {

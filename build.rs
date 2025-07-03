@@ -34,7 +34,7 @@ fn prebuild() {
 fn build() {
     let features = Features::get();
 
-    let profile = read_profiles(&features);
+    let profile = read_profile(&features);
     // println!("{:#?}", profile);
 
     let fieldsets = extract_fieldsets_from_block(&profile.block);
