@@ -1,10 +1,6 @@
 #![no_std]
 mod fmt;
 
-pub mod regs;
-pub use regs::common;
-
-
 #[cfg(all(feature = "embassy-usb-driver-impl", feature = "usb-device-impl"))]
 compile_error!(
     "The `embassy-usb-driver-impl` feature is incompatible with the `usb-device-impl` feature. "
@@ -23,8 +19,12 @@ pub use usb_device_impl::*;
 mod alloc_endpoint;
 mod common_impl;
 
+pub mod generated;
+pub use generated::common;
+pub use generated::regs;
+
 mod info {
-    pub use crate::regs::info::*;
+    pub use crate::generated::ENDPOINTS;
 
     #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum EpDirection {
@@ -39,7 +39,7 @@ mod info {
     }
 }
 #[cfg(feature = "_gen-usb-instance")]
-pub use info::UsbInstance;
+pub use generated::UsbInstance;
 
 pub trait MusbInstance: 'static + Send + Sync {
     fn regs() -> regs::Usb;
