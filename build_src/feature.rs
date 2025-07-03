@@ -56,9 +56,6 @@ impl FeatureGenerator {
         match &profile.fifo {
             FifoConfig::Fixed(fifo) => {
                 features.push("_fixed-fifo-size".to_string());
-                if fifo.equal_size {
-                    features.push("_equal-fifo-size".to_string());
-                }
                 if fifo.shared {
                     features.push("_ep-shared-fifo".to_string());
                 }

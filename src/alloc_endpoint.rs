@@ -1,6 +1,6 @@
 use embassy_usb_driver::{Direction, EndpointType};
 
-use crate::{ENDPOINTS_NUM, MAX_FIFO_SIZE_DWORD};
+use crate::info::ENDPOINTS;
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -26,14 +26,14 @@ pub(crate) enum EndpointAllocError {
 }
 
 pub(crate) fn alloc_endpoint(
-    alloc: &mut [EndpointData; ENDPOINTS_NUM],
+    alloc: &mut [EndpointData; ENDPOINTS.len()],
     ep_type: EndpointType,
     ep_index: Option<u8>,
     direction: Direction,
     max_packet_size: u16,
 ) -> Result<u8, EndpointAllocError> {
     let res = if let Some(index) = ep_index {
-        if index >= ENDPOINTS_NUM as u8 {
+        if index >= ENDPOINTS.len() as u8 {
             return Err(EndpointAllocError::EndpointOverflow);
         }
         if index == 0 {
@@ -97,14 +97,23 @@ fn check_endpoint(
     // #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
     // if used && index != 0 { return false }
 
-    #[cfg(not(feature = "_equal-fifo-size"))]
-    if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWORD[index as usize] {
+    if ((max_packet_size + 7) / 8) as u8 > ENDPOINTS[index as usize].max_packet_size_dword {
         return false;
     }
 
-    #[cfg(feature = "_equal-fifo-size")]
-    if ((max_packet_size + 7) / 8) as u8 > MAX_FIFO_SIZE_DWORD {
-        panic!("max_packet_size > MAX_FIFO_SIZE");
+    if ENDPOINTS[index as usize].ep_direction != crate::info::EpDirection::RXTX {
+        match direction {
+            Direction::Out => {
+                if ENDPOINTS[index as usize].ep_direction != crate::info::EpDirection::RX {
+                    return false;
+                }
+            }
+            Direction::In => {
+                if ENDPOINTS[index as usize].ep_direction != crate::info::EpDirection::TX {
+                    return false;
+                }
+            }
+        }
     }
 
     if alloc_ep_type == EndpointType::Bulk && used {

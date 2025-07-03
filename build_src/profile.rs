@@ -5,7 +5,7 @@ use std::io::Read;
 
 use serde_yaml;
 
-use crate::{Features, Profile};
+use crate::{Features, Profile, EndpointDirection, EndpointConfig};
 
 pub fn read_profiles(features: &Features) -> Profile {
     let builtin = features.builtin.clone();
@@ -18,15 +18,20 @@ pub fn read_profiles(features: &Features) -> Profile {
     // Parse the YAML
     let mut profile: Profile = serde_yaml::from_str(&contents).unwrap();
 
-    if let Some(_) = profile.endpoints_num {
+    if profile.endpoints.len() != 0 {
         if let Some(_) = features.endpoints_num {
             panic!("The endpoints_num field in profie exists and the endpoints_num_x feature is enabled.");
         }
     } else {
-        if let None = features.endpoints_num {
+        if None == features.endpoints_num {
             panic!("The endpoints_num field in profie does not exist and the endpoints_num_x feature is not enabled.");
         }
-        profile.endpoints_num = features.endpoints_num;
+        if let Some(num) = features.endpoints_num {
+            profile.endpoints = vec![EndpointConfig {
+                ep_direction: EndpointDirection::RXTX,
+                max_packet_size_dword: num,
+            }];
+        }
     }
 
     profile
@@ -37,7 +42,7 @@ impl Profile {
         let mut replacements = HashMap::new();
         replacements.insert("FIFO_REG_BIT_SIZE", self.reg_bit_size.fifo.to_string());
         replacements.insert("INTR_REG_BIT_SIZE", self.reg_bit_size.intr.to_string());
-        replacements.insert("ENDPOINTS_NUM", self.endpoints_num.unwrap().to_string());
+        replacements.insert("ENDPOINTS_NUM", self.endpoints.len().to_string());
         replacements
     }
 }

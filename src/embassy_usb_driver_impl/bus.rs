@@ -2,11 +2,12 @@ use super::*;
 
 use crate::alloc_endpoint::EndpointConfig;
 use crate::common_impl;
+use crate::info::ENDPOINTS;
 
 /// USB bus.
 pub struct Bus<'d, T: MusbInstance> {
     pub(super) phantom: PhantomData<&'d mut T>,
-    pub(super) ep_confs: [EndpointConfig; ENDPOINTS_NUM],
+    pub(super) ep_confs: [EndpointConfig; ENDPOINTS.len()],
     pub(super) inited: bool,
 }
 

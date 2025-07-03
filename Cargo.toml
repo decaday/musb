@@ -56,7 +56,6 @@ endpoints-num-16 = []
 _ep-shared-fifo = []
 _equal-fifo-size = []
 _fixed-fifo-size = []
-
 # Generate a `UsbInstance` when you set `base_address` in profile
 _gen-usb-instance = []
 

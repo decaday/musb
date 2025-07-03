@@ -50,24 +50,25 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
    ```
 
 3. **Register Definitions**
-      Each manufacturer's SVD or manual exhibits significant register name variations, despite functional consistency. This crate uses standard MUSB register names.
+
+   Each manufacturer's SVD or manual exhibits significant register name variations, despite functional consistency. This crate uses standard MUSB register names.
 
    The crate describes registers using YAML, with these register description files manually maintained. It then leverages [chiptool](https://github.com/embassy-rs/chiptool) and [yaml2pac](https://github.com/embedded-drivers/yaml2pac) to generate register operation functions. These operations can be found in the `build.rs` file.
-   
+
    These replacements are automatically generated from profile contents and can be used in register description YAML files.
-   
+
    - **ENDPOINTS_NUM**
-   
+
      `profile.endpoints_num` OR `endpoints-num-x` feature (e.g. `endpoints-num-8`)。
-   
+
    - **FIFO_REG_BIT_SIZE** (does not change the offset)
-   
+
      `profile.reg_bit_size.fifo`
-   
+
      Note: This does not change the offset.
-   
+
    - **INTR_REG_BIT_SIZE** (does not change the offset)
-   
+
      `profile.reg_bit_size.intr`
 
 ## Integrate this crate into a HAL crate

@@ -1,15 +1,25 @@
 name: py32f403
 block: py32
-endpoints_num: 8
 base_address: 0x40005c00
 fifo:
   type: fixed
   shared: false
-  equal_size: true
-  dword_size: 8
 reg_bit_size:
   fifo: 8
   intr: 8
+endpoints:
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 8
 patches:
   - fieldset: POWER
     version: mini

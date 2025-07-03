@@ -3,7 +3,7 @@ mod fmt;
 
 pub mod regs;
 pub use regs::common;
-pub use regs::info::*;
+
 
 #[cfg(all(feature = "embassy-usb-driver-impl", feature = "usb-device-impl"))]
 compile_error!(
@@ -22,6 +22,23 @@ pub use usb_device_impl::*;
 
 mod alloc_endpoint;
 mod common_impl;
+
+mod info {
+    pub use crate::regs::info::*;
+
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    pub enum EpDirection {
+        TX,
+        RX,
+        RXTX,
+    }
+
+    pub struct EpInfo {
+        pub ep_direction: EpDirection,
+        pub max_packet_size_dword: u8,
+    }
+}
+pub use info::UsbInstance;
 
 pub trait MusbInstance: 'static + Send + Sync {
     fn regs() -> regs::Usb;

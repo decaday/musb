@@ -1,15 +1,25 @@
 name: py32f07x
 block: py32
-endpoints_num: 6
 base_address: 0x40005c00
 fifo:
   type: fixed
   shared: true
-  equal_size: false
-  dword_size_endpoints: [8, 8, 16, 16, 16, 64]
 reg_bit_size:
   fifo: 8
   intr: 8
+endpoints:
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 8
+  - type: rxtx
+    max_packet_size_dword: 16
+  - type: rxtx
+    max_packet_size_dword: 16
+  - type: rxtx
+    max_packet_size_dword: 16
+  - type: rxtx
+    max_packet_size_dword: 64
 patches:
   - fieldset: POWER
     version: mini

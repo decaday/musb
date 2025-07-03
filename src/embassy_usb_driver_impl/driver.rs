@@ -1,10 +1,11 @@
 use super::*;
 use crate::alloc_endpoint::{self, EndpointConfig, EndpointData};
+use crate::info::ENDPOINTS;
 
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {
     phantom: PhantomData<&'d mut T>,
-    alloc: [EndpointData; ENDPOINTS_NUM],
+    alloc: [EndpointData; ENDPOINTS.len()],
 }
 
 impl<'d, T: MusbInstance> MusbDriver<'d, T> {
@@ -27,7 +28,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
                 },
                 used_tx: false,
                 used_rx: false,
-            }; ENDPOINTS_NUM],
+            }; ENDPOINTS.len()],
         }
     }
 
@@ -83,9 +84,9 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             ep_type: EndpointType::Bulk,
             tx_max_fifo_size_dword: 1,
             rx_max_fifo_size_dword: 1,
-        }; ENDPOINTS_NUM];
+        }; ENDPOINTS.len()];
 
-        for i in 0..ENDPOINTS_NUM {
+        for i in 0..ENDPOINTS.len() {
             ep_confs[i] = self.alloc[i].ep_conf;
         }
 
