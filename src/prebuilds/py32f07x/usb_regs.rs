@@ -1,10 +1,3 @@
-pub struct UsbInstance;
-impl crate::MusbInstance for UsbInstance {
-    fn regs() -> crate::regs::Usb {
-        unsafe { Usb::from_ptr((0x40005c00) as _ ) }
-    }
-}
-
 #[doc = "USB control and status registers for managing USB operations."]
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Usb {
@@ -810,13 +803,13 @@ pub mod regs {
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Rxmaxp(pub u16);
     impl Rxmaxp {
-        #[doc = "Maximum payload in bytes"]
+        #[doc = "Maximum payload in 8bytes"]
         #[inline(always)]
         pub const fn maxp(&self) -> u16 {
             let val = (self.0 >> 0usize) & 0x07ff;
             val as u16
         }
-        #[doc = "Maximum payload in bytes"]
+        #[doc = "Maximum payload in 8bytes"]
         #[inline(always)]
         pub fn set_maxp(&mut self, val: u16) {
             self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);
@@ -1000,13 +993,13 @@ pub mod regs {
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Txmaxp(pub u16);
     impl Txmaxp {
-        #[doc = "Maximum payload in bytes"]
+        #[doc = "Maximum payload in 8bytes"]
         #[inline(always)]
         pub const fn maxp(&self) -> u16 {
             let val = (self.0 >> 0usize) & 0x07ff;
             val as u16
         }
-        #[doc = "Maximum payload in bytes"]
+        #[doc = "Maximum payload in 8bytes"]
         #[inline(always)]
         pub fn set_maxp(&mut self, val: u16) {
             self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);

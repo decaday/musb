@@ -1,3 +1,2 @@
 _fixed-fifo-size
-_equal-fifo-size
 _gen-usb-instance

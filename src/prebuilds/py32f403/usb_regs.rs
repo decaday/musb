@@ -1,10 +1,3 @@
-pub struct UsbInstance;
-impl crate::MusbInstance for UsbInstance {
-    fn regs() -> crate::regs::Usb {
-        unsafe { Usb::from_ptr((0x40005c00) as _ ) }
-    }
-}
-
 #[doc = "USB control and status registers for managing USB operations."]
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Usb {
