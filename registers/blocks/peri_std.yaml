@@ -61,49 +61,49 @@ block/USB:
     byte_offset: 0x10
     bit_size: 16
     fieldset: TXMAXP
-  - name: CSR0H
-    description: Control Status register higher byte for Endpoint 0.
-    byte_offset: 0x12
-    bit_size: 8
-    fieldset: CSR0H
   - name: CSR0L
     description: Control Status register lower byte for Endpoint 0.
-    byte_offset: 0x13
+    byte_offset: 0x12
     bit_size: 8
     fieldset: CSR0L
-  - name: TXCSRH
-    description: Control Status register higher byte for peripheral TX endpoint.
-    byte_offset: 0x14
+  - name: CSR0H
+    description: Control Status register higher byte for Endpoint 0.
+    byte_offset: 0x13
     bit_size: 8
-    fieldset: TXCSRH
+    fieldset: CSR0H
   - name: TXCSRL
     description: Control Status register lower byte for peripheral TX endpoint.
-    byte_offset: 0x15
+    byte_offset: 0x12
     bit_size: 8
     fieldset: TXCSRL
+  - name: TXCSRH
+    description: Control Status register higher byte for peripheral TX endpoint.
+    byte_offset: 0x13
+    bit_size: 8
+    fieldset: TXCSRH
   - name: RXMAXP
     description: Maximum packet size for peripheral Rx endpoint.
-    byte_offset: 0x16
+    byte_offset: 0x14
     bit_size: 16
     fieldset: RXMAXP
-  - name: RXCSRH
-    description: Control Status register higher byte for peripheral Rx endpoint.
-    byte_offset: 0x18
-    bit_size: 8
-    fieldset: RXCSRH
   - name: RXCSRL
     description: Control Status register lower byte for peripheral Rx endpoint.
-    byte_offset: 0x19
+    byte_offset: 0x16
+    bit_size: 8
+    fieldset: RXCSRH
+  - name: RXCSRH
+    description: Control Status register higher byte for peripheral Rx endpoint.
+    byte_offset: 0x17
     bit_size: 8
     fieldset: RXCSRL
   - name: COUNT0
     description: Number of received bytes in Endpoint 0 FIFO.
-    byte_offset: 0x1A
+    byte_offset: 0x18
     bit_size: 8
     fieldset: COUNT0
   - name: RXCOUNT
     description: Number of bytes to be read from peripheral Rx endpoint FIFO.
-    byte_offset: 0x1C
+    byte_offset: 0x18
     bit_size: 16
     fieldset: RXCOUNT
   - name: CONFIGDATA

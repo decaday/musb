@@ -3,7 +3,7 @@ fieldset/INTRRX:
   description: Receive Endpoint Interrupt Status Register
   fields:
   - name: EP_RX
-    description: Endpoint transmit interrupt (except EP0)
+    description:  description: Receive endpoint interrupt (except EP0)
     bit_offset: 0
     bit_size: 1
     array:

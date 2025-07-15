@@ -28,7 +28,7 @@ fieldset/INTRUSB:
     bit_size: 1
 
   - name: Reset
-    description: Reset signaling detected
+    description: Reset signaling detected (Peripheral mode) or Babble detected (Host mode)
     bit_offset: 2
     bit_size: 1
 

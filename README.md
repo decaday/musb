@@ -13,18 +13,12 @@ The MUSBMHDRC (musb) is a USB 2.0 Multi-Point, Dual-Role Controller designed by 
 
 ## Quick Start
 
-### If your chip uses standard MUSB IP
-
- (and hasn't disabled features like Dynamic FIFO size configuration)
-
-
-
-### If your chip's IP differs from the standard MUSB IP
-
 These built-in profiles are used via Cargo features (see below), with only one selectable:
 
 - `builtin-py32f07x` (py32m070, py32f071, py32f072)
+
 - `builtin-py32f403`
+
 - `builtin-std-8bep-2048` (excludes base_address, 8 bidirectional endpoints, 2048K FIFO size in total)
 
 Add musb to your `Cargo.toml`:
@@ -48,9 +42,8 @@ Note: Only one of these two implementations can be enabled at a time.
 
 `prebuild`(on by default): Uses pre-generated PAC (Peripheral Access Crate).
 
-`builtin-xxxx: Uses builtin profile.
+`builtin-xxxx` : Uses builtin profile.
 
-`total-fifo-size-dword-x`: Specifies the total FIFO size. Only needs to be set when using dynamic FIFO sizing and this information is not provided in the profile.
 
 `defmt`, `log`: Enables debug logging.
 
@@ -75,12 +68,11 @@ If you have any questions or uncertainties, feel free to create an Issue or star
 ## TODOs
 
 - **Support Dynamic FIFO Size**
-- better support for standard musb
 - Support dual packet buffer
-- Support SiFli SF32BL52
+- Support SiFli SF32LB52
 - Other Chips
-- host mode 
+- Host mode 
 
 ## License
 
-This project is under Apache License, Version 2.0 ([LICENSE](../LICENSE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+This project is under Apache License, Version 2.0 ([LICENSE](LICENSE) or <http://www.apache.org/licenses/LICENSE-2.0>).
