@@ -49,6 +49,7 @@ builtin-std-8bep-2048 = []
 _ep-shared-fifo = []
 _equal-fifo-size = []
 _fixed-fifo-size = []
+_mini = []
 # Generate a `UsbInstance` when you set `base_address` in profile
 _gen-usb-instance = []
 

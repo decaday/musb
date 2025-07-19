@@ -6,13 +6,17 @@ use crate::info::ENDPOINTS;
 pub struct MusbDriver<'d, T: MusbInstance> {
     phantom: PhantomData<&'d mut T>,
     alloc: [EndpointData; ENDPOINTS.len()],
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    next_fifo_addr_8b_units: u16,
 }
 
 impl<'d, T: MusbInstance> MusbDriver<'d, T> {
     /// Create a new USB driver.
     pub fn new() -> Self {
+        #[cfg(not(feature = "_fixed-fifo-size"))]
+        let next_fifo_addr_8b_units = 8; // Start after EP0's 64 bytes
+        
         let regs = T::regs();
-
         regs.index().write(|w| w.set_index(0));
 
         // Initialize the bus so that it signals that power is available
@@ -29,6 +33,8 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
                 used_tx: false,
                 used_rx: false,
             }; ENDPOINTS.len()],
+            #[cfg(not(feature = "_fixed-fifo-size"))]
+            next_fifo_addr_8b_units,
         }
     }
 
@@ -49,6 +55,8 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
 
         let index = alloc_endpoint::alloc_endpoint(
             &mut self.alloc,
+            #[cfg(not(feature = "_fixed-fifo-size"))]
+            &mut self.next_fifo_addr_8b_units,
             ep_type,
             ep_index,
             D::dir(),

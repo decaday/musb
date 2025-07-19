@@ -98,9 +98,21 @@ pub(crate) fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
 
     // TODO: DMA
 
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    if index != 0 {
+        // This logic is only compiled when we are NOT using fixed FIFOs.
+        regs.tx_fifo_sz().write(|w| {
+            let fifo_size_bytes = ep_data.ep_conf.tx_fifo_size_dword * 4;
+            let size_code = (fifo_size_bytes.trailing_zeros() - 3) as u8;
+            w.set_sz(size_code);
+            w.set_dpb(true);
+        });
+        regs.tx_fifo_add().write(|w| w.set_ad(ep_data.tx_fifo_addr_dword / 2));
+    }
+
     T::regs()
         .txmaxp()
-        .write(|w| w.set_maxp(config.tx_max_fifo_size_dword));
+        .write(|w| w.set_maxp(config.tx_max_packet_size));
 
     T::regs().txcsrl().write(|w| {
         w.set_clr_data_tog(true);
@@ -138,9 +150,20 @@ pub(crate) fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
     //     w.set_auto_clear(true);
     // });
 
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    if index != 0 {
+        regs.rx_fifo_sz().write(|w| {
+            let fifo_size_bytes = ep_data.ep_conf.rx_fifo_size_dword * 4;
+            let size_code = (fifo_size_bytes.trailing_zeros() - 3) as u8;
+            w.set_sz(size_code);
+            w.set_dpb(true);
+        });
+        regs.rx_fifo_add().write(|w| w.set_ad(ep_data.rx_fifo_addr_dword / 2));
+    }
+
     T::regs()
         .rxmaxp()
-        .write(|w| w.set_maxp(config.rx_max_fifo_size_dword));
+        .write(|w| w.set_maxp(config.rx_max_packet_size));
 
     T::regs().rxcsrl().write(|w| {
         w.set_clr_data_tog(true);

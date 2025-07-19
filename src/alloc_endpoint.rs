@@ -3,19 +3,27 @@ use embassy_usb_driver::{Direction, EndpointType};
 use crate::info::ENDPOINTS;
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub(crate) struct EndpointData {
-    pub(crate) ep_conf: EndpointConfig, // only valid if used_tx || used_rx
-    pub(crate) used_tx: bool,
-    pub(crate) used_rx: bool,
+pub(crate) struct EndpointConfig {
+    pub(crate) ep_type: EndpointType,
+    pub(crate) tx_max_packet_size: u16,
+    pub(crate) rx_max_packet_size: u16,
+    
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub(crate) tx_fifo_size_dword: u16,
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub(crate) rx_fifo_size_dword: u16,
 }
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub(crate) struct EndpointConfig {
-    pub(crate) ep_type: EndpointType,
-    pub(crate) tx_max_fifo_size_dword: u16,
-    pub(crate) rx_max_fifo_size_dword: u16,
+pub(crate) struct EndpointData {
+    pub(crate) ep_conf: EndpointConfig,
+    pub(crate) used_tx: bool,
+    pub(crate) used_rx: bool,
+
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub(crate) tx_fifo_addr_dword: u16,
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub(crate) rx_fifo_addr_dword: u16,
 }
 
 pub(crate) enum EndpointAllocError {
@@ -27,6 +35,7 @@ pub(crate) enum EndpointAllocError {
 
 pub(crate) fn alloc_endpoint(
     alloc: &mut [EndpointData; ENDPOINTS.len()],
+    #[cfg(not(feature = "_fixed-fifo-size"))] next_fifo_addr_8b_units: &mut u16,
     ep_type: EndpointType,
     ep_index: Option<u8>,
     direction: Direction,
@@ -66,19 +75,46 @@ pub(crate) fn alloc_endpoint(
     };
 
     ep.ep_conf.ep_type = ep_type;
+    
+    // --- Dynamic FIFO Allocation Logic ---
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    if index != 0 {
+        let fifo_size_bytes = (max_packet_size * 2).next_power_of_two().max(8) as u16;
+        let fifo_size_8b_units = fifo_size_bytes / 8;
+        
+        let assigned_addr_8b_units = *next_fifo_addr_8b_units;
+        *next_fifo_addr_8b_units += fifo_size_8b_units;
+        
+        let assigned_addr_dword = assigned_addr_8b_units * 2;
+
+        match direction {
+            Direction::Out => {
+                ep.ep_conf.rx_max_packet_size = max_packet_size;
+                ep.ep_conf.rx_fifo_size_dword = fifo_size_bytes / 4;
+                ep.rx_fifo_addr_dword = assigned_addr_dword;
+            }
+            Direction::In => {
+                ep.ep_conf.tx_max_packet_size = max_packet_size;
+                ep.ep_conf.tx_fifo_size_dword = fifo_size_bytes / 4;
+                ep.tx_fifo_addr_dword = assigned_addr_dword;
+            }
+        }
+    }
+    
+    // --- Fixed FIFO "Allocation" Logic ---
+    #[cfg(feature = "_fixed-fifo-size")]
+    {
+        // For fixed FIFO, we don't calculate or assign, just record the packet size.
+        // The sizes and addresses will be retrieved from `crate::generated` later.
+        match direction {
+            Direction::Out => ep.ep_conf.rx_max_packet_size = max_packet_size,
+            Direction::In => ep.ep_conf.tx_max_packet_size = max_packet_size,
+        }
+    }
 
     match direction {
-        Direction::Out => {
-            assert!(!ep.used_rx);
-            ep.used_rx = true;
-            ep.ep_conf.rx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
-        }
-        Direction::In => {
-            assert!(!ep.used_tx);
-            ep.used_tx = true;
-
-            ep.ep_conf.tx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
-        }
+        Direction::Out => ep.used_rx = true,
+        Direction::In => ep.used_tx = true,
     };
 
     Ok(index as u8)
