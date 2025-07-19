@@ -40,7 +40,8 @@ static EP_RX_ENABLED: AtomicU16 = AtomicU16::new(0);
 
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
-    let intrusb = T::regs().intrusb().read();
+    let regs = T::regs();
+    let intrusb = regs.intrusb().read();
     if intrusb.reset() {
         IRQ_RESET.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
@@ -54,8 +55,8 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         BUS_WAKER.wake();
     }
 
-    let intrtx = T::regs().intrtx().read();
-    let intrrx = T::regs().intrrx().read();
+    let intrtx = regs.intrtx().read();
+    let intrrx = regs.intrrx().read();
     if intrtx.ep_tx(0) {
         EP_TX_WAKERS[0].wake();
         EP_RX_WAKERS[0].wake();
@@ -65,9 +66,9 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         if intrtx.ep_tx(index) {
             EP_TX_WAKERS[index].wake();
         }
-        if intrrx.ep_rx(index) {
-            EP_RX_WAKERS[index].wake();
-        }
+            if intrrx.ep_rx(index) {
+                EP_RX_WAKERS[index].wake();
+            }
 
         // TODO: move to another location
         // T::regs().index().write(|w| w.set_index(index as _));

@@ -33,6 +33,12 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                 IRQ_RESET.store(false, Ordering::Relaxed);
 
                 regs.power().write(|w| w.set_suspend_mode(true));
+                #[cfg(not(feature = "_mini"))]
+                {
+                    regs.power().write(|w| w.set_reset(true));
+                    regs.power().write(|w| w.set_reset(false));
+                }
+
                 // for index in 1..ENDPOINTS_NUM {
                 //     regs.index().write(|w| w.set_index(index as _));
                 //     regs.txcsrl().modify(|w| w.set_flush_fifo(true));
