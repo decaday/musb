@@ -152,10 +152,31 @@ fn process_directory<P: AsRef<Path>>(
 
 /// Extract tags from the file or folder name (separated by `_`)
 fn add_tags_from_name<'a>(name: &'a str, tags: &mut HashSet<String>) -> &'a str {
-    let parts: Vec<&str> = name.split('_').collect();
-    if parts.len() > 1 {
-        // Skip the first part (which is the name itself)
-        tags.extend(parts[1..].iter().map(|&s| s.to_string()));
+    // Find the byte index of the first underscore followed by a lowercase letter.
+    // We use `windows(2)` to get a sliding window of two bytes.
+    let split_index = name.as_bytes().windows(2).enumerate()
+        .find(|(_, window)| {
+            // Check if the window matches the pattern: `_` followed by a lowercase ASCII character.
+            window[0] == b'_' && window[1].is_ascii_lowercase()
+        })
+        .map(|(i, _)| i); // Get the index of the underscore.
+
+    match split_index {
+        Some(index) => {
+            // The name is the part of the string before the underscore.
+            let name_part = &name[..index];
+            // The tags start from the character after the underscore.
+            let tags_part = &name[index + 1..];
+            
+            // Split the tags part by underscores and add them to the provided HashSet.
+            tags.extend(tags_part.split('_').filter(|s| !s.is_empty()).map(|s| s.to_string()));
+            
+            // Return the slice corresponding to the name.
+            name_part
+        }
+        None => {
+            // If no such underscore is found, the entire string is the name.
+            name
+        }
     }
-    parts.get(0).unwrap()
 }

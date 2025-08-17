@@ -54,7 +54,7 @@ pub fn gen_usb_pac() {
         .arg(input_path.to_str().unwrap())
         .arg("-o")
         .arg(output_path.to_str().unwrap())
-        .arg("--common")
+        // .arg("--common")
         .status()
         .unwrap();
 
