@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::Read;
 
@@ -19,7 +19,9 @@ pub fn extract_fieldsets_from_block(block_name: &str) -> Vec<String> {
                 .items
                 .iter()
                 .map(|item| item.fieldset.clone())
-                .collect()
+                .collect::<HashSet<_>>() // Collect into a HashSet to get unique fieldsets
+                .into_iter()
+                .collect() // Convert back to a Vec
         },
     )
 }

@@ -60,7 +60,7 @@ block/USB:
     description: Maximum packet size for peripheral TX endpoint.
     byte_offset: 0x10
     bit_size: 16
-    fieldset: TXMAXP
+    fieldset: MAXP
   - name: CSR0L
     description: Control Status register lower byte for Endpoint 0.
     byte_offset: 0x12
@@ -85,7 +85,7 @@ block/USB:
     description: Maximum packet size for peripheral Rx endpoint.
     byte_offset: 0x14
     bit_size: 16
-    fieldset: RXMAXP
+    fieldset: MAXP
   - name: RXCSRL
     description: Control Status register lower byte for peripheral Rx endpoint.
     byte_offset: 0x16
