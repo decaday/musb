@@ -90,12 +90,12 @@ block/USB:
     description: Control Status register lower byte for peripheral Rx endpoint.
     byte_offset: 0x16
     bit_size: 8
-    fieldset: RXCSRH
+    fieldset: RXCSRL
   - name: RXCSRH
     description: Control Status register higher byte for peripheral Rx endpoint.
     byte_offset: 0x17
     bit_size: 8
-    fieldset: RXCSRL
+    fieldset: RXCSRH
   - name: COUNT0
     description: Number of received bytes in Endpoint 0 FIFO.
     byte_offset: 0x18
