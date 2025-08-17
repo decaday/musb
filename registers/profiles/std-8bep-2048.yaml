@@ -2,24 +2,24 @@ name: std-8bep-2048
 block: peri_std
 fifo:
   type: dynamic
-  total_size_dword: 256 # 2048 KBytes
+  total_size: 2048
 reg_bit_size:
   fifo: 8
   intr: 16
 endpoints:
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64

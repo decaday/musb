@@ -23,8 +23,9 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             alloc: [EndpointData {
                 ep_conf: EndpointConfig {
                     ep_type: EndpointType::Bulk,
-                    tx_max_fifo_size_dword: 1,
-                    rx_max_fifo_size_dword: 1,
+                    tx_max_packet_size: 0,
+                    rx_max_packet_size: 0,
+                    
                 },
                 used_tx: false,
                 used_rx: false,
@@ -82,8 +83,8 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
 
         let mut ep_confs = [EndpointConfig {
             ep_type: EndpointType::Bulk,
-            tx_max_fifo_size_dword: 1,
-            rx_max_fifo_size_dword: 1,
+            tx_max_packet_size: 0,
+            rx_max_packet_size: 0,
         }; ENDPOINTS.len()];
 
         for i in 0..ENDPOINTS.len() {

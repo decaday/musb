@@ -43,8 +43,8 @@ impl<T: MusbInstance> UsbdBus<T> {
             endpoints: [EndpointData {
                 ep_conf: EndpointConfig {
                     ep_type: EndpointType::Bulk,
-                    tx_max_fifo_size_dword: 1,
-                    rx_max_fifo_size_dword: 1,
+                    tx_max_fifo_size: 0,
+                    rx_max_fifo_size: 0,
                 },
                 used_tx: false,
                 used_rx: false,
@@ -129,7 +129,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         let regs = T::regs();
         regs.index().write(|w| w.set_index(index as _));
 
-        // if buf.len() > self.endpoints[index].ep_conf.tx_max_fifo_size_dword as usize * 8 {
+        // if buf.len() > self.endpoints[index].ep_conf.tx_max_fifo_size as usize {
         //     return Err(UsbError::BufferOverflow);
         // }
         let unready = if index == 0 {
@@ -165,7 +165,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                         self.control_state.set_state(ControlStateEnum::Idle);
                         // trace!("WRITE END, tx_len = 0, buf.len() = {}", buf.len());
                     } else if buf.len()
-                        < self.endpoints[0].ep_conf.tx_max_fifo_size_dword as usize * 8
+                        < self.endpoints[0].ep_conf.tx_max_fifo_size as usize
                     {
                         // Last Package. include ZLP
                         regs.csr0l().modify(|w| w.set_data_end(true));
@@ -257,7 +257,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 }
                 ControlStateEnum::DataOut => {
                     if (read_count as u32)
-                        < self.endpoints[0].ep_conf.rx_max_fifo_size_dword as u32 * 8
+                        < self.endpoints[0].ep_conf.rx_max_fifo_size as u32
                     {
                         // Last Package. include ZLP
                         regs.csr0l().modify(|w| w.set_data_end(true));

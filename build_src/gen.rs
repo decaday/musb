@@ -127,7 +127,7 @@ impl crate::MusbInstance for UsbInstance {{
     for ep in &profile.endpoints {
         writeln!(file, "    EpInfo {{").unwrap();
         writeln!(file, "        ep_direction: EpDirection::{:?},", ep.ep_direction).unwrap();
-        writeln!(file, "        max_packet_size_dword: {},", ep.max_packet_size_dword).unwrap();
+        writeln!(file, "        max_packet_size: {},", ep.max_packet_size).unwrap();
         writeln!(file, "    }},").unwrap();
     }
     writeln!(file, "];").unwrap();
@@ -137,8 +137,8 @@ impl crate::MusbInstance for UsbInstance {{
         FifoConfig::Dynamic(config) => {
             writeln!(
                 file,
-                "pub const TOTAL_FIFO_SIZE_DWORD: u32 = {};",
-                config.total_size_dword
+                "pub const TOTAL_FIFO_SIZE: u16 = {};",
+                config.total_size
             )
             .unwrap();
         }

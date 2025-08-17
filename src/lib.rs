@@ -35,7 +35,7 @@ mod info {
 
     pub struct EpInfo {
         pub ep_direction: EpDirection,
-        pub max_packet_size_dword: u8,
+        pub max_packet_size: u16,
     }
 }
 #[cfg(feature = "_gen-usb-instance")]

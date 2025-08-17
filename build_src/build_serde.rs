@@ -17,7 +17,7 @@ pub struct Profile {
 pub struct EndpointConfig {
     #[serde(rename = "type")]
     pub ep_direction: EndpointDirection,
-    pub max_packet_size_dword: u8,
+    pub max_packet_size: u16,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -39,7 +39,7 @@ pub enum FifoConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DynamicFifoConfig {
-    pub total_size_dword: u32,
+    pub total_size: u16,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

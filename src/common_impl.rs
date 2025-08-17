@@ -100,7 +100,7 @@ pub(crate) fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
 
     T::regs()
         .txmaxp()
-        .write(|w| w.set_maxp(config.tx_max_fifo_size_dword));
+        .write(|w| w.set_maxp(config.tx_max_packet_size));
 
     T::regs().txcsrl().write(|w| {
         w.set_clr_data_tog(true);
@@ -140,7 +140,7 @@ pub(crate) fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) 
 
     T::regs()
         .rxmaxp()
-        .write(|w| w.set_maxp(config.rx_max_fifo_size_dword));
+        .write(|w| w.set_maxp(config.rx_max_packet_size));
 
     T::regs().rxcsrl().write(|w| {
         w.set_clr_data_tog(true);
