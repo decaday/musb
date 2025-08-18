@@ -1,0 +1,10 @@
+
+
+fieldset/FIFO:
+  bit_size: FIFO_REG_BIT_SIZE
+  description: FIFO Data Access Register for Endpoints
+  fields:
+  - name: Data
+    description: Data byte for FIFO read/write operation
+    bit_offset: 0
+    bit_size: FIFO_REG_BIT_SIZE

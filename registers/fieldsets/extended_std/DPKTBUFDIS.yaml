@@ -1,0 +1,11 @@
+fieldset/DPKTBUFDIS:
+  bit_size: INTR_REG_BIT_SIZE
+  description: Indicates which of the endpoints have disabled the double packet buffer functionality described in section 8.4.2.2 of the MUSBMHDRC Product Specification
+  fields:
+  - name: Dis
+    description: Double Packet Buffer Disable for Tx/Rx Endpoint x (except EP0)
+    bit_offset: 0
+    bit_size: 1
+    array:
+      len: ENDPOINTS_NUM
+      stride : 1
