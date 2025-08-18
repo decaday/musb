@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_yaml::Value;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Profile {
@@ -67,19 +68,32 @@ impl Default for RegBitSize {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Block {
+    // This field specifies the parent block to inherit from.
+    // It is deserialized from the source YAML but will be removed before final output.
+    // `skip_serializing_if` ensures that if `inherits` is `None`, it's omitted from the output.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inherits: Option<String>,
     pub description: Option<String>,
     pub items: Vec<BlockItem>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockItem {
     pub name: String,
     pub description: Option<String>,
     pub byte_offset: Option<String>,
     pub bit_size: Option<String>,
     pub fieldset: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub array: Option<ArrayConfig>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ArrayConfig {
+    pub len: Value,
+    pub stride: Value,
 }
 
 fn default_16() -> u8 {
@@ -89,11 +103,3 @@ fn default_16() -> u8 {
 fn default_8() -> u8 {
     8
 }
-
-// fn default_true() -> bool {
-//     true
-// }
-
-// fn default_false() -> bool {
-//     false
-// }
