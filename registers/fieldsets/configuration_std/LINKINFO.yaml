@@ -1,0 +1,12 @@
+fieldset/LINKINFO:
+  bit_size: 8
+  description: Link information and delay specification.
+  fields:
+  - name: WTCON
+    description: Sets the wait for connect/disconnect filter in units of 533.3ns.
+    bit_offset: 4
+    bit_size: 4
+  - name: WTID
+    description: Sets the delay from IDPULLUP assertion to IDDIG valid in units of 4.369ms.
+    bit_offset: 0
+    bit_size: 4

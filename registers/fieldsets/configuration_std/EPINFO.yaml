@@ -1,0 +1,12 @@
+fieldset/EPINFO:
+  bit_size: 8
+  description: Endpoint information register.
+  fields:
+  - name: RxEndPoints
+    description: The number of Rx endpoints implemented.
+    bit_offset: 4
+    bit_size: 4
+  - name: TxEndPoints
+    description: The number of TX endpoints implemented.
+    bit_offset: 0
+    bit_size: 4

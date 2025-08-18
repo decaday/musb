@@ -1,0 +1,8 @@
+fieldset/VPLEN:
+  bit_size: 8
+  description: VBus pulsing charge duration.
+  fields:
+  - name: VPLEN
+    description: Sets the duration of VBus pulsing charge in units of 546.1 µs.
+    bit_offset: 0
+    bit_size: 8

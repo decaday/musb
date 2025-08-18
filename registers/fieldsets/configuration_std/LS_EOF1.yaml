@@ -1,0 +1,8 @@
+fieldset/LS_EOF1:
+  bit_size: 8
+  description: Low-speed end of frame time gap.
+  fields:
+  - name: LS_EOF1
+    description: Time before EOF to stop beginning new transactions for Low-speed, in units of 1.067us.
+    bit_offset: 0
+    bit_size: 8

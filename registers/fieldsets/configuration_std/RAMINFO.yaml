@@ -1,0 +1,12 @@
+fieldset/RAMINFO:
+  bit_size: 8
+  description: Provides information about the RAM.
+  fields:
+  - name: DMAChans
+    description: The number of DMA channels implemented.
+    bit_offset: 4
+    bit_size: 4
+  - name: RamBits
+    description: The width of the RAM address bus.
+    bit_offset: 0
+    bit_size: 4
