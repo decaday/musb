@@ -111,6 +111,11 @@ block/USB:
     byte_offset: 0x1F
     bit_size: 8
     fieldset: CONFIGDATA
+  - name: FIFOSIZE
+    description: FIFO Size Register for TX and RX Endpoints
+    byte_offset: 0x1F
+    bit_size: 8
+    fieldset: FIFOSIZE
   - name: FIFO
     description: FIFO for endpoints.
     byte_offset: 0x20

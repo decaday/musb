@@ -1,10 +1,10 @@
 # `musb-readconf`
 
-A `no_std` ~~and not-so-useful~~ utility crate for reading and interpreting the hardware configuration registers of a Mentor Graphics MUSB IP core.
+A `no_std` utility crate for reading and interpreting the hardware configuration registers of a Mentor Graphics MUSB IP core.
 
 This tool is designed to help embedded developers verify the specific hardware features and configuration of the MUSB IP as implemented by a particular chip vendor.
 
-~~But, Useless.~~ Most Venders masked  several following registers like `CONFIGDATA`.
+But, Some Venders masked several following registers like `CONFIGDATA`.
 
 ## Features
 
@@ -27,7 +27,7 @@ use musb_readconf::{Configuration, MusbInstance, regs};
 struct MyUsbInstance;
 impl MusbInstance for MyUsbInstance {
     fn regs() -> regs::Usb {
-        unsafe { *(0x5004_7000 as *const regs::Usb) }
+        unsafe { regs::Usb::from_ptr((0x5004_7000) as _ ) }
     }
 }
 ```
@@ -40,6 +40,8 @@ In your `main` function, initialize your hardware, then call the library to read
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     // ...
+
+    // rcc::enable_usb();
 
     defmt::info!("Reading MUSB IP Core Configuration...");
     let musb_config = Configuration::read::<MyUsbInstance>();

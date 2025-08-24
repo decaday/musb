@@ -36,6 +36,10 @@ pub struct Configuration {
     pub soft_connect: bool,
     pub utmi_data_width: UtmiDataWidth,
 
+     // --- Fields from FIFOSIZE registers ---
+    pub tx_fifo_sizes: [u16; 16],
+    pub rx_fifo_sizes: [u16; 16],
+
     // --- Fields from Additional Registers ---
     pub rx_endpoints: u8,
     pub tx_endpoints: u8,
@@ -66,6 +70,7 @@ impl Configuration {
     pub fn read<T: MusbInstance>() -> Self {
         let regs = T::regs();
 
+        defmt::trace!("INDEX addr: 0x{:X}", &regs.index().as_ptr());
         // --- Read and Decode CONFIGDATA ---
         regs.index().write(|w| w.set_index(0));
         let configdata = regs.configdata().read();
@@ -85,6 +90,29 @@ impl Configuration {
             1 => UtmiDataWidth::Bit16,
             val => UtmiDataWidth::Unknown(val),
         };
+
+                // --- Read and Decode FIFOSIZE for each endpoint (if static) ---
+        let mut tx_fifo_sizes = [0u16; 16];
+        let mut rx_fifo_sizes = [0u16; 16];
+
+        if let FifoSizing::Static = dyn_fifo_sizing {
+            for i in 0..=15 {
+                regs.index().write(|w| w.set_index(i));
+                let tx_nibble = regs.fifosize().read().tx_fifo_size();
+                let rx_nibble = regs.fifosize().read().rx_fifo_size();
+                // defmt::trace!("Endpoint {}: FIFOSIZE register = {:b}, TX nibble = 0x{:x}, RX nibble = 0x{:x}", i, regs.fifosize().read().0, tx_nibble, rx_nibble);
+
+                tx_fifo_sizes[i as usize] = Self::decode_fifo_size_nibble(tx_nibble);
+                
+                if rx_nibble == 0xF {
+                    // 0xF indicates the RX endpoint shares the TX FIFO
+                    rx_fifo_sizes[i as usize] = u16::MAX; 
+                } else {
+                    rx_fifo_sizes[i as usize] = Self::decode_fifo_size_nibble(rx_nibble);
+                }
+            }
+        }
+        regs.index().write(|w| w.set_index(0));
 
         // --- Read and Decode Additional Configuration Registers ---
 
@@ -128,11 +156,22 @@ impl Configuration {
 
         Self {
             mprxe, mptxe, big_endian, hbrxe, hbtxe, dyn_fifo_sizing,
+            tx_fifo_sizes, rx_fifo_sizes,
             soft_connect, utmi_data_width,
             rx_endpoints, tx_endpoints, dma_channels, ram_bits,
             wtcon, wtid, vplen, hs_eof1, fs_eof1, ls_eof1,
             epinfo_is_zero, raminfo_is_zero, linkinfo_is_zero,
             vplen_is_zero, hs_eof1_is_zero, fs_eof1_is_zero, ls_eof1_is_zero,
+        }
+    }
+
+    /// Decodes a 4-bit FIFOSIZE nibble into the corresponding size in bytes.
+    /// According to the spec, values 3-13 correspond to 2^n bytes.
+    /// Other values mean the endpoint is not configured.
+    fn decode_fifo_size_nibble(nibble: u8) -> u16 {
+        match nibble {
+            3..=13 => 1u16 << nibble,
+            _ => 0, // Not configured or invalid
         }
     }
 
@@ -160,6 +199,39 @@ impl Configuration {
         }
         defmt::info!("  - UTMI+ Data Width: {}", self.utmi_data_width);
 
+        // FIFO Size Details
+        defmt::info!("Endpoint FIFO Configuration (from FIFOSIZE):");
+        match self.dyn_fifo_sizing {
+            FifoSizing::Dynamic => {
+                defmt::info!("  - Dynamic FIFO Sizing is enabled. The FIFOSIZE register is not applicable.");
+            }
+            FifoSizing::Static => {
+                let mut found_any = false;
+                for i in 1..=15 {
+                    let tx_size = self.tx_fifo_sizes[i];
+                    let rx_size = self.rx_fifo_sizes[i];
+
+                    if tx_size > 0 || rx_size > 0 {
+                        found_any = true;
+                        if tx_size > 0 {
+                            if rx_size == u16::MAX {
+                                defmt::info!("  - Endpoint {}: TX FIFO = {=u16} bytes, RX FIFO = (Shared with TX)", i, tx_size);
+                            } else if rx_size > 0 {
+                                defmt::info!("  - Endpoint {}: TX FIFO = {=u16} bytes, RX FIFO = {=u16} bytes", i, tx_size, rx_size);
+                            } else {
+                                defmt::info!("  - Endpoint {}: TX FIFO = {=u16} bytes, RX FIFO = (Not configured)", i, tx_size);
+                            }
+                        } else {
+                            // This case handles when only RX is configured (tx_size is 0)
+                            defmt::info!("  - Endpoint {}: TX FIFO = (Not configured), RX FIFO = {=u16} bytes", i, rx_size);
+                        }
+                    }
+                }
+                if !found_any {
+                    defmt::warn!("  - No configured static FIFOs found for endpoints 1-15.");
+                }
+            }
+        }
 
         // EPINFO Details
         defmt::info!("Endpoint Configuration (from EPINFO):");
