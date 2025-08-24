@@ -23,8 +23,10 @@ pub mod generated;
 pub use generated::common;
 pub use generated::regs;
 
-mod info {
+pub mod info {
     pub use crate::generated::ENDPOINTS;
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub use crate::generated::TOTAL_FIFO_SIZE;
 
     #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum EpDirection {

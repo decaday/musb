@@ -115,9 +115,10 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
 
     // TODO: DMA
 
-    #[cfg(not(feature = "_fixed-fifo-size"))]
     if index != 0 {
         // This logic is only compiled when we are NOT using fixed FIFOs.
+        #[cfg(not(feature = "_fixed-fifo-size"))]
+        {
         T::regs().tx_fifo_sz().write(|w| {
             let size_code = (config.tx_fifo_size_bits - 3) as u8;
             w.set_sz(size_code);
@@ -162,6 +163,7 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     if T::regs().txcsrl().read().fifo_not_empty() {
         T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
         T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
+        }
     }
 }
 
@@ -193,14 +195,13 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
         T::regs()
             .intrrxe()
             .modify(|w| w.set_ep_rxe(index as _, true));
-    }
 
     // T::regs().rxcsrh().write(|w| {
     //     w.set_auto_clear(true);
     // });
 
     #[cfg(not(feature = "_fixed-fifo-size"))]
-    if index != 0 {
+        {
         T::regs().rx_fifo_sz().write(|w| {
             let size_code = (config.rx_fifo_size_bits - 3) as u8;
             w.set_sz(size_code);
@@ -242,6 +243,7 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     if T::regs().rxcsrl().read().rx_pkt_rdy() {
         T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
         T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
+        }
     }
 }
 

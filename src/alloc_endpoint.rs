@@ -80,7 +80,23 @@ pub fn alloc_endpoint(
     
     // --- Dynamic FIFO Allocation Logic ---
     #[cfg(not(feature = "_fixed-fifo-size"))]
-    {
+    if ep_type == EndpointType::Control {
+        assert!(max_packet_size <= 64, "endpoint0 max packet size must be <= 64");
+        match direction {
+            // EP0 has fixed FIFO size(64k) and address.
+            Direction::Out => {
+                ep.ep_conf.rx_max_packet_size = max_packet_size;
+                ep.ep_conf.rx_fifo_size_bits = 0;
+                ep.ep_conf.rx_fifo_addr_8bytes = 0;
+            }
+            Direction::In => {
+                ep.ep_conf.tx_max_packet_size = max_packet_size;
+                ep.ep_conf.tx_fifo_size_bits =0;
+                ep.ep_conf.tx_fifo_addr_8bytes = 0;
+            }
+        }
+    }
+    else {
         let fifo_size_bytes = max_packet_size.next_power_of_two().max(8) as u16;
         let fifo_size_8bytes = fifo_size_bytes / 8;
         
