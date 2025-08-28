@@ -1,0 +1,29 @@
+name: std-8bep-2048
+block: sf32_peri
+base_address: 0x50047000
+fifo:
+  type: fixed
+  shared: true
+reg_bit_size:
+  fifo: 8
+  intr: 16
+endpoints:
+  - type: rxtx
+    max_packet_size: 64
+  - type: rxtx
+    max_packet_size: 64
+  - type: rx
+    max_packet_size: 64
+  - type: rx
+    max_packet_size: 64
+  - type: rx
+    max_packet_size: 64
+  - type: tx
+    max_packet_size: 64
+  - type: tx
+    max_packet_size: 64
+  - type: tx
+    max_packet_size: 64
+patches:
+  - fieldset: USBCFG
+    version: sf32
