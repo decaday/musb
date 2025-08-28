@@ -152,8 +152,8 @@ fn check_endpoint(
     let used = ep.used_rx || ep.used_tx;
     let _ = index;
 
-    // #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
-    // if used && index != 0 { return false }
+    #[cfg(feature = "_ep-shared-fifo")]
+    if used && index != 0 { return Err(EndpointAllocError::EpUsed) }
 
     if max_packet_size > ENDPOINTS[index as usize].max_packet_size {
         return Err(EndpointAllocError::MaxPacketSizeBiggerThanEpFifoSize);

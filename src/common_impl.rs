@@ -1,6 +1,8 @@
 use embassy_usb_driver::EndpointType;
 
 use crate::alloc_endpoint::EndpointConfig;
+use crate::regs::regs::{Intrrxe, Intrtxe};
+#[cfg(feature = "_ep-shared-fifo")]
 use crate::regs::vals::EndpointDirection;
 use crate::{trace, warn, MusbInstance};
 use crate::info::ENDPOINTS;
@@ -130,50 +132,52 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
         // This logic is only compiled when we are NOT using fixed FIFOs.
         #[cfg(not(feature = "_fixed-fifo-size"))]
         {
-        T::regs().tx_fifo_sz().write(|w| {
-            let size_code = (config.tx_fifo_size_bits - 3) as u8;
-            w.set_sz(size_code);
-            w.set_dpb(true);
-        });
-        T::regs().tx_fifo_add().write(|w| w.set_add(config.tx_fifo_addr_8bytes));
-    }
-
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "_mini")] {
-            if config.tx_max_packet_size % 8 != 0 {
-                warn!("TX max packet size must be a multiple of 8 for mini musb IP, using {} instead",
-                    ((config.tx_max_packet_size + 7) / 8) * 8
-                );
-            }
-
-            // Mini version uses 8-byte unit
-            T::regs()
-                .txmaxp()
-                .write(|w| w.set_maxp((config.tx_max_packet_size + 7) / 8));
-        } else {
-            // Full version uses full packet size
-            T::regs()
-                .txmaxp()
-                .write(|w| w.set_maxp(config.tx_max_packet_size));
+            T::regs().tx_fifo_sz().write(|w| {
+                let size_code = (config.tx_fifo_size_bits - 3) as u8;
+                w.set_sz(size_code);
+                w.set_dpb(true);
+            });
+            T::regs().tx_fifo_add().write(|w| w.set_add(config.tx_fifo_addr_8bytes));
         }
-    }
 
-    T::regs().txcsrl().write(|w| {
-        w.set_clr_data_tog(true);
-    });
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "_mini")] {
+                if config.tx_max_packet_size % 8 != 0 {
+                    warn!("TX max packet size must be a multiple of 8 for mini musb IP, using {} instead",
+                        ((config.tx_max_packet_size + 7) / 8) * 8
+                    );
+                }
 
-    if config.ep_type == EndpointType::Isochronous {
-        T::regs().txcsrh().write(|w| {
-            w.set_iso(true);
+                // Mini version uses 8-byte unit
+                T::regs()
+                    .txmaxp()
+                    .write(|w| w.set_maxp((config.tx_max_packet_size + 7) / 8));
+            } else {
+                // Full version uses full packet size
+                T::regs()
+                    .txmaxp()
+                    .write(|w| w.set_maxp(config.tx_max_packet_size));
+            }
+        }
+
+        T::regs().txcsrl().write(|w| {
+            w.set_clr_data_tog(true);
         });
-    }
-    T::regs()
-        .txcsrh()
-        .write(|w| w.set_mode(EndpointDirection::Tx));
 
-    if T::regs().txcsrl().read().fifo_not_empty() {
-        T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
-        T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
+        if config.ep_type == EndpointType::Isochronous {
+            T::regs().txcsrh().write(|w| {
+                w.set_iso(true);
+            });
+        }
+
+        #[cfg(feature = "_ep-shared-fifo")]
+        T::regs()
+            .txcsrh()
+            .write(|w| w.set_mode(EndpointDirection::Tx));
+
+        if T::regs().txcsrl().read().fifo_not_empty() {
+            T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
+            T::regs().txcsrl().modify(|w| w.set_flush_fifo(true));
         }
     }
 }
@@ -215,53 +219,58 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
             .intrrxe()
             .modify(|w| w.set_ep_rxe(index as _, true));
 
-    // T::regs().rxcsrh().write(|w| {
-    //     w.set_auto_clear(true);
-    // });
+        // T::regs().rxcsrh().write(|w| {
+        //     w.set_auto_clear(true);
+        // });
 
-    #[cfg(not(feature = "_fixed-fifo-size"))]
+        #[cfg(not(feature = "_fixed-fifo-size"))]
         {
-        T::regs().rx_fifo_sz().write(|w| {
-            let size_code = (config.rx_fifo_size_bits - 3) as u8;
-            w.set_sz(size_code);
-            w.set_dpb(true);
-        });
-        T::regs().rx_fifo_add().write(|w| w.set_add(config.rx_fifo_addr_8bytes));
-    }
-
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "_mini")] {
-            if config.rx_max_packet_size % 8 != 0 {
-                warn!("RX max packet size must be a multiple of 8 for mini musb IP, using {} instead",
-                    ((config.rx_max_packet_size + 7) / 8) * 8
-                );
-            }
-            // Mini version uses 8-byte unit
-            T::regs()
-                .rxmaxp()
-                .write(|w| w.set_maxp((config.rx_max_packet_size + 7) / 8));
-        } else {
-            T::regs()
-                .rxmaxp()
-                .write(|w| w.set_maxp(config.rx_max_packet_size));
+            T::regs().rx_fifo_sz().write(|w| {
+                let size_code = (config.rx_fifo_size_bits - 3) as u8;
+                w.set_sz(size_code);
+                w.set_dpb(true);
+            });
+            T::regs().rx_fifo_add().write(|w| w.set_add(config.rx_fifo_addr_8bytes));
         }
-    }
+    
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "_mini")] {
+                if config.rx_max_packet_size % 8 != 0 {
+                    warn!("RX max packet size must be a multiple of 8 for mini musb IP, using {} instead",
+                        ((config.rx_max_packet_size + 7) / 8) * 8
+                    );
+                }
+                // Mini version uses 8-byte unit
+                T::regs()
+                    .rxmaxp()
+                    .write(|w| w.set_maxp((config.rx_max_packet_size + 7) / 8));
+            } else {
+                T::regs()
+                    .rxmaxp()
+                    .write(|w| w.set_maxp(config.rx_max_packet_size));
+            }
+        }
 
-    T::regs().rxcsrl().write(|w| {
-        w.set_clr_data_tog(true);
-    });
-
-    //TODO: DMA
-
-    if config.ep_type == EndpointType::Isochronous {
-        T::regs().rxcsrh().write(|w| {
-            w.set_iso(true);
+        T::regs().rxcsrl().write(|w| {
+            w.set_clr_data_tog(true);
         });
-    }
 
-    if T::regs().rxcsrl().read().rx_pkt_rdy() {
-        T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
-        T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
+        #[cfg(feature = "_ep-shared-fifo")]
+        T::regs()
+            .txcsrh()
+            .write(|w| w.set_mode(EndpointDirection::Rx));
+
+        //TODO: DMA
+
+        if config.ep_type == EndpointType::Isochronous {
+            T::regs().rxcsrh().write(|w| {
+                w.set_iso(true);
+            });
+        }
+
+        if T::regs().rxcsrl().read().rx_pkt_rdy() {
+            T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
+            T::regs().rxcsrl().modify(|w| w.set_flush_fifo(true));
         }
     }
 }

@@ -58,7 +58,7 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         IRQ_RESUME.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
-
+    
     if intrtx.ep_tx(0) {
         EP_TX_WAKERS[0].wake();
         EP_RX_WAKERS[0].wake();
