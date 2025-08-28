@@ -4,10 +4,10 @@ use crate::info::EpInfo;
 pub struct UsbInstance;
 impl crate::MusbInstance for UsbInstance {
     fn regs() -> crate::regs::Usb {
-        unsafe { crate::regs::Usb::from_ptr((0x40005c00) as _ ) }
+        unsafe { crate::regs::Usb::from_ptr((0x50047000) as _ ) }
     }
 }
-pub const ENDPOINTS: [EpInfo; 6] = [
+pub const ENDPOINTS: [EpInfo; 8] = [
     EpInfo {
         ep_direction: EpDirection::RXTX,
         max_packet_size: 64,
@@ -17,19 +17,27 @@ pub const ENDPOINTS: [EpInfo; 6] = [
         max_packet_size: 64,
     },
     EpInfo {
-        ep_direction: EpDirection::RXTX,
+        ep_direction: EpDirection::RX,
         max_packet_size: 64,
     },
     EpInfo {
-        ep_direction: EpDirection::RXTX,
+        ep_direction: EpDirection::RX,
         max_packet_size: 64,
     },
     EpInfo {
-        ep_direction: EpDirection::RXTX,
+        ep_direction: EpDirection::RX,
         max_packet_size: 64,
     },
     EpInfo {
-        ep_direction: EpDirection::RXTX,
+        ep_direction: EpDirection::TX,
+        max_packet_size: 64,
+    },
+    EpInfo {
+        ep_direction: EpDirection::TX,
+        max_packet_size: 64,
+    },
+    EpInfo {
+        ep_direction: EpDirection::TX,
         max_packet_size: 64,
     },
 ];

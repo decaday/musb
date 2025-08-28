@@ -87,7 +87,7 @@ impl Usb {
     }
     #[doc = "Maximum packet size for IN endpoints."]
     #[inline(always)]
-    pub const fn txmaxp(self) -> crate::common::Reg<regs::Txmaxp, crate::common::RW> {
+    pub const fn txmaxp(self) -> crate::common::Reg<regs::Maxp, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x16usize) as _) }
     }
     #[doc = "Control and status register for OUT endpoints."]
@@ -102,7 +102,7 @@ impl Usb {
     }
     #[doc = "Maximum packet size for OUT endpoints."]
     #[inline(always)]
-    pub const fn rxmaxp(self) -> crate::common::Reg<regs::Rxmaxp, crate::common::RW> {
+    pub const fn rxmaxp(self) -> crate::common::Reg<regs::Maxp, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x1ausize) as _) }
     }
     #[doc = "Data count for OUT endpoints."]
@@ -113,7 +113,7 @@ impl Usb {
     #[doc = "FIFO for endpoints."]
     #[inline(always)]
     pub const fn fifo(self, n: usize) -> crate::common::Reg<regs::Fifo, crate::common::RW> {
-        assert!(n < 8usize);
+        assert!(n < 6usize);
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x20usize + n * 4usize) as _) }
     }
 }
@@ -338,18 +338,18 @@ pub mod regs {
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Intrrx(pub u8);
     impl Intrrx {
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Receive endpoint interrupt (except EP0)"]
         #[inline(always)]
         pub const fn ep_rx(&self, n: usize) -> bool {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
         }
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Receive endpoint interrupt (except EP0)"]
         #[inline(always)]
         pub fn set_ep_rx(&mut self, n: usize, val: bool) {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }
@@ -368,7 +368,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (except EP0)"]
         #[inline(always)]
         pub const fn ep_rxe(&self, n: usize) -> bool {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -376,7 +376,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (except EP0)"]
         #[inline(always)]
         pub fn set_ep_rxe(&mut self, n: usize, val: bool) {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }
@@ -392,18 +392,18 @@ pub mod regs {
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Intrtx(pub u8);
     impl Intrtx {
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Endpoint 0 and transmit endpoints interrupt"]
         #[inline(always)]
         pub const fn ep_tx(&self, n: usize) -> bool {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
         }
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Endpoint 0 and transmit endpoints interrupt"]
         #[inline(always)]
         pub fn set_ep_tx(&mut self, n: usize, val: bool) {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }
@@ -422,7 +422,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (EP0:TXE_RXE)"]
         #[inline(always)]
         pub const fn ep_txe(&self, n: usize) -> bool {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -430,7 +430,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (EP0:TXE_RXE)"]
         #[inline(always)]
         pub fn set_ep_txe(&mut self, n: usize, val: bool) {
-            assert!(n < 8usize);
+            assert!(n < 6usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u8) & 0x01) << offs);
         }
@@ -551,6 +551,29 @@ pub mod regs {
         #[inline(always)]
         fn default() -> Intrusbe {
             Intrusbe(0)
+        }
+    }
+    #[doc = "Maximum payload size forendpoint"]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct Maxp(pub u16);
+    impl Maxp {
+        #[doc = "Maximum payload"]
+        #[inline(always)]
+        pub const fn maxp(&self) -> u16 {
+            let val = (self.0 >> 0usize) & 0x07ff;
+            val as u16
+        }
+        #[doc = "Maximum payload"]
+        #[inline(always)]
+        pub fn set_maxp(&mut self, val: u16) {
+            self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);
+        }
+    }
+    impl Default for Maxp {
+        #[inline(always)]
+        fn default() -> Maxp {
+            Maxp(0)
         }
     }
     #[doc = "USB Power Control and Status Register"]
@@ -799,29 +822,6 @@ pub mod regs {
             Rxcsrl(0)
         }
     }
-    #[doc = "Maximum payload size for RX endpoint"]
-    #[repr(transparent)]
-    #[derive(Copy, Clone, Eq, PartialEq)]
-    pub struct Rxmaxp(pub u16);
-    impl Rxmaxp {
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub const fn maxp(&self) -> u16 {
-            let val = (self.0 >> 0usize) & 0x07ff;
-            val as u16
-        }
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub fn set_maxp(&mut self, val: u16) {
-            self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);
-        }
-    }
-    impl Default for Rxmaxp {
-        #[inline(always)]
-        fn default() -> Rxmaxp {
-            Rxmaxp(0)
-        }
-    }
     #[doc = "Additional TX endpoint control register"]
     #[repr(transparent)]
     #[derive(Copy, Clone, Eq, PartialEq)]
@@ -989,36 +989,13 @@ pub mod regs {
             Txcsrl(0)
         }
     }
-    #[doc = "Maximum payload size for TX endpoint"]
-    #[repr(transparent)]
-    #[derive(Copy, Clone, Eq, PartialEq)]
-    pub struct Txmaxp(pub u16);
-    impl Txmaxp {
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub const fn maxp(&self) -> u16 {
-            let val = (self.0 >> 0usize) & 0x07ff;
-            val as u16
-        }
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub fn set_maxp(&mut self, val: u16) {
-            self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);
-        }
-    }
-    impl Default for Txmaxp {
-        #[inline(always)]
-        fn default() -> Txmaxp {
-            Txmaxp(0)
-        }
-    }
 }
 pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum EndpointDirection {
-        RX = 0x0,
-        TX = 0x01,
+        Rx = 0x0,
+        Tx = 0x01,
     }
     impl EndpointDirection {
         #[inline(always)]
@@ -1045,8 +1022,8 @@ pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum HsModeStatus {
-        FULL_SPEED = 0x0,
-        HIGH_SPEED = 0x01,
+        FullSpeed = 0x0,
+        HighSpeed = 0x01,
     }
     impl HsModeStatus {
         #[inline(always)]
@@ -1073,8 +1050,8 @@ pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum IsoUpdateMode {
-        NORMAL = 0x0,
-        WAIT_SOF = 0x01,
+        Normal = 0x0,
+        WaitSof = 0x01,
     }
     impl IsoUpdateMode {
         #[inline(always)]

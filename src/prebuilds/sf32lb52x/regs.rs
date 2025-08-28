@@ -171,6 +171,11 @@ impl Usb {
     pub const fn rx_dpktbufdis(self) -> crate::common::Reg<regs::Dpktbufdis, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x0344usize) as _) }
     }
+    #[doc = "Vender-specified USB configuration register."]
+    #[inline(always)]
+    pub const fn usbcfg(self) -> crate::common::Reg<regs::Usbcfg, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x0370usize) as _) }
+    }
 }
 pub mod regs {
     #[doc = "Core configuration information register"]
@@ -1626,6 +1631,36 @@ pub mod regs {
         #[inline(always)]
         fn default() -> Txcsrl {
             Txcsrl(0)
+        }
+    }
+    #[doc = "Vender-specified USB configuration register."]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct Usbcfg(pub u8);
+    impl Usbcfg {
+        #[inline(always)]
+        pub const fn avalid_dr(&self) -> bool {
+            let val = (self.0 >> 2usize) & 0x01;
+            val != 0
+        }
+        #[inline(always)]
+        pub fn set_avalid_dr(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 2usize)) | (((val as u8) & 0x01) << 2usize);
+        }
+        #[inline(always)]
+        pub const fn avalid(&self) -> bool {
+            let val = (self.0 >> 3usize) & 0x01;
+            val != 0
+        }
+        #[inline(always)]
+        pub fn set_avalid(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 3usize)) | (((val as u8) & 0x01) << 3usize);
+        }
+    }
+    impl Default for Usbcfg {
+        #[inline(always)]
+        fn default() -> Usbcfg {
+            Usbcfg(0)
         }
     }
 }
