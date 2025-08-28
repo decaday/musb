@@ -9,17 +9,17 @@ reg_bit_size:
   intr: 8
 endpoints:
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
   - type: rxtx
-    max_packet_size_dword: 8
+    max_packet_size: 64
 patches:
   - fieldset: POWER
     version: mini

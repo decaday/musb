@@ -1,0 +1,8 @@
+fieldset/MAXP:
+  bit_size: 9
+  description: Maximum payload size for endpoint
+  fields:
+  - name: maxp
+    description: Maximum payload in 8bytes
+    bit_offset: 0
+    bit_size: 9

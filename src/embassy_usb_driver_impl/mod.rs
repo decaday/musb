@@ -40,7 +40,12 @@ static EP_RX_ENABLED: AtomicU16 = AtomicU16::new(0);
 
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
-    let intrusb = T::regs().intrusb().read();
+    let regs = T::regs();
+    let intrusb = regs.intrusb().read();
+    let intrtx = regs.intrtx().read();
+    let intrrx = regs.intrrx().read();
+    trace!("musb/on_interrupt: intrusb: {:b}, intrtx: {:b}, intrrx: {:b}", intrusb.0, intrtx.0, intrrx.0);
+
     if intrusb.reset() {
         IRQ_RESET.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
@@ -53,9 +58,7 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         IRQ_RESUME.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
-
-    let intrtx = T::regs().intrtx().read();
-    let intrrx = T::regs().intrrx().read();
+    
     if intrtx.ep_tx(0) {
         EP_TX_WAKERS[0].wake();
         EP_RX_WAKERS[0].wake();

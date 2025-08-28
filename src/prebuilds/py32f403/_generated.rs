@@ -10,26 +10,26 @@ impl crate::MusbInstance for UsbInstance {
 pub const ENDPOINTS: [EpInfo; 6] = [
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 64,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 64,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 64,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 64,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 64,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 64,
     },
 ];

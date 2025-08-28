@@ -1,0 +1,58 @@
+block/USB:
+  description: USB control and status registers for managing USB operations.
+  items:
+    - name: INDEX
+      description: Index register for selecting the endpoint status and control registers.
+      byte_offset: 0x0E
+      bit_size: 8
+      fieldset: INDEX
+    - name: CONFIGDATA
+      description: Returns details of core configuration.
+      byte_offset: 0x1F
+      bit_size: 8
+      fieldset: CONFIGDATA
+    - name: FIFOSIZE
+      description: FIFO Size Register for TX and RX Endpoints
+      byte_offset: 0x1F
+      bit_size: 8
+      fieldset: FIFOSIZE
+    - name: EPINFO
+      description: Read-back of the number of TX and Rx endpoints.
+      byte_offset: 0x78
+      bit_size: 8
+      fieldset: EPINFO
+    - name: RAMINFO
+      description: Provides information about the width of the RAM.
+      byte_offset: 0x79
+      bit_size: 8
+      fieldset: RAMINFO
+    - name: LINKINFO
+      description: Allows some delays to be specified.
+      byte_offset: 0x7A
+      bit_size: 8
+      fieldset: LINKINFO
+    - name: VPLEN
+      description: Sets the duration of the VBus pulsing charge.
+      byte_offset: 0x7B
+      bit_size: 8
+      fieldset: VPLEN
+    - name: HS_EOF1
+      description: Sets the minimum time gap before EOF for High-speed transactions.
+      byte_offset: 0x7C
+      bit_size: 8
+      fieldset: HS_EOF1
+    - name: FS_EOF1
+      description: Sets the minimum time gap before EOF for Full-speed transactions.
+      byte_offset: 0x7D
+      bit_size: 8
+      fieldset: FS_EOF1
+    - name: LS_EOF1
+      description: Sets the minimum time gap before EOF for Low-speed transactions.
+      byte_offset: 0x7E
+      bit_size: 8
+      fieldset: LS_EOF1
+    - name: SOFT_RST
+      description: Asserts LOW the output reset signals NRSTO and NRSTOX.
+      byte_offset: 0x7F
+      bit_size: 8
+      fieldset: SOFT_RST

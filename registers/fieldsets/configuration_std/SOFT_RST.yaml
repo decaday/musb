@@ -1,0 +1,12 @@
+fieldset/SOFT_RST:
+  bit_size: 8
+  description: Software reset control.
+  fields:
+  - name: NRSTX
+    description: Writing 1 asserts the NRSTXO output LOW.
+    bit_offset: 1
+    bit_size: 1
+  - name: NRST
+    description: Writing 1 asserts the NRSTO output LOW.
+    bit_offset: 0
+    bit_size: 1

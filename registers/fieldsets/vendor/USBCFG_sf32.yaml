@@ -1,0 +1,11 @@
+fieldset/USBCFG:
+  bit_size: 8
+  description: Vender-specified USB configuration register.
+  fields:
+  - name: AVALID_DR
+    bit_offset: 2
+    bit_size: 1
+  - name: AVALID
+    bit_offset: 3
+    bit_size: 1
+

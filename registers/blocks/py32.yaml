@@ -75,7 +75,7 @@ block/USB:
     description: Maximum packet size for IN endpoints.
     byte_offset: 0x16
     bit_size: 16
-    fieldset: TXMAXP
+    fieldset: MAXP
   - name: RXCSRH
     description: Control and status register for OUT endpoints.
     byte_offset: 0x18
@@ -90,7 +90,7 @@ block/USB:
     description: Maximum packet size for OUT endpoints.
     byte_offset: 0x1A
     bit_size: 16
-    fieldset: RXMAXP
+    fieldset: MAXP
   - name: RXCOUNT
     description: Data count for OUT endpoints.
     byte_offset: 0x1C

@@ -72,64 +72,104 @@ impl Usb {
     }
     #[doc = "Maximum packet size for peripheral TX endpoint."]
     #[inline(always)]
-    pub const fn txmaxp(self) -> crate::common::Reg<regs::Txmaxp, crate::common::RW> {
+    pub const fn txmaxp(self) -> crate::common::Reg<regs::Maxp, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x10usize) as _) }
-    }
-    #[doc = "Control Status register higher byte for Endpoint 0."]
-    #[inline(always)]
-    pub const fn csr0h(self) -> crate::common::Reg<regs::Csr0h, crate::common::RW> {
-        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x12usize) as _) }
     }
     #[doc = "Control Status register lower byte for Endpoint 0."]
     #[inline(always)]
     pub const fn csr0l(self) -> crate::common::Reg<regs::Csr0l, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x12usize) as _) }
+    }
+    #[doc = "Control Status register lower byte for peripheral TX endpoint."]
+    #[inline(always)]
+    pub const fn txcsrl(self) -> crate::common::Reg<regs::Txcsrl, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x12usize) as _) }
+    }
+    #[doc = "Control Status register higher byte for Endpoint 0."]
+    #[inline(always)]
+    pub const fn csr0h(self) -> crate::common::Reg<regs::Csr0h, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x13usize) as _) }
     }
     #[doc = "Control Status register higher byte for peripheral TX endpoint."]
     #[inline(always)]
     pub const fn txcsrh(self) -> crate::common::Reg<regs::Txcsrh, crate::common::RW> {
-        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x14usize) as _) }
-    }
-    #[doc = "Control Status register lower byte for peripheral TX endpoint."]
-    #[inline(always)]
-    pub const fn txcsrl(self) -> crate::common::Reg<regs::Txcsrl, crate::common::RW> {
-        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x15usize) as _) }
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x13usize) as _) }
     }
     #[doc = "Maximum packet size for peripheral Rx endpoint."]
     #[inline(always)]
-    pub const fn rxmaxp(self) -> crate::common::Reg<regs::Rxmaxp, crate::common::RW> {
+    pub const fn rxmaxp(self) -> crate::common::Reg<regs::Maxp, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x14usize) as _) }
+    }
+    #[doc = "Control Status register lower byte for peripheral Rx endpoint."]
+    #[inline(always)]
+    pub const fn rxcsrl(self) -> crate::common::Reg<regs::Rxcsrl, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x16usize) as _) }
     }
     #[doc = "Control Status register higher byte for peripheral Rx endpoint."]
     #[inline(always)]
     pub const fn rxcsrh(self) -> crate::common::Reg<regs::Rxcsrh, crate::common::RW> {
-        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x18usize) as _) }
-    }
-    #[doc = "Control Status register lower byte for peripheral Rx endpoint."]
-    #[inline(always)]
-    pub const fn rxcsrl(self) -> crate::common::Reg<regs::Rxcsrl, crate::common::RW> {
-        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x19usize) as _) }
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x17usize) as _) }
     }
     #[doc = "Number of received bytes in Endpoint 0 FIFO."]
     #[inline(always)]
     pub const fn count0(self) -> crate::common::Reg<regs::Count0, crate::common::RW> {
-        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x1ausize) as _) }
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x18usize) as _) }
     }
     #[doc = "Number of bytes to be read from peripheral Rx endpoint FIFO."]
     #[inline(always)]
     pub const fn rxcount(self) -> crate::common::Reg<regs::Rxcount, crate::common::RW> {
-        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x1cusize) as _) }
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x18usize) as _) }
     }
     #[doc = "Returns details of core configuration."]
     #[inline(always)]
     pub const fn configdata(self) -> crate::common::Reg<regs::Configdata, crate::common::RW> {
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x1fusize) as _) }
     }
+    #[doc = "FIFO Size Register for TX and RX Endpoints"]
+    #[inline(always)]
+    pub const fn fifosize(self) -> crate::common::Reg<regs::Fifosize, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x1fusize) as _) }
+    }
     #[doc = "FIFO for endpoints."]
     #[inline(always)]
     pub const fn fifo(self, n: usize) -> crate::common::Reg<regs::Fifo, crate::common::RW> {
-        assert!(n < 16usize);
+        assert!(n < 8usize);
         unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x20usize + n * 4usize) as _) }
+    }
+    #[doc = "used to select whether the MUSBMHDRC is operating in Peripheral mode or in Host mode, and for controlling and monitoring the USB VBus line."]
+    #[inline(always)]
+    pub const fn devctl(self) -> crate::common::Reg<regs::Devctl, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x60usize) as _) }
+    }
+    #[doc = "controls the size of the selected TX endpoint FIFO"]
+    #[inline(always)]
+    pub const fn tx_fifo_sz(self) -> crate::common::Reg<regs::FifoSz, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x62usize) as _) }
+    }
+    #[doc = "controls the size of the selected Rx endpoint FIFO"]
+    #[inline(always)]
+    pub const fn rx_fifo_sz(self) -> crate::common::Reg<regs::FifoSz, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x63usize) as _) }
+    }
+    #[doc = "controls the start address of the selected Tx endpoint FIFO"]
+    #[inline(always)]
+    pub const fn tx_fifo_add(self) -> crate::common::Reg<regs::FifoAdd, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x64usize) as _) }
+    }
+    #[doc = "controls the start address of the selected Rx endpoint FIFO"]
+    #[inline(always)]
+    pub const fn rx_fifo_add(self) -> crate::common::Reg<regs::FifoAdd, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x66usize) as _) }
+    }
+    #[doc = "Double Packet Buffer Disable register."]
+    #[inline(always)]
+    pub const fn tx_dpktbufdis(self) -> crate::common::Reg<regs::Dpktbufdis, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x0342usize) as _) }
+    }
+    #[doc = "Double Packet Buffer Disable register."]
+    #[inline(always)]
+    pub const fn rx_dpktbufdis(self) -> crate::common::Reg<regs::Dpktbufdis, crate::common::RW> {
+        unsafe { crate::common::Reg::from_ptr(self.ptr.add(0x0344usize) as _) }
     }
 }
 pub mod regs {
@@ -173,24 +213,24 @@ pub mod regs {
         }
         #[doc = "High-bandwidth TX ISO Endpoint Support"]
         #[inline(always)]
-        pub const fn hb_tx_e(&self) -> bool {
+        pub const fn hbtxe(&self) -> bool {
             let val = (self.0 >> 3usize) & 0x01;
             val != 0
         }
         #[doc = "High-bandwidth TX ISO Endpoint Support"]
         #[inline(always)]
-        pub fn set_hb_tx_e(&mut self, val: bool) {
+        pub fn set_hbtxe(&mut self, val: bool) {
             self.0 = (self.0 & !(0x01 << 3usize)) | (((val as u8) & 0x01) << 3usize);
         }
         #[doc = "High-bandwidth Rx ISO Endpoint Support"]
         #[inline(always)]
-        pub const fn hb_rx_e(&self) -> bool {
+        pub const fn hbrxe(&self) -> bool {
             let val = (self.0 >> 4usize) & 0x01;
             val != 0
         }
         #[doc = "High-bandwidth Rx ISO Endpoint Support"]
         #[inline(always)]
-        pub fn set_hb_rx_e(&mut self, val: bool) {
+        pub fn set_hbrxe(&mut self, val: bool) {
             self.0 = (self.0 & !(0x01 << 4usize)) | (((val as u8) & 0x01) << 4usize);
         }
         #[doc = "Endian ordering indicator"]
@@ -206,24 +246,24 @@ pub mod regs {
         }
         #[doc = "Automatic bulk packet splitting"]
         #[inline(always)]
-        pub const fn mp_tx_e(&self) -> bool {
+        pub const fn mptxe(&self) -> bool {
             let val = (self.0 >> 6usize) & 0x01;
             val != 0
         }
         #[doc = "Automatic bulk packet splitting"]
         #[inline(always)]
-        pub fn set_mp_tx_e(&mut self, val: bool) {
+        pub fn set_mptxe(&mut self, val: bool) {
             self.0 = (self.0 & !(0x01 << 6usize)) | (((val as u8) & 0x01) << 6usize);
         }
         #[doc = "Automatic bulk packet amalgamation"]
         #[inline(always)]
-        pub const fn mp_rx_e(&self) -> bool {
+        pub const fn mprxe(&self) -> bool {
             let val = (self.0 >> 7usize) & 0x01;
             val != 0
         }
         #[doc = "Automatic bulk packet amalgamation"]
         #[inline(always)]
-        pub fn set_mp_rx_e(&mut self, val: bool) {
+        pub fn set_mprxe(&mut self, val: bool) {
             self.0 = (self.0 & !(0x01 << 7usize)) | (((val as u8) & 0x01) << 7usize);
         }
     }
@@ -379,6 +419,122 @@ pub mod regs {
             Csr0l(0)
         }
     }
+    #[doc = "Device Control Register for USB mode and VBus monitoring"]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct Devctl(pub u8);
+    impl Devctl {
+        #[doc = "Control or monitor USB session state"]
+        #[inline(always)]
+        pub const fn session(&self) -> bool {
+            let val = (self.0 >> 0usize) & 0x01;
+            val != 0
+        }
+        #[doc = "Control or monitor USB session state"]
+        #[inline(always)]
+        pub fn set_session(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 0usize)) | (((val as u8) & 0x01) << 0usize);
+        }
+        #[doc = "Initiate Host Negotiation Protocol"]
+        #[inline(always)]
+        pub const fn host_req(&self) -> bool {
+            let val = (self.0 >> 1usize) & 0x01;
+            val != 0
+        }
+        #[doc = "Initiate Host Negotiation Protocol"]
+        #[inline(always)]
+        pub fn set_host_req(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 1usize)) | (((val as u8) & 0x01) << 1usize);
+        }
+        #[doc = "Indicates USB Host mode operation"]
+        #[inline(always)]
+        pub const fn host_mode(&self) -> bool {
+            let val = (self.0 >> 2usize) & 0x01;
+            val != 0
+        }
+        #[doc = "Indicates USB Host mode operation"]
+        #[inline(always)]
+        pub fn set_host_mode(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 2usize)) | (((val as u8) & 0x01) << 2usize);
+        }
+        #[doc = "VBus voltage level indication"]
+        #[inline(always)]
+        pub const fn vbus(&self) -> super::vals::VbusLevel {
+            let val = (self.0 >> 3usize) & 0x03;
+            super::vals::VbusLevel::from_bits(val as u8)
+        }
+        #[doc = "VBus voltage level indication"]
+        #[inline(always)]
+        pub fn set_vbus(&mut self, val: super::vals::VbusLevel) {
+            self.0 = (self.0 & !(0x03 << 3usize)) | (((val.to_bits() as u8) & 0x03) << 3usize);
+        }
+        #[doc = "Low-speed device detection"]
+        #[inline(always)]
+        pub const fn ls_dev(&self) -> bool {
+            let val = (self.0 >> 5usize) & 0x01;
+            val != 0
+        }
+        #[doc = "Low-speed device detection"]
+        #[inline(always)]
+        pub fn set_ls_dev(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 5usize)) | (((val as u8) & 0x01) << 5usize);
+        }
+        #[doc = "Full-speed or high-speed device detection"]
+        #[inline(always)]
+        pub const fn fs_dev(&self) -> bool {
+            let val = (self.0 >> 6usize) & 0x01;
+            val != 0
+        }
+        #[doc = "Full-speed or high-speed device detection"]
+        #[inline(always)]
+        pub fn set_fs_dev(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 6usize)) | (((val as u8) & 0x01) << 6usize);
+        }
+        #[doc = "Indicates device type in USB session"]
+        #[inline(always)]
+        pub const fn b_device(&self) -> super::vals::DeviceType {
+            let val = (self.0 >> 7usize) & 0x01;
+            super::vals::DeviceType::from_bits(val as u8)
+        }
+        #[doc = "Indicates device type in USB session"]
+        #[inline(always)]
+        pub fn set_b_device(&mut self, val: super::vals::DeviceType) {
+            self.0 = (self.0 & !(0x01 << 7usize)) | (((val.to_bits() as u8) & 0x01) << 7usize);
+        }
+    }
+    impl Default for Devctl {
+        #[inline(always)]
+        fn default() -> Devctl {
+            Devctl(0)
+        }
+    }
+    #[doc = "Indicates which of the endpoints have disabled the double packet buffer functionality described in section 8.4.2.2 of the MUSBMHDRC Product Specification"]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct Dpktbufdis(pub u16);
+    impl Dpktbufdis {
+        #[doc = "Double Packet Buffer Disable for Tx/Rx Endpoint x (except EP0)"]
+        #[inline(always)]
+        pub const fn dis(&self, n: usize) -> bool {
+            assert!(n < 8usize);
+            let offs = 0usize + n * 1usize;
+            let val = (self.0 >> offs) & 0x01;
+            val != 0
+        }
+        #[doc = "Double Packet Buffer Disable for Tx/Rx Endpoint x (except EP0)"]
+        #[inline(always)]
+        pub fn set_dis(&mut self, n: usize, val: bool) {
+            assert!(n < 8usize);
+            let offs = 0usize + n * 1usize;
+            self.0 = (self.0 & !(0x01 << offs)) | (((val as u16) & 0x01) << offs);
+        }
+    }
+    impl Default for Dpktbufdis {
+        #[inline(always)]
+        fn default() -> Dpktbufdis {
+            Dpktbufdis(0)
+        }
+    }
     #[doc = "Function Address Register for USB device addressing"]
     #[repr(transparent)]
     #[derive(Copy, Clone, Eq, PartialEq)]
@@ -423,6 +579,97 @@ pub mod regs {
         #[inline(always)]
         fn default() -> Fifo {
             Fifo(0)
+        }
+    }
+    #[doc = "controls the start address of the selected endpoint FIFO"]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct FifoAdd(pub u16);
+    impl FifoAdd {
+        #[doc = "Start address of the endpoint FIFO in units of 8 bytes"]
+        #[inline(always)]
+        pub const fn add(&self) -> u16 {
+            let val = (self.0 >> 0usize) & 0x1fff;
+            val as u16
+        }
+        #[doc = "Start address of the endpoint FIFO in units of 8 bytes"]
+        #[inline(always)]
+        pub fn set_add(&mut self, val: u16) {
+            self.0 = (self.0 & !(0x1fff << 0usize)) | (((val as u16) & 0x1fff) << 0usize);
+        }
+    }
+    impl Default for FifoAdd {
+        #[inline(always)]
+        fn default() -> FifoAdd {
+            FifoAdd(0)
+        }
+    }
+    #[doc = "controls the size of the selected endpoint FIFO"]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct FifoSz(pub u8);
+    impl FifoSz {
+        #[doc = "Maximum packet size to be allowed for (before any splitting within the FIFO of Bulk/High Bandwidth packets prior to transmission – see Sections 8.4.1.3, 8.4.1.4 and 8.5.3)"]
+        #[inline(always)]
+        pub const fn sz(&self) -> u8 {
+            let val = (self.0 >> 0usize) & 0x07;
+            val as u8
+        }
+        #[doc = "Maximum packet size to be allowed for (before any splitting within the FIFO of Bulk/High Bandwidth packets prior to transmission – see Sections 8.4.1.3, 8.4.1.4 and 8.5.3)"]
+        #[inline(always)]
+        pub fn set_sz(&mut self, val: u8) {
+            self.0 = (self.0 & !(0x07 << 0usize)) | (((val as u8) & 0x07) << 0usize);
+        }
+        #[doc = "Defines whether double-packet buffering supported"]
+        #[inline(always)]
+        pub const fn dpb(&self) -> bool {
+            let val = (self.0 >> 4usize) & 0x01;
+            val != 0
+        }
+        #[doc = "Defines whether double-packet buffering supported"]
+        #[inline(always)]
+        pub fn set_dpb(&mut self, val: bool) {
+            self.0 = (self.0 & !(0x01 << 4usize)) | (((val as u8) & 0x01) << 4usize);
+        }
+    }
+    impl Default for FifoSz {
+        #[inline(always)]
+        fn default() -> FifoSz {
+            FifoSz(0)
+        }
+    }
+    #[doc = "FIFO Size Register for TX and RX Endpoints"]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct Fifosize(pub u8);
+    impl Fifosize {
+        #[doc = "Size of the selected Tx endpoint FIFO (2^n bytes, 0 if not configured)"]
+        #[inline(always)]
+        pub const fn tx_fifo_size(&self) -> u8 {
+            let val = (self.0 >> 0usize) & 0x0f;
+            val as u8
+        }
+        #[doc = "Size of the selected Tx endpoint FIFO (2^n bytes, 0 if not configured)"]
+        #[inline(always)]
+        pub fn set_tx_fifo_size(&mut self, val: u8) {
+            self.0 = (self.0 & !(0x0f << 0usize)) | (((val as u8) & 0x0f) << 0usize);
+        }
+        #[doc = "Size of the selected Rx endpoint FIFO (2^n bytes, 0 if not configured)"]
+        #[inline(always)]
+        pub const fn rx_fifo_size(&self) -> u8 {
+            let val = (self.0 >> 4usize) & 0x0f;
+            val as u8
+        }
+        #[doc = "Size of the selected Rx endpoint FIFO (2^n bytes, 0 if not configured)"]
+        #[inline(always)]
+        pub fn set_rx_fifo_size(&mut self, val: u8) {
+            self.0 = (self.0 & !(0x0f << 4usize)) | (((val as u8) & 0x0f) << 4usize);
+        }
+    }
+    impl Default for Fifosize {
+        #[inline(always)]
+        fn default() -> Fifosize {
+            Fifosize(0)
         }
     }
     #[doc = "Last received USB frame number"]
@@ -476,18 +723,18 @@ pub mod regs {
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Intrrx(pub u16);
     impl Intrrx {
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Receive endpoint interrupt (except EP0)"]
         #[inline(always)]
         pub const fn ep_rx(&self, n: usize) -> bool {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
         }
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Receive endpoint interrupt (except EP0)"]
         #[inline(always)]
         pub fn set_ep_rx(&mut self, n: usize, val: bool) {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u16) & 0x01) << offs);
         }
@@ -506,7 +753,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (except EP0)"]
         #[inline(always)]
         pub const fn ep_rxe(&self, n: usize) -> bool {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -514,7 +761,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (except EP0)"]
         #[inline(always)]
         pub fn set_ep_rxe(&mut self, n: usize, val: bool) {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u16) & 0x01) << offs);
         }
@@ -530,18 +777,18 @@ pub mod regs {
     #[derive(Copy, Clone, Eq, PartialEq)]
     pub struct Intrtx(pub u16);
     impl Intrtx {
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Endpoint 0 and transmit endpoints interrupt"]
         #[inline(always)]
         pub const fn ep_tx(&self, n: usize) -> bool {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
         }
-        #[doc = "Endpoint transmit interrupt (except EP0)"]
+        #[doc = "Endpoint 0 and transmit endpoints interrupt"]
         #[inline(always)]
         pub fn set_ep_tx(&mut self, n: usize, val: bool) {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u16) & 0x01) << offs);
         }
@@ -560,7 +807,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (EP0:TXE_RXE)"]
         #[inline(always)]
         pub const fn ep_txe(&self, n: usize) -> bool {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             let val = (self.0 >> offs) & 0x01;
             val != 0
@@ -568,7 +815,7 @@ pub mod regs {
         #[doc = "Endpoint transmit interrupt enable (EP0:TXE_RXE)"]
         #[inline(always)]
         pub fn set_ep_txe(&mut self, n: usize, val: bool) {
-            assert!(n < 16usize);
+            assert!(n < 8usize);
             let offs = 0usize + n * 1usize;
             self.0 = (self.0 & !(0x01 << offs)) | (((val as u16) & 0x01) << offs);
         }
@@ -606,13 +853,13 @@ pub mod regs {
         pub fn set_resume(&mut self, val: bool) {
             self.0 = (self.0 & !(0x01 << 1usize)) | (((val as u8) & 0x01) << 1usize);
         }
-        #[doc = "Reset signaling detected"]
+        #[doc = "Reset signaling detected (Peripheral mode) or Babble detected (Host mode)"]
         #[inline(always)]
         pub const fn reset(&self) -> bool {
             let val = (self.0 >> 2usize) & 0x01;
             val != 0
         }
-        #[doc = "Reset signaling detected"]
+        #[doc = "Reset signaling detected (Peripheral mode) or Babble detected (Host mode)"]
         #[inline(always)]
         pub fn set_reset(&mut self, val: bool) {
             self.0 = (self.0 & !(0x01 << 2usize)) | (((val as u8) & 0x01) << 2usize);
@@ -777,6 +1024,29 @@ pub mod regs {
         #[inline(always)]
         fn default() -> Intrusbe {
             Intrusbe(0)
+        }
+    }
+    #[doc = "Maximum payload size forendpoint"]
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub struct Maxp(pub u16);
+    impl Maxp {
+        #[doc = "Maximum payload"]
+        #[inline(always)]
+        pub const fn maxp(&self) -> u16 {
+            let val = (self.0 >> 0usize) & 0x07ff;
+            val as u16
+        }
+        #[doc = "Maximum payload"]
+        #[inline(always)]
+        pub fn set_maxp(&mut self, val: u16) {
+            self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);
+        }
+    }
+    impl Default for Maxp {
+        #[inline(always)]
+        fn default() -> Maxp {
+            Maxp(0)
         }
     }
     #[doc = "USB Power Control and Status Register"]
@@ -1080,29 +1350,6 @@ pub mod regs {
             Rxcsrl(0)
         }
     }
-    #[doc = "Maximum payload size for RX endpoint"]
-    #[repr(transparent)]
-    #[derive(Copy, Clone, Eq, PartialEq)]
-    pub struct Rxmaxp(pub u16);
-    impl Rxmaxp {
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub const fn maxp(&self) -> u16 {
-            let val = (self.0 >> 0usize) & 0x07ff;
-            val as u16
-        }
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub fn set_maxp(&mut self, val: u16) {
-            self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);
-        }
-    }
-    impl Default for Rxmaxp {
-        #[inline(always)]
-        fn default() -> Rxmaxp {
-            Rxmaxp(0)
-        }
-    }
     #[doc = "USB test mode configuration register"]
     #[repr(transparent)]
     #[derive(Copy, Clone, Eq, PartialEq)]
@@ -1381,36 +1628,41 @@ pub mod regs {
             Txcsrl(0)
         }
     }
-    #[doc = "Maximum payload size for TX endpoint"]
-    #[repr(transparent)]
-    #[derive(Copy, Clone, Eq, PartialEq)]
-    pub struct Txmaxp(pub u16);
-    impl Txmaxp {
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub const fn maxp(&self) -> u16 {
-            let val = (self.0 >> 0usize) & 0x07ff;
-            val as u16
-        }
-        #[doc = "Maximum payload in bytes"]
-        #[inline(always)]
-        pub fn set_maxp(&mut self, val: u16) {
-            self.0 = (self.0 & !(0x07ff << 0usize)) | (((val as u16) & 0x07ff) << 0usize);
-        }
-    }
-    impl Default for Txmaxp {
-        #[inline(always)]
-        fn default() -> Txmaxp {
-            Txmaxp(0)
-        }
-    }
 }
 pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+    pub enum DeviceType {
+        ADevice = 0x0,
+        BDevice = 0x01,
+    }
+    impl DeviceType {
+        #[inline(always)]
+        pub const fn from_bits(val: u8) -> DeviceType {
+            unsafe { core::mem::transmute(val & 0x01) }
+        }
+        #[inline(always)]
+        pub const fn to_bits(self) -> u8 {
+            unsafe { core::mem::transmute(self) }
+        }
+    }
+    impl From<u8> for DeviceType {
+        #[inline(always)]
+        fn from(val: u8) -> DeviceType {
+            DeviceType::from_bits(val)
+        }
+    }
+    impl From<DeviceType> for u8 {
+        #[inline(always)]
+        fn from(val: DeviceType) -> u8 {
+            DeviceType::to_bits(val)
+        }
+    }
+    #[repr(u8)]
+    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum EndpointDirection {
-        RX = 0x0,
-        TX = 0x01,
+        Rx = 0x0,
+        Tx = 0x01,
     }
     impl EndpointDirection {
         #[inline(always)]
@@ -1437,8 +1689,8 @@ pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum ForceHostMode {
-        NORMAL = 0x0,
-        FORCE = 0x01,
+        Normal = 0x0,
+        Force = 0x01,
     }
     impl ForceHostMode {
         #[inline(always)]
@@ -1465,8 +1717,8 @@ pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum HsModeStatus {
-        FULL_SPEED = 0x0,
-        HIGH_SPEED = 0x01,
+        FullSpeed = 0x0,
+        HighSpeed = 0x01,
     }
     impl HsModeStatus {
         #[inline(always)]
@@ -1493,8 +1745,8 @@ pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum IsoUpdateMode {
-        NORMAL = 0x0,
-        WAIT_SOF = 0x01,
+        Normal = 0x0,
+        WaitSof = 0x01,
     }
     impl IsoUpdateMode {
         #[inline(always)]
@@ -1521,8 +1773,8 @@ pub mod vals {
     #[repr(u8)]
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
     pub enum UtmiWidth {
-        EIGHT_BIT = 0x0,
-        SIXTEEN_BIT = 0x01,
+        EightBit = 0x0,
+        SixteenBit = 0x01,
     }
     impl UtmiWidth {
         #[inline(always)]
@@ -1544,6 +1796,36 @@ pub mod vals {
         #[inline(always)]
         fn from(val: UtmiWidth) -> u8 {
             UtmiWidth::to_bits(val)
+        }
+    }
+    #[repr(u8)]
+    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+    pub enum VbusLevel {
+        BelowSessionEnd = 0x0,
+        AboveSessionEndBelowAvalid = 0x01,
+        AboveAvalidBelowVbusValid = 0x02,
+        AboveVbusValid = 0x03,
+    }
+    impl VbusLevel {
+        #[inline(always)]
+        pub const fn from_bits(val: u8) -> VbusLevel {
+            unsafe { core::mem::transmute(val & 0x03) }
+        }
+        #[inline(always)]
+        pub const fn to_bits(self) -> u8 {
+            unsafe { core::mem::transmute(self) }
+        }
+    }
+    impl From<u8> for VbusLevel {
+        #[inline(always)]
+        fn from(val: u8) -> VbusLevel {
+            VbusLevel::from_bits(val)
+        }
+    }
+    impl From<VbusLevel> for u8 {
+        #[inline(always)]
+        fn from(val: VbusLevel) -> u8 {
+            VbusLevel::to_bits(val)
         }
     }
 }

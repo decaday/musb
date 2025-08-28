@@ -16,15 +16,19 @@ mod usb_device_impl;
 #[cfg(feature = "usb-device-impl")]
 pub use usb_device_impl::*;
 
-mod alloc_endpoint;
-mod common_impl;
+#[cfg(not(feature = "builtin-readconf"))]
+pub mod alloc_endpoint;
+#[cfg(not(feature = "builtin-readconf"))]
+pub mod common_impl;
 
 pub mod generated;
 pub use generated::common;
 pub use generated::regs;
 
-mod info {
+pub mod info {
     pub use crate::generated::ENDPOINTS;
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub use crate::generated::TOTAL_FIFO_SIZE;
 
     #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum EpDirection {
@@ -35,7 +39,7 @@ mod info {
 
     pub struct EpInfo {
         pub ep_direction: EpDirection,
-        pub max_packet_size_dword: u8,
+        pub max_packet_size: u16,
     }
 }
 #[cfg(feature = "_gen-usb-instance")]

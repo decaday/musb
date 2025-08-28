@@ -1,0 +1,11 @@
+name: readconf
+block: readconf
+fifo:
+  type: dynamic
+  total_size: 9999
+reg_bit_size:
+  fifo: 8
+  intr: 16
+endpoints:
+  - type: rxtx
+    max_packet_size: 64

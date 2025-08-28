@@ -60,7 +60,7 @@ block/USB:
     description: Maximum packet size for peripheral TX endpoint.
     byte_offset: 0x10
     bit_size: 16
-    fieldset: TXMAXP
+    fieldset: MAXP
   - name: CSR0L
     description: Control Status register lower byte for Endpoint 0.
     byte_offset: 0x12
@@ -85,17 +85,17 @@ block/USB:
     description: Maximum packet size for peripheral Rx endpoint.
     byte_offset: 0x14
     bit_size: 16
-    fieldset: RXMAXP
+    fieldset: MAXP
   - name: RXCSRL
     description: Control Status register lower byte for peripheral Rx endpoint.
     byte_offset: 0x16
     bit_size: 8
-    fieldset: RXCSRH
+    fieldset: RXCSRL
   - name: RXCSRH
     description: Control Status register higher byte for peripheral Rx endpoint.
     byte_offset: 0x17
     bit_size: 8
-    fieldset: RXCSRL
+    fieldset: RXCSRH
   - name: COUNT0
     description: Number of received bytes in Endpoint 0 FIFO.
     byte_offset: 0x18
@@ -111,6 +111,11 @@ block/USB:
     byte_offset: 0x1F
     bit_size: 8
     fieldset: CONFIGDATA
+  - name: FIFOSIZE
+    description: FIFO Size Register for TX and RX Endpoints
+    byte_offset: 0x1F
+    bit_size: 8
+    fieldset: FIFOSIZE
   - name: FIFO
     description: FIFO for endpoints.
     byte_offset: 0x20
@@ -119,3 +124,38 @@ block/USB:
     array:
       len: ENDPOINTS_NUM
       stride: 4
+  - name: DEVCTL
+    description:  used to select whether the MUSBMHDRC is operating in Peripheral mode or in Host mode, and for controlling and monitoring the USB VBus line.
+    byte_offset: 0x60
+    bit_size: 8
+    fieldset: DEVCTL
+  - name: TX_FIFO_SZ
+    description: controls the size of the selected TX endpoint FIFO
+    byte_offset: 0x62
+    bit_size: 8
+    fieldset: FIFO_SZ
+  - name: RX_FIFO_SZ
+    description: controls the size of the selected Rx endpoint FIFO
+    byte_offset: 0x63
+    bit_size: 8
+    fieldset: FIFO_SZ
+  - name: TX_FIFO_ADD
+    description: controls the start address of the selected Tx endpoint FIFO
+    byte_offset: 0x64
+    bit_size: 16
+    fieldset: FIFO_ADD
+  - name: RX_FIFO_ADD
+    description: controls the start address of the selected Rx endpoint FIFO
+    byte_offset: 0x66
+    bit_size: 16
+    fieldset: FIFO_ADD
+  - name: TX_DPKTBUFDIS
+    description: Double Packet Buffer Disable register.
+    byte_offset: 0x342
+    bit_size: INTR_REG_BIT_SIZE
+    fieldset: DPKTBUFDIS
+  - name: RX_DPKTBUFDIS
+    description: Double Packet Buffer Disable register.
+    byte_offset: 0x344
+    bit_size: INTR_REG_BIT_SIZE
+    fieldset: DPKTBUFDIS

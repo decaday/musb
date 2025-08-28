@@ -33,21 +33,20 @@ impl<'d, T: MusbInstance, D: Dir> driver::Endpoint for Endpoint<'d, T, D> {
             }
         })
         .await;
-        trace!("Endpoint {:#X} wait enabled OK", self.info.addr);
+        trace!("musb/ep: endpoint {:#X} wait enabled OK", self.info.addr);
     }
 }
 
 impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
     async fn read(&mut self, buf: &mut [u8]) -> Result<usize, EndpointError> {
-        trace!("READ WAITING, buf.len() = {}", buf.len());
+        trace!("musb/ep: read waiting, buf.len() = {}", buf.len());
         let index = self.info.addr.index();
         let regs = T::regs();
 
         let _ = poll_fn(|cx| {
             EP_RX_WAKERS[index].register(cx.waker());
-            regs.index().write(|w| w.set_index(index as _));
+            regs.index().write(|w| w.set_index(index as _)); 
             let ready = regs.rxcsrl().read().rx_pkt_rdy();
-
             if ready {
                 Poll::Ready(())
             } else {
@@ -66,7 +65,7 @@ impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
             .take(read_count as _)
             .for_each(|b| *b = regs.fifo(index).read().data());
         regs.rxcsrl().modify(|w| w.set_rx_pkt_rdy(false));
-        trace!("READ OK, rx_len = {}", read_count);
+        trace!("musb/ep: read ok, rx_len = {}", read_count);
 
         Ok(read_count as usize)
     }
@@ -81,7 +80,7 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
         let index = self.info.addr.index();
         let regs = T::regs();
 
-        trace!("WRITE WAITING len = {}", buf.len());
+        trace!("musb/ep: write waiting len = {}", buf.len());
 
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[index].register(cx.waker());
@@ -102,7 +101,7 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
             .for_each(|b| regs.fifo(index).write(|w| w.set_data(*b)));
 
         regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
-        trace!("WRITE OK");
+        trace!("musb/ep: write ok");
         Ok(())
     }
 }

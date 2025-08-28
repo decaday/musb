@@ -1,32 +1,46 @@
 use embassy_usb_driver::{Direction, EndpointType};
 
 use crate::info::ENDPOINTS;
+#[cfg(not(feature = "_fixed-fifo-size"))]
+use crate::info::TOTAL_FIFO_SIZE;
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub(crate) struct EndpointData {
-    pub(crate) ep_conf: EndpointConfig, // only valid if used_tx || used_rx
-    pub(crate) used_tx: bool,
-    pub(crate) used_rx: bool,
+pub struct EndpointConfig {
+    pub ep_type: EndpointType,
+    pub tx_max_packet_size: u16,
+    pub rx_max_packet_size: u16,
+    
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub tx_fifo_size_bits: u8,
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub rx_fifo_size_bits: u8,
+
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub tx_fifo_addr_8bytes: u16,
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    pub rx_fifo_addr_8bytes: u16,
 }
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub(crate) struct EndpointConfig {
-    pub(crate) ep_type: EndpointType,
-    pub(crate) tx_max_fifo_size_dword: u16,
-    pub(crate) rx_max_fifo_size_dword: u16,
+pub struct EndpointData {
+    pub ep_conf: EndpointConfig,
+    pub used_tx: bool,
+    pub used_rx: bool,
 }
 
-pub(crate) enum EndpointAllocError {
+pub enum EndpointAllocError {
     EndpointOverflow,
     InvalidEndpoint,
+    EpDirNotSupported,
+    EpUsed,
+    MaxPacketSizeBiggerThanEpFifoSize,
     #[cfg(not(feature = "_fixed-fifo-size"))]
     BufferOverflow,
 }
 
-pub(crate) fn alloc_endpoint(
+pub fn alloc_endpoint(
     alloc: &mut [EndpointData; ENDPOINTS.len()],
+    #[cfg(not(feature = "_fixed-fifo-size"))] next_fifo_addr_8bytes: &mut u16,
     ep_type: EndpointType,
     ep_index: Option<u8>,
     direction: Direction,
@@ -34,29 +48,26 @@ pub(crate) fn alloc_endpoint(
 ) -> Result<u8, EndpointAllocError> {
     let res = if let Some(index) = ep_index {
         if index >= ENDPOINTS.len() as u8 {
-            return Err(EndpointAllocError::EndpointOverflow);
+            return Err(EndpointAllocError::InvalidEndpoint);
         }
         if index == 0 {
             Some((0, &mut alloc[0]))
         } else {
-            if check_endpoint(
+            check_endpoint(
                 &alloc[index as usize],
                 ep_type,
                 index,
                 direction,
                 max_packet_size,
-            ) {
-                Some((index as usize, &mut alloc[index as usize]))
-            } else {
-                return Err(EndpointAllocError::InvalidEndpoint);
-            }
+            )?;
+            Some((index as usize, &mut alloc[index as usize]))
         }
     } else {
         alloc.iter_mut().enumerate().find(|(i, ep)| {
             if *i == 0 {
                 return false; // reserved for control pipe
             }
-            check_endpoint(ep, ep_type, *i as _, direction, max_packet_size)
+            check_endpoint(ep, ep_type, *i as _, direction, max_packet_size).is_ok()
         })
     };
 
@@ -66,19 +77,66 @@ pub(crate) fn alloc_endpoint(
     };
 
     ep.ep_conf.ep_type = ep_type;
+    
+    // --- Dynamic FIFO Allocation Logic ---
+    #[cfg(not(feature = "_fixed-fifo-size"))]
+    if ep_type == EndpointType::Control {
+        assert!(max_packet_size <= 64, "endpoint0 max packet size must be <= 64");
+        match direction {
+            // EP0 has fixed FIFO size(64k) and address.
+            Direction::Out => {
+                ep.ep_conf.rx_max_packet_size = max_packet_size;
+                ep.ep_conf.rx_fifo_size_bits = 0;
+                ep.ep_conf.rx_fifo_addr_8bytes = 0;
+            }
+            Direction::In => {
+                ep.ep_conf.tx_max_packet_size = max_packet_size;
+                ep.ep_conf.tx_fifo_size_bits =0;
+                ep.ep_conf.tx_fifo_addr_8bytes = 0;
+            }
+        }
+    }
+    else {
+        let fifo_size_bytes = max_packet_size.next_power_of_two().max(8) as u16;
+        let fifo_size_8bytes = fifo_size_bytes / 8;
+        
+        let assigned_addr_8bytes = *next_fifo_addr_8bytes;
+        
+        if ep.ep_conf.ep_type == EndpointType::Control {
+            *next_fifo_addr_8bytes += fifo_size_8bytes;
+        }
+
+        if *next_fifo_addr_8bytes * 8 > TOTAL_FIFO_SIZE {
+            return Err(EndpointAllocError::BufferOverflow);
+        }
+
+        match direction {
+            Direction::Out => {
+                ep.ep_conf.rx_max_packet_size = max_packet_size;
+                ep.ep_conf.rx_fifo_size_bits = fifo_size_bytes.trailing_zeros() as u8;
+                ep.ep_conf.rx_fifo_addr_8bytes = assigned_addr_8bytes;
+            }
+            Direction::In => {
+                ep.ep_conf.tx_max_packet_size = max_packet_size;
+                ep.ep_conf.tx_fifo_size_bits = fifo_size_bytes.trailing_zeros() as u8;
+                ep.ep_conf.tx_fifo_addr_8bytes = assigned_addr_8bytes;
+            }
+        }
+    }
+    
+    #[cfg(feature = "_fixed-fifo-size")]
+    {
+        // For fixed FIFO, we don't calculate or assign, just record the packet size.
+        // The sizes and addresses will be retrieved from `crate::generated`.
+        match direction {
+            Direction::Out => ep.ep_conf.rx_max_packet_size = max_packet_size,
+            Direction::In => ep.ep_conf.tx_max_packet_size = max_packet_size,
+        }
+    }
 
     match direction {
-        Direction::Out => {
-            assert!(!ep.used_rx);
-            ep.used_rx = true;
-            ep.ep_conf.rx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
-        }
-        Direction::In => {
-            assert!(!ep.used_tx);
-            ep.used_tx = true;
-
-            ep.ep_conf.tx_max_fifo_size_dword = calc_max_fifo_size_dword(max_packet_size);
-        }
+        Direction::Out => ep.used_rx = true,
+        Direction::In => ep.used_tx = true,
     };
 
     Ok(index as u8)
@@ -90,47 +148,45 @@ fn check_endpoint(
     index: u8,
     direction: Direction,
     max_packet_size: u16,
-) -> bool {
+) -> Result<(), EndpointAllocError> {
     let used = ep.used_rx || ep.used_tx;
     let _ = index;
 
-    // #[cfg(all(not(feature = "allow-ep-shared-fifo"), feature = "_ep-shared-fifo"))]
-    // if used && index != 0 { return false }
+    #[cfg(feature = "_ep-shared-fifo")]
+    if used && index != 0 { return Err(EndpointAllocError::EpUsed) }
 
-    if ((max_packet_size + 7) / 8) as u8 > ENDPOINTS[index as usize].max_packet_size_dword {
-        return false;
+    if max_packet_size > ENDPOINTS[index as usize].max_packet_size {
+        return Err(EndpointAllocError::MaxPacketSizeBiggerThanEpFifoSize);
     }
 
     if ENDPOINTS[index as usize].ep_direction != crate::info::EpDirection::RXTX {
         match direction {
             Direction::Out => {
                 if ENDPOINTS[index as usize].ep_direction != crate::info::EpDirection::RX {
-                    return false;
+                    return Err(EndpointAllocError::EpDirNotSupported);
                 }
             }
             Direction::In => {
                 if ENDPOINTS[index as usize].ep_direction != crate::info::EpDirection::TX {
-                    return false;
+                    return Err(EndpointAllocError::EpDirNotSupported);
                 }
             }
         }
     }
 
     if alloc_ep_type == EndpointType::Bulk && used {
-        return false;
+        return Err(EndpointAllocError::EpUsed);
     }
 
     let used_dir = match direction {
         Direction::Out => ep.used_rx,
         Direction::In => ep.used_tx,
     };
-    !used || (ep.ep_conf.ep_type == alloc_ep_type && !used_dir)
+    
+    if !used || (ep.ep_conf.ep_type == alloc_ep_type && !used_dir) {
+        Ok(())
+    } else {
+        Err(EndpointAllocError::EpUsed)
+    }
 }
 
-fn calc_max_fifo_size_dword(len: u16) -> u16 {
-    let dwords = ((len + 7) / 8) as u16;
-    if dwords > 8 {
-        panic!("Invalid length: {}", len);
-    }
-    dwords
-}

@@ -1,0 +1,14 @@
+
+
+fieldset/FIFO_SZ:
+  bit_size: 8
+  description: controls the size of the selected endpoint FIFO
+  fields:
+  - name: SZ
+    description: Maximum packet size to be allowed for (before any splitting within the FIFO of Bulk/High Bandwidth packets prior to transmission – see Sections 8.4.1.3, 8.4.1.4 and 8.5.3) 
+    bit_offset: 0
+    bit_size: 3
+  - name: DPB
+    description: Defines whether double-packet buffering supported
+    bit_offset: 4
+    bit_size: 1

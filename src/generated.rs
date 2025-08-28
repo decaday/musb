@@ -28,6 +28,12 @@ cfg_if::cfg_if! {
         #[cfg(feature = "builtin-py32f07x")]
         include!("prebuilds/py32f07x/_generated.rs");
 
+        #[cfg(feature = "builtin-sf32lb52x")]
+        pub mod regs {
+            include!("prebuilds/sf32lb52x/regs.rs");
+        }
+        #[cfg(feature = "builtin-sf32lb52x")]
+        include!("prebuilds/sf32lb52x/_generated.rs");
 
         #[cfg(feature = "builtin-py32f403")]
         pub mod regs {
@@ -42,5 +48,12 @@ cfg_if::cfg_if! {
         }
         #[cfg(feature = "builtin-std-8bep-2048")]
         include!("prebuilds/std-8bep-2048/_generated.rs");
+
+        #[cfg(feature = "builtin-readconf")]
+        pub mod regs {
+            include!("prebuilds/readconf/regs.rs");
+        }
+        #[cfg(feature = "builtin-readconf")]
+        include!("prebuilds/readconf/_generated.rs");
     }
 }

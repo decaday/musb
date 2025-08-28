@@ -1,0 +1,8 @@
+fieldset/MAXP:
+  bit_size: 11
+  description: Maximum payload size forendpoint
+  fields:
+  - name: maxp
+    description: Maximum payload
+    bit_offset: 0
+    bit_size: 11

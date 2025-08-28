@@ -14,14 +14,12 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
     }
 
     async fn setup(&mut self) -> [u8; 8] {
+        trace!("musb/control_pipe: setup");
         let regs = T::regs();
         loop {
-            trace!("SETUP read waiting");
             poll_fn(|cx| {
                 EP_RX_WAKERS[0].register(cx.waker());
-
                 regs.index().write(|w| w.set_index(0));
-
                 if regs.csr0l().read().rx_pkt_rdy() {
                     Poll::Ready(())
                 } else {
@@ -32,7 +30,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
             regs.index().write(|w| w.set_index(0));
             if regs.count0().read().count() != 8 {
-                trace!("SETUP read failed: {:?}", regs.count0().read().count());
+                trace!("musb/setup: read failed, read count: {:?}", regs.count0().read().count());
                 continue;
             }
 
@@ -42,7 +40,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
                 .for_each(|b| *b = regs.fifo(0).read().data());
             regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
 
-            trace!("SETUP read ok");
+            trace!("musb/setup: read OK");
             return buf;
         }
     }
@@ -54,7 +52,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         last: bool,
     ) -> Result<usize, EndpointError> {
         trace!(
-            "control: data_out len={} first={} last={}",
+            "musb/control_pipe: data_out len={} first={} last={}",
             buf.len(),
             first,
             last
@@ -94,14 +92,14 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
                 w.set_data_end(true);
             }
         });
-        trace!("READ OK, rx_len = {}", read_count);
+        trace!("musb/control_pipe: READ OK, rx_len = {}", read_count);
 
         Ok(read_count as usize)
     }
 
     async fn data_in(&mut self, data: &[u8], first: bool, last: bool) -> Result<(), EndpointError> {
         trace!(
-            "control: data_in len={} first={} last={}",
+            "musb/control_pipe: data_in len={} first={} last={}",
             data.len(),
             first,
             last
@@ -112,8 +110,6 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         }
 
         let regs = T::regs();
-
-        trace!("WRITE WAITING");
 
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[0].register(cx.waker());
@@ -141,13 +137,15 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
     }
 
     async fn accept(&mut self) {
-        trace!("control: accept");
-        // If SendStall is not set, Musb will automatically send ACK
+        trace!("musb/control_pipe: accept");
+        // If SendStall is not set, Musb will automatically send ACK,
+        // Programming Guide: No further action is required from the software
+        // Should we await for SetupEnd?
     }
 
     async fn reject(&mut self) {
         let regs = T::regs();
-        trace!("control: reject");
+        trace!("musb/control_pipe: reject");
 
         regs.index().write(|w| w.set_index(0));
         regs.csr0l().modify(|w| {
@@ -158,9 +156,24 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
     async fn accept_set_address(&mut self, addr: u8) {
         // self.accept().await;
-
+        trace!("musb/control_pipe: setting addr: {}", addr);
         let regs = T::regs();
-        trace!("setting addr: {}", addr);
+
+        // Wait for SetupEnd
+        let _ = poll_fn(|cx| {
+            EP_TX_WAKERS[0].register(cx.waker());
+            regs.index().write(|w| w.set_index(0));
+            let setup_end = regs.csr0l().read().setup_end();
+            if setup_end {
+                regs.csr0l().modify(|w| w.set_serviced_setup_end(true));
+                Poll::Ready(())
+            } else {
+                Poll::Pending
+            }
+        })
+        .await;
+
+        trace!("musb/control_pipe: set address acked, setting addr now");
         regs.faddr().write(|w| w.set_func_addr(addr));
     }
 }

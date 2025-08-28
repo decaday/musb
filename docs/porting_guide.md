@@ -54,9 +54,9 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
      intr: 8
    endpoints:
      - type: rxtx
-       max_packet_size_dword: 8
+       max_packet_size: 64
      - type: rxtx
-       max_packet_size_dword: 8
+       max_packet_size: 64
    
    ```
 

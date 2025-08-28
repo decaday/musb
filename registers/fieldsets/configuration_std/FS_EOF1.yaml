@@ -1,0 +1,8 @@
+fieldset/FS_EOF1:
+  bit_size: 8
+  description: Full-speed end of frame time gap.
+  fields:
+  - name: FS_EOF1
+    description: Time before EOF to stop beginning new transactions for Full-speed, in units of 533.3ns.
+    bit_offset: 0
+    bit_size: 8

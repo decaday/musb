@@ -2,12 +2,12 @@ fieldset/CONFIGDATA:
   bit_size: 8
   description: Core configuration information register
   fields:
-  - name: MP_RxE
+  - name: MPRXE
     description: Automatic bulk packet amalgamation
     bit_offset: 7
     bit_size: 1
 
-  - name: MP_TxE
+  - name: MPTXE
     description: Automatic bulk packet splitting
     bit_offset: 6
     bit_size: 1
@@ -17,12 +17,12 @@ fieldset/CONFIGDATA:
     bit_offset: 5
     bit_size: 1
 
-  - name: HB_RxE
+  - name: HBRXE
     description: High-bandwidth Rx ISO Endpoint Support
     bit_offset: 4
     bit_size: 1
 
-  - name: HB_TxE
+  - name: HBTXE
     description: High-bandwidth TX ISO Endpoint Support
     bit_offset: 3
     bit_size: 1

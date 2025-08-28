@@ -1,0 +1,10 @@
+
+
+fieldset/FIFO_ADD:
+  bit_size: 16
+  description: controls the start address of the selected endpoint FIFO
+  fields:
+  - name: ADD
+    description: Start address of the endpoint FIFO in units of 8 bytes
+    bit_offset: 0
+    bit_size: 13

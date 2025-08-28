@@ -4,35 +4,35 @@ use crate::info::EpInfo;
 pub const ENDPOINTS: [EpInfo; 8] = [
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
     EpInfo {
         ep_direction: EpDirection::RXTX,
-        max_packet_size_dword: 8,
+        max_packet_size: 2048,
     },
 ];
-pub const TOTAL_FIFO_SIZE_DWORD: u32 = 256;
+pub const TOTAL_FIFO_SIZE: u16 = 2048;
