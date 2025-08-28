@@ -54,7 +54,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         ep_index: Option<u8>,
     ) -> Result<Endpoint<'d, T, D>, driver::EndpointAllocError> {
         trace!(
-            "allocating type={:?} mps={:?} interval_ms={}, dir={:?}",
+            "musb/alloc_ep: allocating type={:?} mps={:?} interval_ms={}, dir={:?}",
             ep_type,
             max_packet_size,
             interval_ms,
@@ -94,7 +94,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, Some(0))
             .unwrap();
 
-        trace!("enabled");
+        trace!("musb driver: start");
 
         let mut ep_confs = [EndpointConfig {
             ep_type: EndpointType::Bulk,

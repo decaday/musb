@@ -44,7 +44,7 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
     let intrusb = regs.intrusb().read();
     let intrtx = regs.intrtx().read();
     let intrrx = regs.intrrx().read();
-    trace!("on_interrupt, intrusb: {:b}, intrtx: {:b}, intrrx: {:b}", intrusb.0, intrtx.0, intrrx.0);
+    trace!("musb/on_interrupt: intrusb: {:b}, intrtx: {:b}, intrrx: {:b}", intrusb.0, intrtx.0, intrrx.0);
 
     if intrusb.reset() {
         IRQ_RESET.store(true, Ordering::SeqCst);

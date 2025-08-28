@@ -90,7 +90,7 @@ pub fn ep_tx_is_stalled<T: MusbInstance>(index: u8) -> bool {
 pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     #[cfg(not(feature="_fixed-fifo-size"))]
     trace!(
-        "Enabling TX endpoint {}: max_packet_size={}, fifo_size_bits={}, fifo_addr_8bytes={}, ep_type={:?}",
+        "musb/ep_enable: Enabling TX endpoint {}: max_packet_size={}, fifo_size_bits={}, fifo_addr_8bytes={}, ep_type={:?}",
         index,
         config.tx_max_packet_size,
         config.tx_fifo_size_bits,
@@ -99,7 +99,7 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     );
     #[cfg(feature = "_fixed-fifo-size")]
     trace!(
-        "Enabling TX endpoint {}: max_packet_size={}, ep_type={:?}",
+        "musb/ep_enable: Enabling TX endpoint {}: max_packet_size={}, ep_type={:?}",
         index,
         config.tx_max_packet_size,
         config.ep_type
@@ -185,7 +185,7 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
 pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     #[cfg(not(feature="_fixed-fifo-size"))]
     trace!(
-        "Enabling RX endpoint {}: max_packet_size={}, fifo_size_bits={}, fifo_addr_8bytes={}, ep_type={:?}",
+        "musb/ep_enable: Enabling RX endpoint {}: max_packet_size={}, fifo_size_bits={}, fifo_addr_8bytes={}, ep_type={:?}",
         index,
         config.rx_max_packet_size,
         config.rx_fifo_size_bits,
@@ -194,7 +194,7 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     );
     #[cfg(feature = "_fixed-fifo-size")]
     trace!(
-        "Enabling RX endpoint {}: max_packet_size={}, ep_type={:?}",
+        "musb/ep_enable: Enabling RX endpoint {}: max_packet_size={}, ep_type={:?}",
         index,
         config.rx_max_packet_size,
         config.ep_type

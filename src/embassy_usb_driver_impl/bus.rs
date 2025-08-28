@@ -14,7 +14,7 @@ pub struct Bus<'d, T: MusbInstance> {
 impl<'d, T: MusbInstance> Bus<'d, T> {
     fn init(&self) {
         #[cfg(not(feature="_mini"))]
-        trace!("DEVCTL: {:b}", T::regs().devctl().read().0);
+        trace!("musb/bus init: DEVCTL: {:b}", T::regs().devctl().read().0);
         common_impl::bus_init::<T>();
     }
 }
@@ -51,7 +51,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     regs.txcsrl().modify(|w| w.set_flush_fifo(true));
                 }
 
-                trace!("RESET");
+                trace!("musb/poll: reset");
 
                 for w in &EP_TX_WAKERS {
                     w.wake()
@@ -97,7 +97,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     }
 
     fn endpoint_set_enabled(&mut self, ep_addr: EndpointAddress, enabled: bool) {
-        trace!("set_enabled {:x} {}", ep_addr, enabled);
+        trace!("musb/bus/set_enabled: {:x} {}", ep_addr, enabled);
         let ep_index = ep_addr.index();
 
         if enabled {
@@ -108,7 +108,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
 
                     let flags = EP_RX_ENABLED.load(Ordering::Acquire) | (1 << ep_index) as u16;
                     EP_RX_ENABLED.store(flags, Ordering::Release);
-                    // Wake `Endpoint::wait_enabled()`
+                    // Wake for `Endpoint::wait_enabled()`
                     EP_RX_WAKERS[ep_index].wake();
                 }
                 Direction::In => {
@@ -116,7 +116,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
 
                     let flags = EP_TX_ENABLED.load(Ordering::Acquire) | (1 << ep_index) as u16;
                     EP_TX_ENABLED.store(flags, Ordering::Release);
-                    // Wake `Endpoint::wait_enabled()`
+                    // Wake for `Endpoint::wait_enabled()`
                     EP_TX_WAKERS[ep_index].wake();
                 }
             }
