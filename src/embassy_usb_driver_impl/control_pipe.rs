@@ -19,9 +19,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             trace!("SETUP read waiting");
             poll_fn(|cx| {
                 EP_RX_WAKERS[0].register(cx.waker());
-
                 regs.index().write(|w| w.set_index(0));
-
                 if regs.csr0l().read().rx_pkt_rdy() {
                     Poll::Ready(())
                 } else {

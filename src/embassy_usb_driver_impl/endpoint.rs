@@ -47,7 +47,6 @@ impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
             EP_RX_WAKERS[index].register(cx.waker());
             regs.index().write(|w| w.set_index(index as _));
             let ready = regs.rxcsrl().read().rx_pkt_rdy();
-
             if ready {
                 Poll::Ready(())
             } else {

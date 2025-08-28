@@ -16,8 +16,10 @@ mod usb_device_impl;
 #[cfg(feature = "usb-device-impl")]
 pub use usb_device_impl::*;
 
-mod alloc_endpoint;
-mod common_impl;
+#[cfg(not(feature = "builtin-readconf"))]
+pub mod alloc_endpoint;
+#[cfg(not(feature = "builtin-readconf"))]
+pub mod common_impl;
 
 pub mod generated;
 pub use generated::common;

@@ -5,12 +5,15 @@ use crate::regs::vals::EndpointDirection;
 use crate::{trace, warn, MusbInstance};
 use crate::info::ENDPOINTS;
 
-pub fn bus_enable<T: MusbInstance>() {
+pub fn bus_init<T: MusbInstance>() {
     T::regs().intrusbe().write(|w| {
         w.set_reset_enable(true);
         w.set_suspend_enable(true);
         w.set_resume_enable(true);
     });
+
+    T::regs().intrrxe().write_value(Intrrxe(0xFE));
+    T::regs().intrtxe().write_value(Intrtxe(0xFF));
 }
 
 pub fn ep_tx_stall<T: MusbInstance>(index: u8, stalled: bool) {
@@ -102,7 +105,15 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
 
     T::regs().index().write(|w| w.set_index(index));
     if index == 0 {
-        T::regs().intrtxe().modify(|w| w.set_ep_txe(0, true))
+        T::regs().intrtxe().modify(|w| w.set_ep_txe(0, true));
+        T::regs().csr0l().modify(|w| {
+             w.set_serviced_rx_pkt_rdy(true);
+             w.set_serviced_setup_end(true);
+        });
+        #[cfg(not(feature = "_mini"))]
+        T::regs().csr0h().modify(|w| {
+            w.set_flush_fifo(true);
+        });
     } else {
         T::regs()
             .intrtxe()
@@ -190,7 +201,15 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     if index == 0 {
         T::regs().intrtxe().modify(|w|
             // EP0 has only one interrupt enable register
-            w.set_ep_txe(0, true))
+            w.set_ep_txe(0, true));
+        T::regs().csr0l().modify(|w| {
+             w.set_serviced_rx_pkt_rdy(true);
+             w.set_serviced_setup_end(true);
+        });
+        #[cfg(not(feature = "_mini"))]
+        T::regs().csr0h().modify(|w| {
+            w.set_flush_fifo(true);
+        });
     } else {
         T::regs()
             .intrrxe()

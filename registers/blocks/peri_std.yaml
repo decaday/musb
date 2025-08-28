@@ -124,6 +124,11 @@ block/USB:
     array:
       len: ENDPOINTS_NUM
       stride: 4
+  - name: DEVCTL
+    description:  used to select whether the MUSBMHDRC is operating in Peripheral mode or in Host mode, and for controlling and monitoring the USB VBus line.
+    byte_offset: 0x60
+    bit_size: 8
+    fieldset: DEVCTL
   - name: TX_FIFO_SZ
     description: controls the size of the selected TX endpoint FIFO
     byte_offset: 0x62

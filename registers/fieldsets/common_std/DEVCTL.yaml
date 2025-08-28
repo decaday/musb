@@ -52,9 +52,9 @@ enum/VBus_Level:
   variants:
   - name: BELOW_SESSION_END
     value: 0
-  - name: ABOVE_SESSION_END
+  - name: ABOVE_SESSION_END_BELOW_AVALID
     value: 1
-  - name: ABOVE_AVALID
+  - name: ABOVE_AVALID_BELOW_VBUS_VALID
     value: 2
   - name: ABOVE_VBUS_VALID
     value: 3

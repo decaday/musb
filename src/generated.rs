@@ -48,5 +48,12 @@ cfg_if::cfg_if! {
         }
         #[cfg(feature = "builtin-std-8bep-2048")]
         include!("prebuilds/std-8bep-2048/_generated.rs");
+
+        #[cfg(feature = "builtin-readconf")]
+        pub mod regs {
+            include!("prebuilds/readconf/regs.rs");
+        }
+        #[cfg(feature = "builtin-readconf")]
+        include!("prebuilds/readconf/_generated.rs");
     }
 }
