@@ -158,7 +158,22 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         // self.accept().await;
 
         let regs = T::regs();
-        trace!("setting addr: {}", addr);
+
+        // Wait for SetupEnd
+        let _ = poll_fn(|cx| {
+            EP_TX_WAKERS[0].register(cx.waker());
+            regs.index().write(|w| w.set_index(0));
+            let setup_end = regs.csr0l().read().setup_end();
+            if setup_end {
+                regs.csr0l().modify(|w| w.set_serviced_setup_end(true));
+                Poll::Ready(())
+            } else {
+                Poll::Pending
+            }
+        })
+        .await;
+    
+        trace!("set address ACKed, setting addr now");
         regs.faddr().write(|w| w.set_func_addr(addr));
     }
 }
