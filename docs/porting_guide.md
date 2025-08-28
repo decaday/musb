@@ -4,22 +4,22 @@ This guide explains how to add support for new chips using MUSB.
 
 ## Known chips using MUSB IP
 
-| Manufacturer             | Chips (not fully listed)         | IP          |
-| ------------------------ | -------------------------------- | ----------- |
-| Texas Instruments        | am335x,am1802, F2837xD, LM3S6911 | musb**      |
-| Allwinner(全志)          | F1C100S, F133                    | musb phy ip |
-| SiFli (思澈)             | SF32LB52x                        | musb std*   |
-| beken (北科微 or 小博通) | beken725x                        | musb std*   |
-| essemi (东软载波微)      | ES32F027x                        | musb std*   |
-| jieli (杰理)             |                                  | musb**      |
-| SPRD                     | sp7862                           | musb**      |
-| MediaTek                 | MT6735                           | musb**      |
-| Puya (普冉)              | py32f071, py32f403               | musb mini*  |
-| STC (姚永平)             | stc8, stc32, ai8051u             | musb mini*  |
+| Manufacturer             | Chips (not fully listed)         | IP             |
+| ------------------------ | -------------------------------- | -------------- |
+| Texas Instruments        | am335x,am1802, F2837xD, LM3S6911 | musb*          |
+| Allwinner(全志)          | F1C100S, F133                    | musb phy ip*   |
+| SiFli (思澈)             | SF32LB52x                        | musb std + phy |
+| beken (北科微 or 小博通) | beken725x                        | musb std       |
+| essemi (东软载波微)      | ES32F027x                        | musb std       |
+| jieli (杰理)             |                                  | musb*          |
+| SPRD                     | sp7862                           | musb*          |
+| MediaTek                 | MT6735                           | musb*          |
+| Puya (普冉)              | py32f071, py32f403               | musb mini      |
+| STC (姚永平)             | stc8, stc32, ai8051u             | musb mini      |
 
-*: Not sure about the IP name
+I'm not sure about the official sub-name/branch name of them.
 
-**: Further identification is needed
+*: Further identification is needed
 
 ## Overview
 
@@ -27,18 +27,16 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
 
 ## Creating a New Profile
 
-1. **Identify Your Chip**
-   
+1. ##### **Identify Your Chip**
+
    - Registers start with POWER, FADDR (though not always at the beginning)
    - Most registers are 8-bit (some manufacturers group them into 32-bit, but it's usually clear they're composed of 8-bit registers)
    - An INDEX register exists, requiring setting before endpoint operations. EP0 registers are separate, other endpoints use TXCSRH, TXCSRL, RXCSRH, RXCSRL (or IN_CSR1, IN_CSR2, OUT_CSR1, OUT_CSR2)
    - Compare with [block-peri-std](../registers/blocks/peri_std.yaml) to confirm register similarity
-   
-2. **Create Profile YAML**
+
+2. ##### **Create Profile YAML**
 
    To write a profile, please refer to [existing profiles](../registers/profiles) and [serialization-related data types](../build_src/build_serde.rs)
-
-   Example: [the PY32F07x profile example](../registers/profiles/py32f07x.yaml).
 
    ```yaml
    # Example profile structure
@@ -60,7 +58,7 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
    
    ```
 
-3. **Register Definitions**
+3. ##### **Register Definitions**
 
    Each manufacturer's SVD or manual exhibits significant register name variations, despite functional consistency. This crate uses standard MUSB register names.
 
@@ -76,21 +74,59 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
 
      `profile.reg_bit_size.fifo`
 
-     **Note**: This does not change the offset.
+     Note: This does not change the offset.
 
    - **INTR_REG_BIT_SIZE**
 
      `profile.reg_bit_size.intr`
      
-     **Note**: This does not change the offset.
+     Note: This does not change the offset.
+
+4. ##### **Register Patches**
+
+   When your IP has non-official registers or its layout differs from the standard, you can use **patches** in your profile:
+
+   ```yaml
+   patches:
+     - fieldset: USBCFG
+       version: sf32
+   ```
+
+   Then, you can add your register fieldset file under `registers\fieldsets`, for example: `registers\fieldsets\vendor\USBCFG_sf32.yaml`.
+   The version (e.g., `sf32`) is the last part of the filename separated by an underscore ( `_` ).It must be lowercase letters (digits are allowed).
+
+## Add features & prebuilds
+
+You need to add `builtin-your-chip-name` in `Cargo.toml`, and it must match the profile name.
+
+Then, in a proper place within `src\generated.rs`, add the following lines by imitating the existing pattern:
+
+```rust
+#[cfg(feature = "builtin-your-chip-name")]
+pub mod regs {
+   include!("prebuilds/your-chip-name/regs.rs");
+}
+#[cfg(feature = "builtin-std-8bep-2048")]
+include!("prebuilds/your-chip-name/_generated.rs");
+```
+
+Next, create an empty folder named `your-chip-name` under `src\prebuilds`.
+
+After that, run:
+
+```shell
+python update_prebuild.py
+```
+
+If compilation succeeds, the script will automatically add or update the pre-generated code and files (such as PAC) under `src\prebuilds\your-chip-name`.
 
 ## Integrate this crate into a HAL crate
 
-### Examples
+#### Examples
 
 [py32-hal/src/usb.rs · py32-rs/py32-hal](https://github.com/py32-rs/py32-hal/blob/main/src/usb.rs)
 
-### Instance
+#### Instance
 
 Every struct in this crate has a generic parameter `T: MusbInstance`:
 
@@ -103,7 +139,7 @@ pub trait MusbInstance: 'static {
 If the profile contains a base_address field, you can directly use:
 
 ```rust
-let musb_driver = musb::Driver::<musb::UsbInstance>(new);
+let musb_driver = musb::MusbDriver::new::<musb::UsbInstance>();
 ```
 
 `musb::UsbInstance` is a struct that has already implemented the `MusbInstance` trait based on base_address.
@@ -119,9 +155,9 @@ impl musb::MusbInstance for UsbInstance {
 }
 ```
 
-### Driver
+#### Driver
 
-This crate includes a `MusbDriver` that has methods from `embassy_usb_driver::Driver` but doesn't implement it. The intention is for HAL libraries to create a `Driver` that wraps `MusbDriver` to handle platform-specific peripheral initialization. Please refer to the [Examples](#examples) section.
+This crate includes a `MusbDriver` that has methods from `embassy_usb_driver::Driver` but doesn't implement it. The intention is for HAL libraries to create a `Driver` that wraps `MusbDriver` to handle platform-specific peripheral initialization. Please refer to the [Examples](#examples) .
 
 ## Then
 

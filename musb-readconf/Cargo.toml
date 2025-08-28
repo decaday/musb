@@ -1,6 +1,6 @@
 [package]
 name = "musb-readconf"
-version = "0.1.0"
+version = "0.0.9"
 edition = "2024"
 authors = ["Decaday <myDecaday@outlook.com>"]
 repository = "https://github.com/decaday/musb"
@@ -14,7 +14,7 @@ license = "Apache-2.0"
 
 
 [dependencies]
-musb = { path = "../", default-features = false, features = ["builtin-readconf"] }
+musb = { version = "0.2.2", path = "../", default-features = false, features = ["builtin-readconf"] }
 defmt = "0.3"
 
 [features]

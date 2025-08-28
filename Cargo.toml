@@ -1,6 +1,6 @@
 [package]
 name = "musb"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["Decaday <myDecaday@outlook.com>"]
 repository = "https://github.com/decaday/musb"
@@ -11,6 +11,7 @@ description = "musb(Mentor USB) regs and `embassy-usb-driver`, `usb-device` impl
 keywords = ["usb", "hal", "embedded", "no-std", "hardware-support"]
 readme = "README.md"
 license = "Apache-2.0"
+exclude = ["musb-readconf"]
 
 [dependencies]
 embassy-usb-driver = { version = "0.1.0" }
@@ -26,7 +27,7 @@ serde_yaml = "0.9"
 cfg-if = {version = "1.0.0"}
 
 [features]
-# default = ["prebuild"]
+default = ["prebuild"]
 
 embassy-usb-driver-impl = ["embassy-sync"]
 usb-device-impl = ["usb-device"]
@@ -42,8 +43,8 @@ log = ["embassy-sync/log", "usb-device/log"]
 prebuild = []
 
 builtin-std-8bep-2048 = []
-builtin-py32f07x = ["_mini", "_fixed-fifo-size"]
-builtin-py32f403 = []
+builtin-py32f07x = ["_mini"]
+builtin-py32f403 = ["_mini"]
 builtin-sf32lb52x = []
 # for musb-readconf only
 builtin-readconf = []

@@ -19,13 +19,15 @@ These built-in profiles are used via Cargo features (see below), with only one s
 
 - `builtin-py32f403`
 
-- `builtin-std-8bep-2048` (excludes base_address, 8 bidirectional endpoints, 2048K FIFO size in total)
+- `builtin-sf32lb52x`
+
+- `builtin-std-8bep-2048` (8 bidirectional endpoints, 2048K FIFO size in total, without instance)
 
 Add musb to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-musb = { version = "0.1.0", features = ["builtin-std-8bep-2048"] }
+musb = { version = "0.3.0", features = ["builtin-std-8bep-2048"] }
 ```
 
 You can use the [std profile](registers/profiles/) by enabling the `builtin-std-xxx` feature. This profile doesn't include a base_address, so it won't generate a `UsbInstance` (explained in [Porting Guide](docs/porting_guide.md)).
