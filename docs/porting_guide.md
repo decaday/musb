@@ -126,6 +126,8 @@ If compilation succeeds, the script will automatically add or update the pre-gen
 
 [py32-hal/src/usb.rs · py32-rs/py32-hal](https://github.com/py32-rs/py32-hal/blob/main/src/usb.rs)
 
+[sifli-rs/sifli-hal/src/usb.rs · OpenSiFli/sifli-rs](https://github.com/OpenSiFli/sifli-rs/blob/main/sifli-hal/src/usb.rs)
+
 #### Instance
 
 Every struct in this crate has a generic parameter `T: MusbInstance`:

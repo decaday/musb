@@ -40,20 +40,19 @@ If your chip is not included, you'll need to create a new profile. Refer to the 
 
 `usb-device-impl`: Enables [usb-device](https://crates.io/crates/usb-device) implementation.
 
-Note: Only one of these two implementations can be enabled at a time.
+**Note:** Only one of these two implementations can be enabled at a time.
 
 `prebuild`(on by default): Uses pre-generated PAC (Peripheral Access Crate).
 
 `builtin-xxxx` : Uses builtin profile.
 
-
 `defmt`, `log`: Enables debug logging.
 
 ## Examples
 
-hal example: [py32-hal/src/usb.rs · py32-rs/py32-hal](https://github.com/py32-rs/py32-hal/blob/main/src/usb.rs)
+hal example: [py32-hal/src/usb.rs](https://github.com/py32-rs/py32-hal/blob/main/src/usb.rs) , [sifli-rs/sifli-hal/src/usb.rs](https://github.com/OpenSiFli/sifli-rs/blob/main/sifli-hal/src/usb.rs)
 
-embassy-usb: [py32-hal/examples/py32f072](https://github.com/py32-rs/py32-hal/tree/main/examples/py32f072)
+embassy-usb: [py32-hal/examples/py32f072](https://github.com/py32-rs/py32-hal/tree/main/examples/py32f072) , [sifli-rs/examples/sf32lb52x](https://github.com/OpenSiFli/sifli-rs/tree/main/examples/sf32lb52x)
 
 usb-device: [py32-hal/examples/usbd-f072](https://github.com/py32-rs/py32-hal/tree/main/examples/usbd-f072)
 
@@ -71,10 +70,14 @@ If you have any questions or uncertainties, feel free to create an Issue or star
 
 - **Support Dynamic FIFO Size**
 - Support dual packet buffer
-- Support SiFli SF32LB52
+- HS mode
 - Other Chips
-- Host mode 
+- Host mode / OTG (wait for a rust usb host stack)
 
 ## License
 
 This project is under Apache License, Version 2.0 ([LICENSE](LICENSE) or <http://www.apache.org/licenses/LICENSE-2.0>).
+
+#### Acknowledgements
+
+This repo references the MUSB port implementation in [CherryUSB](https://github.com/sakumisu/CherryUSB) for certain aspects.

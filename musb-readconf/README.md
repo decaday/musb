@@ -15,7 +15,7 @@ But, Some Venders masked several following registers like `CONFIGDATA`.
 
 ## Usage
 
-Here is an example of how to use this library: TODO
+Here is an example of how to use this library: [musb-readconf-sifli(sf32lb52x)](https://github.com/decaday/musb-readconf-sifli)
 
 ### 1\. Implement the `MusbInstance` Trait
 
