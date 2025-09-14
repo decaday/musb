@@ -30,6 +30,9 @@ use crate::info::ENDPOINTS;
 mod control_state;
 use control_state::{ControlState, ControlStateEnum};
 
+#[cfg(all(not(feature = "_fixed-fifo-size"), feature = "usb-device-impl"))]
+compile_error!("`usb-device` driver does not currently support dynamic FIFO size.");
+
 pub struct UsbdBus<T: MusbInstance> {
     phantom: PhantomData<T>,
     endpoints: [EndpointData; ENDPOINTS.len()],
@@ -43,8 +46,16 @@ impl<T: MusbInstance> UsbdBus<T> {
             endpoints: [EndpointData {
                 ep_conf: EndpointConfig {
                     ep_type: EndpointType::Bulk,
-                    tx_max_fifo_size: 0,
-                    rx_max_fifo_size: 0,
+                    tx_max_packet_size: 0,
+                    rx_max_packet_size: 0,
+                    #[cfg(not(feature = "_fixed-fifo-size"))]
+                    tx_fifo_size_bits: 0,
+                    #[cfg(not(feature = "_fixed-fifo-size"))]
+                    rx_fifo_size_bits: 0,
+                    #[cfg(not(feature = "_fixed-fifo-size"))]
+                    tx_fifo_addr_8bytes: 0,
+                    #[cfg(not(feature = "_fixed-fifo-size"))]
+                    rx_fifo_addr_8bytes: 0,
                 },
                 used_tx: false,
                 used_rx: false,
@@ -80,14 +91,17 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 EndpointAllocError::EndpointOverflow => UsbError::EndpointOverflow,
                 EndpointAllocError::InvalidEndpoint => UsbError::InvalidEndpoint,
                 #[cfg(not(feature = "_fixed-fifo-size"))]
-                EndpointAllocError::BufferOverflow => UsbError::EndpointOverflow,
+                EndpointAllocError::BufferOverflow => UsbError::EndpointMemoryOverflow,
+                EndpointAllocError::EpDirNotSupported => UsbError::InvalidEndpoint,
+                EndpointAllocError::EpUsed => UsbError::InvalidEndpoint,
+                EndpointAllocError::MaxPacketSizeBiggerThanEpFifoSize => UsbError::EndpointMemoryOverflow,
             })
             .map(|index| usb_device::endpoint::EndpointAddress::from_parts(index as usize, ep_dir))
     }
 
     fn enable(&mut self) {
         trace!("call enable");
-        common_impl::bus_enable::<T>();
+        T::regs().faddr().write(|w| w.set_func_addr(0));
     }
 
     fn reset(&self) {
@@ -129,7 +143,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         let regs = T::regs();
         regs.index().write(|w| w.set_index(index as _));
 
-        // if buf.len() > self.endpoints[index].ep_conf.tx_max_fifo_size as usize {
+        // if buf.len() > self.endpoints[index].ep_conf.tx_max_packet_size as usize {
         //     return Err(UsbError::BufferOverflow);
         // }
         let unready = if index == 0 {
@@ -165,7 +179,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                         self.control_state.set_state(ControlStateEnum::Idle);
                         // trace!("WRITE END, tx_len = 0, buf.len() = {}", buf.len());
                     } else if buf.len()
-                        < self.endpoints[0].ep_conf.tx_max_fifo_size as usize
+                        < self.endpoints[0].ep_conf.tx_max_packet_size as usize
                     {
                         // Last Package. include ZLP
                         regs.csr0l().modify(|w| w.set_data_end(true));
@@ -257,7 +271,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 }
                 ControlStateEnum::DataOut => {
                     if (read_count as u32)
-                        < self.endpoints[0].ep_conf.rx_max_fifo_size as u32
+                        < self.endpoints[0].ep_conf.rx_max_packet_size as u32
                     {
                         // Last Package. include ZLP
                         regs.csr0l().modify(|w| w.set_data_end(true));

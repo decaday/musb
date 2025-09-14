@@ -1,11 +1,6 @@
 #![no_std]
 mod fmt;
 
-#[cfg(all(feature = "embassy-usb-driver-impl", feature = "usb-device-impl"))]
-compile_error!(
-    "The `embassy-usb-driver-impl` feature is incompatible with the `usb-device-impl` feature. "
-);
-
 #[cfg(feature = "embassy-usb-driver-impl")]
 mod embassy_usb_driver_impl;
 #[cfg(feature = "embassy-usb-driver-impl")]
@@ -48,3 +43,11 @@ pub use generated::UsbInstance;
 pub trait MusbInstance: 'static + Send + Sync {
     fn regs() -> regs::Usb;
 }
+
+
+// In fact, only the function name `on_interrupt` conflicts.
+// However, it is unlikely that anyone would use both at the same time.
+#[cfg(all(feature = "embassy-usb-driver-impl", feature = "usb-device-impl"))]
+compile_error!(
+    "The `embassy-usb-driver-impl` feature is incompatible with the `usb-device-impl` feature. "
+);

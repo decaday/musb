@@ -1,6 +1,7 @@
 use super::*;
 use crate::alloc_endpoint::{self, EndpointConfig, EndpointData};
 use crate::info::ENDPOINTS;
+use crate::assert_eq;
 
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {
@@ -49,9 +50,9 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
     pub fn alloc_endpoint<D: Dir>(
         &mut self,
         ep_type: EndpointType,
+        ep_addr: Option<EndpointAddress>,
         max_packet_size: u16,
         interval_ms: u8,
-        ep_index: Option<u8>,
     ) -> Result<Endpoint<'d, T, D>, driver::EndpointAllocError> {
         trace!(
             "musb/alloc_ep: allocating type={:?} mps={:?} interval_ms={}, dir={:?}",
@@ -61,12 +62,15 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             D::dir()
         );
 
+        if let Some(addr) = ep_addr {
+            assert_eq!(addr.direction(), D::dir(), "Wrong addr.direction");
+        }
+
         let index = alloc_endpoint::alloc_endpoint(
             &mut self.alloc,
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            &mut self.next_fifo_addr_8bytes,
+            #[cfg(not(feature = "_fixed-fifo-size"))] &mut self.next_fifo_addr_8bytes,
             ep_type,
-            ep_index,
+            ep_addr.map(|addr| addr.index() as u8),
             D::dir(),
             max_packet_size,
         )
@@ -88,10 +92,10 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         control_max_packet_size: u16,
     ) -> (crate::Bus<'d, T>, crate::ControlPipe<'d, T>) {
         let ep_out = self
-            .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, Some(0))
+            .alloc_endpoint(EndpointType::Control, Some(0x00.into()), control_max_packet_size, 0)
             .unwrap();
         let ep_in = self
-            .alloc_endpoint(EndpointType::Control, control_max_packet_size, 0, Some(0))
+            .alloc_endpoint(EndpointType::Control, Some(0x80.into()), control_max_packet_size, 0)
             .unwrap();
 
         trace!("musb driver: start");
