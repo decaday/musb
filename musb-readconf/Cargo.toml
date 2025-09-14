@@ -1,10 +1,10 @@
 [package]
 name = "musb-readconf"
-version = "0.0.9"
+version = "0.1.0"
 edition = "2024"
 authors = ["Decaday <myDecaday@outlook.com>"]
 repository = "https://github.com/decaday/musb"
-documentation = "https://docs.rs/musb"
+documentation = "https://docs.rs/musb-readconf"
 homepage = "https://github.com/decaday/musb"
 categories = ["embedded", "no-std", "hardware-support"]
 description = "read hardware configuration of a Mentor Graphics MUSB IP core"
@@ -14,8 +14,8 @@ license = "Apache-2.0"
 
 
 [dependencies]
-musb = { version = "0.2.2", path = "../", default-features = false, features = ["builtin-readconf"] }
-defmt = "0.3"
+musb = { version = "0.3.0", path = "../", default-features = false, features = ["builtin-readconf"] }
+defmt = "1"
 
 [features]
 default = ["prebuild"]
