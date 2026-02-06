@@ -138,9 +138,16 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
     async fn accept(&mut self) {
         trace!("musb/control_pipe: accept");
-        // If SendStall is not set, Musb will automatically send ACK,
-        // Programming Guide: No further action is required from the software
-        // Should we await for SetupEnd?
+
+        // Set `DataEnd` bit to indicate that no more data is expected
+        let regs = T::regs();
+        regs.index().write(|w| w.set_index(0));
+        regs.csr0l().modify(|w| w.set_data_end(true));
+
+        // musb Programming Guide 21.1.2. WRITE REQUESTS
+        // After this transfer completes, MUSB will generate an interrupt, but only
+        // INTRTX[0] (indicating EP0) is set. To prevent the state machine from getting
+        // stuck, we do not await this interrupt for now.
     }
 
     async fn reject(&mut self) {
@@ -156,10 +163,12 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
     async fn accept_set_address(&mut self, addr: u8) {
         // self.accept().await;
-        trace!("musb/control_pipe: setting addr: {}", addr);
+        // trace!("musb/control_pipe: setting addr: {}", addr);
         let regs = T::regs();
 
-        // Wait for SetupEnd
+        // We intentionally do not set the `DataEnd` so that the `SetupEnd` indicates the interrupt
+        // after the Status Stage completes.
+        // musb Programming Guide 21.1.1. ZERO DATA REQUESTS
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[0].register(cx.waker());
             regs.index().write(|w| w.set_index(0));
@@ -170,9 +179,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             } else {
                 Poll::Pending
             }
-        })
-        .await;
-
+        }).await;
         trace!("musb/control_pipe: set address acked, setting addr now");
         regs.faddr().write(|w| w.set_func_addr(addr));
     }
