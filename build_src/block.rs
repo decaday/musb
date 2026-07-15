@@ -1,19 +1,18 @@
 use std::collections::{HashMap, HashSet};
-use std::fs::File;
-use std::io::Read;
+use std::fs;
+use std::path::Path;
 
+use serde_yaml::Value;
 use crate::Block;
 
 fn read_block_file(block_name: &str) -> Block {
-    let path = format!("registers/blocks/{block_name}.yaml");
-    let mut file =
-        File::open(&path).unwrap_or_else(|_| panic!("Failed to open block file: {}", path));
-    let mut content = String::new();
-    file.read_to_string(&mut content).unwrap();
+    let path = Path::new("registers").join("blocks").join(format!("{}.yaml", block_name));
+    let content = fs::read_to_string(&path)
+        .unwrap_or_else(|_| panic!("Failed to read block file: {}", path.display()));
 
     let mut parsed_data: HashMap<String, Block> = serde_yaml::from_str(&content).unwrap();
     parsed_data
-        .remove(&format!("block/USB"))
+        .remove("block/USB")
         .unwrap_or_else(|| panic!("block/USB not found in {}", block_name))
 }
 
@@ -75,4 +74,39 @@ pub fn extract_fieldsets_from_block(merged_block: &Block) -> Vec<String> {
         .collect::<HashSet<_>>() // Use HashSet to automatically handle duplicates.
         .into_iter()
         .collect() // Convert back to a Vec.
+}
+
+pub fn serialize_block_to_yaml_string(final_block: &Block) -> String {
+    let mut block_for_yaml = HashMap::new();
+    block_for_yaml.insert("block/USB".to_string(), final_block.clone());
+    let mut block_value = serde_yaml::to_value(&block_for_yaml).unwrap();
+
+    if let Some(items) = block_value
+        .get_mut("block/USB")
+        .and_then(|v| v.as_mapping_mut())
+        .and_then(|m| m.get_mut("items"))
+        .and_then(|v| v.as_sequence_mut())
+    {
+        for item in items {
+            if let Some(item_map) = item.as_mapping_mut() {
+                for key in ["bit_size", "byte_offset"] {
+                    if let Some(value) = item_map.get_mut(key) {
+                        if let Some(s) = value.as_str() {
+                            let num = if s.starts_with("0x") {
+                                u64::from_str_radix(&s[2..], 16).ok()
+                            } else {
+                                s.parse::<u64>().ok()
+                            };
+
+                            if let Some(n) = num {
+                                *value = Value::Number(n.into());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    serde_yaml::to_string(&block_value).unwrap()
 }

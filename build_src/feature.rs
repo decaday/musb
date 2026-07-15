@@ -8,19 +8,19 @@ pub struct Features {
 impl Features {
     fn get_one_feature(name: &str) -> Option<String> {
         let name_upper = name.to_ascii_uppercase();
+        let prefix = format!("CARGO_FEATURE_{}_", name_upper);
 
-        match env::vars()
-            .map(|(a, _)| a)
-            .filter(|x| x.starts_with(format!("CARGO_FEATURE_{}", &name_upper).as_str()))
-            .get_one()
-        {
-            Ok(x) => Some({
-                x.strip_prefix(&format!("CARGO_FEATURE_{}_", &name_upper))
-                    .unwrap()
-                    .to_ascii_lowercase()
-            }),
-            Err(GetOneError::None) => None,
-            Err(GetOneError::Multiple) => panic!("Multiple {}-xxx Cargo features enabled", name),
+        let matches: Vec<String> = env::vars()
+            .map(|(k, _)| k)
+            .filter(|k| k.starts_with(&prefix))
+            .collect();
+
+        if matches.is_empty() {
+            None
+        } else if matches.len() > 1 {
+            panic!("Multiple {}-xxx Cargo features enabled", name);
+        } else {
+            Some(matches[0].strip_prefix(&prefix).unwrap().to_ascii_lowercase())
         }
     }
 
@@ -103,26 +103,5 @@ impl FeatureGenerator {
         }
 
         fs::write(&file_path, content).unwrap();
-    }
-}
-
-enum GetOneError {
-    None,
-    Multiple,
-}
-
-trait IteratorExt: Iterator {
-    fn get_one(self) -> Result<Self::Item, GetOneError>;
-}
-
-impl<T: Iterator> IteratorExt for T {
-    fn get_one(mut self) -> Result<Self::Item, GetOneError> {
-        match self.next() {
-            None => Err(GetOneError::None),
-            Some(res) => match self.next() {
-                Some(_) => Err(GetOneError::Multiple),
-                None => Ok(res),
-            },
-        }
     }
 }

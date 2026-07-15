@@ -1,22 +1,23 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::Read;
+use std::fs;
+use std::path::Path;
 
 use serde_yaml;
 
 use crate::{Features, Profile};
 
 pub fn read_profile(features: &Features) -> Profile {
-    let builtin = features.builtin.clone();
+    let builtin = &features.builtin;
 
     // Read the YAML file
-    println!("registers/profiles/{builtin}.yaml");
-    let mut file = File::open(format!("registers/profiles/{builtin}.yaml")).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
+    let path = Path::new("registers").join("profiles").join(format!("{}.yaml", builtin));
+    println!("{}", path.display());
+    
+    let contents = fs::read_to_string(&path)
+        .unwrap_or_else(|_| panic!("Failed to read profile at {}", path.display()));
 
     // Parse the YAML
-    serde_yaml::from_str(&contents).unwrap()
+    serde_yaml::from_str(&contents).expect("Failed to parse profile YAML")
 }
 
 impl Profile {

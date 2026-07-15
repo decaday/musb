@@ -1,20 +1,20 @@
 use std::collections::HashSet;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
 pub struct Fieldset {
     pub name: String,
     pub tags: HashSet<String>,
-    pub file_path: String,
+    pub file_path: PathBuf,
 }
 
 impl Fieldset {
-    fn new(name: &str, tags: HashSet<String>, file_path: &str) -> Self {
+    fn new(name: &str, tags: HashSet<String>, file_path: PathBuf) -> Self {
         Self {
             name: name.to_string(),
             tags,
-            file_path: file_path.to_string(),
+            file_path,
         }
     }
 }
@@ -33,9 +33,9 @@ impl FieldsetDatabase {
     /// Process the directory and build the database
     pub fn new_from_file() -> Self {
         let mut db = FieldsetDatabase::new();
-        let root_path = "registers\\fieldsets";
+        let root_path = Path::new("registers").join("fieldsets");
         let initial_tags = HashSet::new();
-        process_directory(root_path, initial_tags, &mut db);
+        process_directory(&root_path, initial_tags, &mut db);
         db
     }
 
@@ -86,16 +86,16 @@ impl FieldsetDatabase {
 
         // If there are multiple matching results, return an error
         if matching_files.len() > 1 {
-            let best_files: Vec<String> = matching_files
-                .iter()
+            let best_files: Vec<PathBuf> = matching_files
+                .into_iter()
                 .filter(|(_, is_true)| *is_true)
-                .map(|(file, _)| file.clone())
+                .map(|(file, _)| file)
                 .collect();
 
             if best_files.len() == 1 {
-                best_files.into_iter().next().unwrap()
+                best_files.into_iter().next().unwrap().to_str().unwrap().to_string()
             } else {
-                panic!("Invalid list: {matching_files:?}\nExpected exactly one file with true value in the list")
+                panic!("Invalid list: {best_files:?}\nExpected exactly one file with true value in the list")
             }
         } else if matching_files.is_empty() {
             panic!(
@@ -104,7 +104,7 @@ impl FieldsetDatabase {
                 best_have_tags: {best_have_tags:?}"
             )
         } else {
-            matching_files[0].0.clone() // Return the single file path
+            matching_files[0].0.to_str().unwrap().to_string() // Return the single file path
         }
     }
 }
@@ -131,7 +131,7 @@ fn process_directory<P: AsRef<Path>>(
             let _ = add_tags_from_name(&folder_name, &mut folder_tags);
 
             // Process the contents of the directory
-            process_directory(entry_path, folder_tags, db);
+            process_directory(&entry_path, folder_tags, db);
         } else if entry_path.is_file() {
             // For files, process the file
             let file_name = entry_path
@@ -142,9 +142,9 @@ fn process_directory<P: AsRef<Path>>(
             let mut file_tags = parent_tags.clone();
             let name = add_tags_from_name(&file_name, &mut file_tags);
             db.add_fieldset(Fieldset::new(
-                &name,
+                name,
                 file_tags,
-                &entry_path.to_string_lossy(),
+                entry_path,
             ));
         }
     }
@@ -152,14 +152,12 @@ fn process_directory<P: AsRef<Path>>(
 
 /// Extract tags from the file or folder name (separated by `_`)
 fn add_tags_from_name<'a>(name: &'a str, tags: &mut HashSet<String>) -> &'a str {
-    // Find the byte index of the first underscore followed by a lowercase letter.
-    // We use `windows(2)` to get a sliding window of two bytes.
     let split_index = name.as_bytes().windows(2).enumerate()
         .find(|(_, window)| {
             // Check if the window matches the pattern: `_` followed by a lowercase ASCII character.
             window[0] == b'_' && window[1].is_ascii_lowercase()
         })
-        .map(|(i, _)| i); // Get the index of the underscore.
+        .map(|(i, _)| i);
 
     match split_index {
         Some(index) => {
@@ -170,13 +168,8 @@ fn add_tags_from_name<'a>(name: &'a str, tags: &mut HashSet<String>) -> &'a str 
             
             // Split the tags part by underscores and add them to the provided HashSet.
             tags.extend(tags_part.split('_').filter(|s| !s.is_empty()).map(|s| s.to_string()));
-            
-            // Return the slice corresponding to the name.
             name_part
         }
-        None => {
-            // If no such underscore is found, the entire string is the name.
-            name
-        }
+        None => name
     }
 }
