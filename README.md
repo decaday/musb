@@ -43,6 +43,9 @@ If your chip is not included, you'll need to create a new profile. Refer to the 
 **Note:** Only one of these two implementations can be enabled at a time.
 
 `prebuild`(on by default): Uses pre-generated PAC (Peripheral Access Crate).
+  If you disable this feature, the crate will generate the PAC on the fly during the build process, which requires the `yaml2pac` tool. You can install it via:
+    `cargo install --git https://github.com/embedded-drivers/yaml2pac`
+  If you modify the registers or create a new profile, you can  `update_prebuild.py` to automatically build and update the `src/prebuilds` directory.
 
 `builtin-xxxx` : Uses builtin profile.
 

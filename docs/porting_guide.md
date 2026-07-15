@@ -64,6 +64,11 @@ MUSB uses YAML files to describe register layouts and chip-specific configuratio
 
    The crate describes registers using YAML, with these register description files manually maintained. It then leverages [chiptool](https://github.com/embassy-rs/chiptool) and [yaml2pac](https://github.com/embedded-drivers/yaml2pac) to generate register operation functions. These operations can be found in the `build.rs` file.
 
+   To generate these files, you need to install `yaml2pac` first:
+   ```shell
+   cargo install --git https://github.com/embedded-drivers/yaml2pac
+   ```
+
    These replacements are automatically generated from profile contents and can be used in register description YAML files.
 
    - **ENDPOINTS_NUM**
