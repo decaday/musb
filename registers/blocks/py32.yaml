@@ -5,102 +5,102 @@ block/USB:
     description: Function address of the USB device.
     byte_offset: 0x00
     bit_size: 8
-    fieldset: FADDR
+    fieldset: common_std/FADDR.yaml
   - name: POWER
     description: USB power management register.
     byte_offset: 0x01
     bit_size: 8
-    fieldset: POWER
+    fieldset: regs_peri_mini/POWER.yaml
   - name: INTRUSB
     description: USB interrupt status register.
     byte_offset: 0x04
     bit_size: 8
-    fieldset: INTRUSB
+    fieldset: regs_peri_mini/INTRUSB.yaml
   - name: INTRRX
     description: Interrupt status for OUT endpoint.
     byte_offset: 0x05
     bit_size: 8
-    fieldset: INTRRX
+    fieldset: common_std/INTRRX.yaml
   - name: INTRTX
     description: Interrupt status for IN endpoint.
     byte_offset: 0x06
     bit_size: 8
-    fieldset: INTRTX
+    fieldset: common_std/INTRTX.yaml
   - name: INTRUSBE
     description: USB interrupt enable register.
     byte_offset: 0x08
     bit_size: 8
-    fieldset: INTRUSBE
+    fieldset: regs_peri_mini/INTRUSBE.yaml
   - name: INTRRXE
     description: Interrupt enable for OUT endpoint 1.
     byte_offset: 0x09
     bit_size: 8
-    fieldset: INTRRXE
+    fieldset: common_std/INTRRXE.yaml
   - name: INTRTXE
     description: Interrupt enable for IN endpoint 1.
     byte_offset: 0x0A
     bit_size: 8
-    fieldset: INTRTXE
+    fieldset: common_std/INTRTXE.yaml
   - name: FRAME
     description: USB frame number and endpoint index.
     byte_offset: 0x0C
     bit_size: 16
-    fieldset: FRAME
+    fieldset: common_std/FRAME.yaml
   - name: INDEX
     description: Selected endpoint index.
     byte_offset: 0x0E
     bit_size: 8
-    fieldset: INDEX
+    fieldset: common_std/INDEX.yaml
   - name: CSR0L
     description: Endpoint 0 control and status register.
     byte_offset: 0x10
     bit_size: 8
-    fieldset: CSR0L
+    fieldset: indexed_peri_std/CSR0L.yaml
   - name: COUNT0
     description: Data count for endpoint 0.
     byte_offset: 0x11
     bit_size: 8
-    fieldset: COUNT0
+    fieldset: indexed_peri_std/COUNT0.yaml
   - name: TXCSRH
     description: Control and status register for IN endpoints.
     byte_offset: 0x14
     bit_size: 8
-    fieldset: TXCSRH
+    fieldset: indexed_peri_std/TXCSRH.yaml
   - name: TXCSRL
     description: Control and status register for IN endpoints.
     byte_offset: 0x15
     bit_size: 8
-    fieldset: TXCSRL
+    fieldset: regs_peri_mini/TXCSRL.yaml
   - name: TXMAXP
     description: Maximum packet size for IN endpoints.
     byte_offset: 0x16
     bit_size: 16
-    fieldset: MAXP
+    fieldset: indexed_peri_std/MAXP.yaml
   - name: RXCSRH
     description: Control and status register for OUT endpoints.
     byte_offset: 0x18
     bit_size: 8
-    fieldset: RXCSRH
+    fieldset: regs_peri_mini/RXCSRH.yaml
   - name: RXCSRL
     description: Control and status register for OUT endpoints.
     byte_offset: 0x19
     bit_size: 8
-    fieldset: RXCSRL
+    fieldset: indexed_peri_std/RXCSRL.yaml
   - name: RXMAXP
     description: Maximum packet size for OUT endpoints.
     byte_offset: 0x1A
     bit_size: 16
-    fieldset: MAXP
+    fieldset: indexed_peri_std/MAXP.yaml
   - name: RXCOUNT
     description: Data count for OUT endpoints.
     byte_offset: 0x1C
     bit_size: 16
-    fieldset: RXCOUNT
+    fieldset: indexed_peri_std/RXCOUNT.yaml
   - name: FIFO
     description: FIFO for endpoints.
     byte_offset: 0x20
     bit_size: FIFO_REG_BIT_SIZE
-    fieldset: FIFO
+    fieldset: fifo_std/FIFO.yaml
     array:
       len: ENDPOINTS_NUM
       stride: 4

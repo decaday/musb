@@ -5,4 +5,4 @@ block/USB:
     description: Vender-specified USB configuration register.
     byte_offset: 0x370
     bit_size: 8
-    fieldset: USBCFG
+    fieldset: vendor/USBCFG_sf32.yaml

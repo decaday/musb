@@ -20,17 +20,3 @@ endpoints:
     max_packet_size: 64
   - type: rxtx
     max_packet_size: 64
-patches:
-  - fieldset: POWER
-    version: mini
-  - fieldset: INTRUSB
-    version: mini
-  - fieldset: INTRUSBE
-    version: mini
-  - fieldset: TXCSRL
-    version: mini
-  - fieldset: RXCSRH
-    version: mini
-
-
-    

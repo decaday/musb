@@ -5,54 +5,54 @@ block/USB:
       description: Index register for selecting the endpoint status and control registers.
       byte_offset: 0x0E
       bit_size: 8
-      fieldset: INDEX
+      fieldset: common_std/INDEX.yaml
     - name: CONFIGDATA
       description: Returns details of core configuration.
       byte_offset: 0x1F
       bit_size: 8
-      fieldset: CONFIGDATA
+      fieldset: indexed_peri_std/CONFIGDATA.yaml
     - name: FIFOSIZE
       description: FIFO Size Register for TX and RX Endpoints
       byte_offset: 0x1F
       bit_size: 8
-      fieldset: FIFOSIZE
+      fieldset: indexed_peri_std/FIFOSIZE.yaml
     - name: EPINFO
       description: Read-back of the number of TX and Rx endpoints.
       byte_offset: 0x78
       bit_size: 8
-      fieldset: EPINFO
+      fieldset: configuration_std/EPINFO.yaml
     - name: RAMINFO
       description: Provides information about the width of the RAM.
       byte_offset: 0x79
       bit_size: 8
-      fieldset: RAMINFO
+      fieldset: configuration_std/RAMINFO.yaml
     - name: LINKINFO
       description: Allows some delays to be specified.
       byte_offset: 0x7A
       bit_size: 8
-      fieldset: LINKINFO
+      fieldset: configuration_std/LINKINFO.yaml
     - name: VPLEN
       description: Sets the duration of the VBus pulsing charge.
       byte_offset: 0x7B
       bit_size: 8
-      fieldset: VPLEN
+      fieldset: configuration_std/VPLEN.yaml
     - name: HS_EOF1
       description: Sets the minimum time gap before EOF for High-speed transactions.
       byte_offset: 0x7C
       bit_size: 8
-      fieldset: HS_EOF1
+      fieldset: configuration_std/HS_EOF1.yaml
     - name: FS_EOF1
       description: Sets the minimum time gap before EOF for Full-speed transactions.
       byte_offset: 0x7D
       bit_size: 8
-      fieldset: FS_EOF1
+      fieldset: configuration_std/FS_EOF1.yaml
     - name: LS_EOF1
       description: Sets the minimum time gap before EOF for Low-speed transactions.
       byte_offset: 0x7E
       bit_size: 8
-      fieldset: LS_EOF1
+      fieldset: configuration_std/LS_EOF1.yaml
     - name: SOFT_RST
       description: Asserts LOW the output reset signals NRSTO and NRSTOX.
       byte_offset: 0x7F
       bit_size: 8
-      fieldset: SOFT_RST
+      fieldset: configuration_std/SOFT_RST.yaml

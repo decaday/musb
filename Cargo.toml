@@ -20,6 +20,7 @@ usb-device = { version = "0.3.2", optional = true }
 
 cfg-if = {version = "1.0.0", features = ["core"]}
 defmt = { version = "1", optional = true }
+log = { version = "0.4", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -38,7 +39,7 @@ defmt = ["embassy-usb-driver/defmt",
     "dep:defmt",
 ]
 
-log = ["embassy-sync/log", "usb-device/log"]
+log = ["embassy-sync/log", "usb-device/log", "dep:log"]
 
 prebuild = []
 
