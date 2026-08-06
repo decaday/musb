@@ -5,6 +5,7 @@ use serde_yaml::Value;
 pub struct Profile {
     pub name: String,
     pub block: String,
+    pub target: Option<String>,
     pub base_address: Option<u32>,
     pub fifo: FifoConfig,
     #[serde(default)]

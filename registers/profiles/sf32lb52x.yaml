@@ -1,4 +1,6 @@
-name: std-8bep-2048
+name: sf32lb52x
+# Used for CI compilation verification
+target: thumbv8m.main-none-eabihf
 block: sf32_peri
 base_address: 0x50047000
 fifo:

@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  prepare:
+    name: Prepare Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse Profiles
+        id: set-matrix
+        run: |
+          python -c "
+          import os, re, json
+          profiles = []
+          for f in os.listdir('registers/profiles'):
+              if f.endswith('.yaml'):
+                  content = open(os.path.join('registers/profiles', f)).read()
+                  name_match = re.search(r'^name:\s*(.+)$', content, re.MULTILINE)
+                  target_match = re.search(r'^target:\s*(.+)$', content, re.MULTILINE)
+                  fifo_dynamic = bool(re.search(r'^  type:\s*dynamic', content, re.MULTILINE))
+                  if name_match:
+                      name = name_match.group(1).strip()
+                      if name == 'readconf':
+                          continue
+                      # fallback to thumbv7em-none-eabihf if no target specified
+                      target = target_match.group(1).strip() if target_match else 'thumbv7em-none-eabihf'
+                      profiles.append({
+                          'chip': f'builtin-{name}', 
+                          'target': target,
+                          'supports_usb_device': not fifo_dynamic
+                      })
+          print(f'matrix={json.dumps(profiles)}')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'matrix={json.dumps(profiles)}\n')
+          "
+
+  check:
+    name: Check Compilation
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # Check baseline without drivers
+      - name: Check without drivers
+        run: cargo check --features "${{ matrix.chip }}" --target "${{ matrix.target }}"
+
+      # Check with embassy-usb-driver implementation
+      - name: Check with embassy-usb-driver
+        run: cargo check --features "${{ matrix.chip }},embassy-usb-driver-impl" --target "${{ matrix.target }}"
+
+      # Check with usb-device implementation
+      - name: Check with usb-device
+        if: matrix.supports_usb_device
+        run: cargo check --features "${{ matrix.chip }},usb-device-impl" --target "${{ matrix.target }}"
+
+      # Check with defmt (logging) but NOT log feature
+      - name: Check with defmt
+        run: cargo check --features "${{ matrix.chip }},embassy-usb-driver-impl,defmt" --target "${{ matrix.target }}"
+
+  check_musb-readconf:
+    name: Check musb-readconf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+
+      - name: Check musb-readconf
+        run: cargo check --manifest-path musb-readconf/Cargo.toml --target thumbv7em-none-eabihf

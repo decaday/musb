@@ -1,4 +1,6 @@
 name: py32f403
+# Used for CI compilation verification
+target: thumbv7em-none-eabihf
 block: py32
 base_address: 0x40005c00
 fifo:

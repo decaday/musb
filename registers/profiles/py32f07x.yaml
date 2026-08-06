@@ -1,4 +1,6 @@
 name: py32f07x
+# Used for CI compilation verification
+target: thumbv6m-none-eabi
 block: py32
 base_address: 0x40005c00
 fifo:
