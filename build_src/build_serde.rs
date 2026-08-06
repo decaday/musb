@@ -58,8 +58,8 @@ pub struct RegBitSize {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Patch {
-    pub fieldset: String,
-    pub version: String,
+    pub item: String,
+    pub path: String,
 }
 
 impl Default for RegBitSize {

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -64,17 +64,7 @@ pub fn load_and_merge_block(block_name: &str) -> Block {
     block
 }
 
-// This function now uses the merged block to extract unique fieldsets.
-// It takes a reference to an already merged block.
-pub fn extract_fieldsets_from_block(merged_block: &Block) -> Vec<String> {
-    merged_block
-        .items
-        .iter()
-        .map(|item| item.fieldset.clone())
-        .collect::<HashSet<_>>() // Use HashSet to automatically handle duplicates.
-        .into_iter()
-        .collect() // Convert back to a Vec.
-}
+// Function removed
 
 pub fn serialize_block_to_yaml_string(final_block: &Block) -> String {
     let mut block_for_yaml = HashMap::new();

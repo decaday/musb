@@ -112,7 +112,7 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
              w.set_serviced_rx_pkt_rdy(true);
              w.set_serviced_setup_end(true);
         });
-        #[cfg(not(feature = "_mini"))]
+        #[cfg(not(feature = "_lite"))]
         T::regs().csr0h().modify(|w| {
             w.set_flush_fifo(true);
         });
@@ -141,14 +141,14 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
         }
 
         cfg_if::cfg_if! {
-            if #[cfg(feature = "_mini")] {
+            if #[cfg(feature = "_lite")] {
                 if config.tx_max_packet_size % 8 != 0 {
-                    warn!("TX max packet size must be a multiple of 8 for mini musb IP, using {} instead",
+                    warn!("TX max packet size must be a multiple of 8 for lite musb IP, using {} instead",
                         ((config.tx_max_packet_size + 7) / 8) * 8
                     );
                 }
 
-                // Mini version uses 8-byte unit
+                // Lite version uses 8-byte unit
                 T::regs()
                     .txmaxp()
                     .write(|w| w.set_maxp((config.tx_max_packet_size + 7) / 8));
@@ -210,7 +210,7 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
              w.set_serviced_rx_pkt_rdy(true);
              w.set_serviced_setup_end(true);
         });
-        #[cfg(not(feature = "_mini"))]
+        #[cfg(not(feature = "_lite"))]
         T::regs().csr0h().modify(|w| {
             w.set_flush_fifo(true);
         });
@@ -234,13 +234,13 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
         }
     
         cfg_if::cfg_if! {
-            if #[cfg(feature = "_mini")] {
+            if #[cfg(feature = "_lite")] {
                 if config.rx_max_packet_size % 8 != 0 {
-                    warn!("RX max packet size must be a multiple of 8 for mini musb IP, using {} instead",
+                    warn!("RX max packet size must be a multiple of 8 for lite musb IP, using {} instead",
                         ((config.rx_max_packet_size + 7) / 8) * 8
                     );
                 }
-                // Mini version uses 8-byte unit
+                // Lite version uses 8-byte unit
                 T::regs()
                     .rxmaxp()
                     .write(|w| w.set_maxp((config.rx_max_packet_size + 7) / 8));
@@ -292,7 +292,7 @@ pub fn check_overrun<T: MusbInstance>() {
     }
 }
 
-#[cfg(not(feature = "_mini"))]
+#[cfg(not(feature = "_lite"))]
 pub fn endpoint_set_rx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: bool) {
     let regs = T::regs();
     if index == 0 {
@@ -304,7 +304,7 @@ pub fn endpoint_set_rx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: b
     }
 }
 
-#[cfg(not(feature = "_mini"))]
+#[cfg(not(feature = "_lite"))]
 pub fn endpoint_set_tx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: bool) {
     let regs = T::regs();
     if index == 0 {
@@ -316,7 +316,7 @@ pub fn endpoint_set_tx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: b
     }
 }
 
-#[cfg(not(feature = "_mini"))]
+#[cfg(not(feature = "_lite"))]
 pub fn endpoints_set_rx_dualpacket_enabled<T: MusbInstance>(index_bits: u16) {
     use crate::regs::regs::Dpktbufdis;
     let regs = T::regs();
@@ -324,7 +324,7 @@ pub fn endpoints_set_rx_dualpacket_enabled<T: MusbInstance>(index_bits: u16) {
     regs.rx_dpktbufdis().write_value(Dpktbufdis(bits));
 }
 
-#[cfg(not(feature = "_mini"))]
+#[cfg(not(feature = "_lite"))]
 pub fn endpoints_set_tx_dualpacket_enabled<T: MusbInstance>(index_bits: u16) {
     use crate::regs::regs::Dpktbufdis;
     let regs = T::regs();

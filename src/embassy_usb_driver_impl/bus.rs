@@ -13,7 +13,7 @@ pub struct Bus<'d, T: MusbInstance> {
 
 impl<'d, T: MusbInstance> Bus<'d, T> {
     fn init(&self) {
-        #[cfg(not(feature="_mini"))]
+        #[cfg(not(feature="_lite"))]
         trace!("musb/bus init: DEVCTL: {:b}", T::regs().devctl().read().0);
         common_impl::bus_init::<T>();
     }
@@ -42,7 +42,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                 IRQ_RESET.store(false, Ordering::Relaxed);
 
                 regs.index().write(|w| w.set_index(0));
-                #[cfg(not(feature = "_mini"))]
+                #[cfg(not(feature = "_lite"))]
                 regs.csr0h().modify(|w| w.set_flush_fifo(true));
                 regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
                 for index in 1..ENDPOINTS.len() {
