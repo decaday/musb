@@ -14,10 +14,10 @@ This guide explains how to add support for new chips using MUSB.
 | jieli (杰理)             |                                  | musb*          |
 | SPRD                     | sp7862                           | musb*          |
 | MediaTek                 | MT6735                           | musb*          |
-| Puya (普冉)              | py32f071, py32f403               | musb mini      |
-| STC (姚永平)             | stc8, stc32, ai8051u             | musb mini      |
+| Puya (普冉)              | py32f071, py32f403               | musb lite      |
+| STC (姚永平)             | stc8, stc32, ai8051u             | musb lite      |
 
-I'm not sure about the official sub-name/branch name of them.
+Note: `musb lite` is not an official IP name from Mentor Graphics, but rather a widely used musb register layout variation discovered in practice.
 
 *: Further identification is needed
 

@@ -44,8 +44,8 @@ log = ["embassy-sync/log", "usb-device/log", "dep:log"]
 prebuild = []
 
 builtin-std-8bep-2048 = []
-builtin-py32f07x = ["_mini"]
-builtin-py32f403 = ["_mini"]
+builtin-py32f07x = ["_lite"]
+builtin-py32f403 = ["_lite"]
 builtin-sf32lb52x = []
 # for musb-readconf only
 builtin-readconf = []
@@ -54,7 +54,7 @@ builtin-readconf = []
 _ep-shared-fifo = []
 _equal-fifo-size = []
 _fixed-fifo-size = []
-_mini = []
+_lite = []
 # Generate a `UsbInstance` when you set `base_address` in profile
 _gen-usb-instance = []
 
