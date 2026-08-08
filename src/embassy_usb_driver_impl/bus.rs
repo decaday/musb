@@ -138,13 +138,23 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     async fn enable(&mut self) {
         T::regs().faddr().write(|w| w.set_func_addr(0));
 
+        #[cfg(not(feature = "_lite"))]
+        T::regs().power().modify(|w| {
+            w.set_soft_conn(true);
+        });
+
         // T::regs().devctl().write(|w| {
         //     w.set_session(true);
         // });
         // self.endpoint_set_enabled(EndpointAddress::from_parts(0, Direction::In), true);
         // self.endpoint_set_enabled(EndpointAddress::from_parts(0, Direction::Out), true);
     }
-    async fn disable(&mut self) {}
+    async fn disable(&mut self) {
+        #[cfg(not(feature = "_lite"))]
+        T::regs().power().modify(|w| {
+            w.set_soft_conn(false);
+        });
+    }
 
     async fn remote_wakeup(&mut self) -> Result<(), Unsupported> {
         Err(Unsupported)
