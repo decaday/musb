@@ -71,11 +71,10 @@ If you have any questions or uncertainties, feel free to create an Issue or star
 
 ## TODOs
 
-- **Support Dynamic FIFO Size**
-- Support dual packet buffer
+- Dual packet buffer
 - HS mode
 - Other Chips
-- Host mode / OTG (wait for a rust usb host stack)
+- Host mode / OTG
 
 ## License
 

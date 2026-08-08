@@ -134,27 +134,33 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
     }
 }
 
-// impl<'d, T: MusbInstance> driver::Driver<'d> for Driver<'d, T> {
-//     type EndpointOut = Endpoint<'d, T, Out>;
-//     type EndpointIn = Endpoint<'d, T, In>;
-//     type ControlPipe = ControlPipe<'d, T>;
-//     type Bus = Bus<'d, T>;
+impl<'d, T: MusbInstance> driver::Driver<'d> for MusbDriver<'d, T> {
+    type EndpointOut = Endpoint<'d, T, Out>;
+    type EndpointIn = Endpoint<'d, T, In>;
+    type ControlPipe = ControlPipe<'d, T>;
+    type Bus = Bus<'d, T>;
 
-//     fn alloc_endpoint_in(
-//         &mut self,
-//         ep_type: EndpointType,
-//         max_packet_size: u16,
-//         interval_ms: u8,
-//     ) -> Result<Self::EndpointIn, driver::EndpointAllocError> {
-//         self.alloc_endpoint(ep_type, max_packet_size, interval_ms, false)
-//     }
+    fn alloc_endpoint_in(
+        &mut self,
+        ep_type: EndpointType,
+        ep_addr: Option<driver::EndpointAddress>,
+        max_packet_size: u16,
+        interval_ms: u8,
+    ) -> Result<Self::EndpointIn, driver::EndpointAllocError> {
+        self.alloc_endpoint(ep_type, ep_addr, max_packet_size, interval_ms)
+    }
 
-//     fn alloc_endpoint_out(
-//         &mut self,
-//         ep_type: EndpointType,
-//         max_packet_size: u16,
-//         interval_ms: u8,
-//     ) -> Result<Self::EndpointOut, driver::EndpointAllocError> {
-//         self.alloc_endpoint(ep_type, max_packet_size, interval_ms, false)
-//     }
-// }
+    fn alloc_endpoint_out(
+        &mut self,
+        ep_type: EndpointType,
+        ep_addr: Option<driver::EndpointAddress>,
+        max_packet_size: u16,
+        interval_ms: u8,
+    ) -> Result<Self::EndpointOut, driver::EndpointAllocError> {
+        self.alloc_endpoint(ep_type, ep_addr, max_packet_size, interval_ms)
+    }
+
+    fn start(self, control_max_packet_size: u16) -> (Self::Bus, Self::ControlPipe) {
+        self.start(control_max_packet_size)
+    }
+}
