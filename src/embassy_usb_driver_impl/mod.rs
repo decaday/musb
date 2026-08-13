@@ -40,35 +40,36 @@ static EP_RX_ENABLED: AtomicU16 = AtomicU16::new(0);
 
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
-    let regs = T::regs();
-    let intrusb = regs.intrusb().read();
-    let intrtx = regs.intrtx().read();
-    let intrrx = regs.intrrx().read();
-    trace!("musb/on_interrupt: intrusb: {:b}, intrtx: {:b}, intrrx: {:b}", intrusb.0, intrtx.0, intrrx.0);
+    let usb_status = crate::bus::read_and_clear_usb_interrupts::<T>();
+    let tx_status = crate::endpoint::read_and_clear_tx_interrupts::<T>();
+    let rx_status = crate::endpoint::read_and_clear_rx_interrupts::<T>();
+    
+    trace!("musb/on_interrupt: reset: {}, suspend: {}, resume: {}, tx: {:b}, rx: {:b}", 
+        usb_status.reset, usb_status.suspend, usb_status.resume, tx_status, rx_status);
 
-    if intrusb.reset() {
+    if usb_status.reset {
         IRQ_RESET.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
-    if intrusb.suspend() {
+    if usb_status.suspend {
         IRQ_SUSPEND.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
-    if intrusb.resume() {
+    if usb_status.resume {
         IRQ_RESUME.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
     }
     
-    if intrtx.ep_tx(0) {
+    if (tx_status & 1) != 0 {
         EP_TX_WAKERS[0].wake();
         EP_RX_WAKERS[0].wake();
     }
 
     for index in 1..ENDPOINTS.len() {
-        if intrtx.ep_tx(index) {
+        if (tx_status & (1 << index)) != 0 {
             EP_TX_WAKERS[index].wake();
         }
-        if intrrx.ep_rx(index) {
+        if (rx_status & (1 << index)) != 0 {
             EP_RX_WAKERS[index].wake();
         }
 

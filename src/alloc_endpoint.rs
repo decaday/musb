@@ -1,4 +1,4 @@
-use embassy_usb_driver::{Direction, EndpointType};
+use crate::types::{Direction, EndpointType};
 
 use crate::info::ENDPOINTS;
 #[cfg(not(feature = "_fixed-fifo-size"))]

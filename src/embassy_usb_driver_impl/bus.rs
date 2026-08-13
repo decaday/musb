@@ -1,7 +1,7 @@
 use super::*;
 
 use crate::alloc_endpoint::EndpointConfig;
-use crate::common_impl;
+use crate::{bus, endpoint};
 use crate::info::ENDPOINTS;
 
 /// USB bus.
@@ -13,9 +13,7 @@ pub struct Bus<'d, T: MusbInstance> {
 
 impl<'d, T: MusbInstance> Bus<'d, T> {
     fn init(&self) {
-        #[cfg(not(feature="_lite"))]
-        trace!("musb/bus init: DEVCTL: {:b}", T::regs().devctl().read().0);
-        common_impl::bus_init::<T>();
+        bus::init_usb_interrupts::<T>();
     }
 }
 
@@ -23,8 +21,6 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     async fn poll(&mut self) -> Event {
         poll_fn(move |cx| {
             BUS_WAKER.register(cx.waker());
-
-            let regs = T::regs();
 
             // TODO: implement VBUS detection.
             if !self.inited {
@@ -41,15 +37,7 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
             if IRQ_RESET.load(Ordering::Acquire) {
                 IRQ_RESET.store(false, Ordering::Relaxed);
 
-                regs.index().write(|w| w.set_index(0));
-                #[cfg(not(feature = "_lite"))]
-                regs.csr0h().modify(|w| w.set_flush_fifo(true));
-                regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
-                for index in 1..ENDPOINTS.len() {
-                    regs.index().write(|w| w.set_index(index as _));
-                    regs.txcsrl().modify(|w| w.set_flush_fifo(true));
-                    regs.txcsrl().modify(|w| w.set_flush_fifo(true));
-                }
+                bus::bus_reset::<T>();
 
                 trace!("musb/poll: reset");
 
@@ -78,11 +66,10 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
         let ep_index = ep_addr.index();
         match ep_addr.direction() {
             Direction::In => {
-                common_impl::ep_tx_stall::<T>(ep_index as _, stalled);
-                EP_TX_WAKERS[ep_addr.index()].wake();
+                endpoint::ep_tx_stall::<T>(ep_index as _, stalled);
             }
             Direction::Out => {
-                common_impl::ep_rx_stall::<T>(ep_index as _, stalled);
+                endpoint::ep_rx_stall::<T>(ep_index as _, stalled);
                 EP_TX_WAKERS[ep_addr.index()].wake();
                 EP_RX_WAKERS[ep_addr.index()].wake();
             }
@@ -91,8 +78,8 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
 
     fn endpoint_is_stalled(&mut self, ep_addr: EndpointAddress) -> bool {
         match ep_addr.direction() {
-            Direction::In => common_impl::ep_tx_is_stalled::<T>(ep_addr.index() as _),
-            Direction::Out => common_impl::ep_rx_is_stalled::<T>(ep_addr.index() as _),
+            Direction::In => endpoint::ep_tx_is_stalled::<T>(ep_addr.index() as _),
+            Direction::Out => endpoint::ep_rx_is_stalled::<T>(ep_addr.index() as _),
         }
     }
 
@@ -100,11 +87,11 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
         trace!("musb/bus/set_enabled: {:x} {}", ep_addr, enabled);
         let ep_index = ep_addr.index();
 
+
         if enabled {
-            T::regs().index().write(|w| w.set_index(ep_index as u8));
             match ep_addr.direction() {
                 Direction::Out => {
-                    common_impl::ep_rx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
+                    endpoint::ep_rx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
 
                     let flags = EP_RX_ENABLED.load(Ordering::Acquire) | (1 << ep_index) as u16;
                     EP_RX_ENABLED.store(flags, Ordering::Release);
@@ -112,11 +99,10 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                     EP_RX_WAKERS[ep_index].wake();
                 }
                 Direction::In => {
-                    common_impl::ep_tx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
+                    endpoint::ep_tx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
 
                     let flags = EP_TX_ENABLED.load(Ordering::Acquire) | (1 << ep_index) as u16;
                     EP_TX_ENABLED.store(flags, Ordering::Release);
-                    // Wake for `Endpoint::wait_enabled()`
                     EP_TX_WAKERS[ep_index].wake();
                 }
             }
@@ -136,24 +122,14 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     }
 
     async fn enable(&mut self) {
-        T::regs().faddr().write(|w| w.set_func_addr(0));
+        bus::bus_set_device_address::<T>(0);
+        bus::init_usb_interrupts::<T>();
 
-        #[cfg(not(feature = "_lite"))]
-        T::regs().power().modify(|w| {
-            w.set_soft_conn(true);
-        });
-
-        // T::regs().devctl().write(|w| {
-        //     w.set_session(true);
-        // });
-        // self.endpoint_set_enabled(EndpointAddress::from_parts(0, Direction::In), true);
-        // self.endpoint_set_enabled(EndpointAddress::from_parts(0, Direction::Out), true);
+        bus::bus_connect::<T>(true);
     }
+    
     async fn disable(&mut self) {
-        #[cfg(not(feature = "_lite"))]
-        T::regs().power().modify(|w| {
-            w.set_soft_conn(false);
-        });
+        bus::bus_connect::<T>(false);
     }
 
     async fn remote_wakeup(&mut self) -> Result<(), Unsupported> {

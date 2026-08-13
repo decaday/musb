@@ -1,4 +1,5 @@
 #![no_std]
+pub mod types;
 mod fmt;
 
 #[cfg(feature = "embassy-usb-driver-impl")]
@@ -13,8 +14,9 @@ pub use usb_device_impl::*;
 
 #[cfg(not(feature = "builtin-readconf"))]
 pub mod alloc_endpoint;
-#[cfg(not(feature = "builtin-readconf"))]
-pub mod common_impl;
+pub mod bus;
+pub mod endpoint;
+pub mod endpoint0;
 
 pub mod generated;
 pub use generated::common;

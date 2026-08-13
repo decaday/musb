@@ -17,9 +17,6 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         #[cfg(not(feature = "_fixed-fifo-size"))]
         let next_fifo_addr_8bytes = 8; // Start after EP0's 64 bytes
         
-        let regs = T::regs();
-        regs.index().write(|w| w.set_index(0));
-
         // Initialize the bus so that it signals that power is available
         BUS_WAKER.wake();
 
@@ -27,7 +24,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             phantom: PhantomData,
             alloc: [EndpointData {
                 ep_conf: EndpointConfig {
-                    ep_type: EndpointType::Bulk,
+                    ep_type: crate::types::EndpointType::Bulk,
                     tx_max_packet_size: 0,
                     rx_max_packet_size: 0,
                     #[cfg(not(feature = "_fixed-fifo-size"))]
@@ -66,12 +63,23 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             assert_eq!(addr.direction(), D::dir(), "Wrong addr.direction");
         }
 
+        let internal_ep_type = match ep_type {
+            EndpointType::Bulk => crate::types::EndpointType::Bulk,
+            EndpointType::Interrupt => crate::types::EndpointType::Interrupt,
+            EndpointType::Isochronous => crate::types::EndpointType::Isochronous,
+            EndpointType::Control => crate::types::EndpointType::Control,
+        };
+        let internal_dir = match D::dir() {
+            Direction::In => crate::types::Direction::In,
+            Direction::Out => crate::types::Direction::Out,
+        };
+
         let index = alloc_endpoint::alloc_endpoint(
             &mut self.alloc,
             #[cfg(not(feature = "_fixed-fifo-size"))] &mut self.next_fifo_addr_8bytes,
-            ep_type,
+            internal_ep_type,
             ep_addr.map(|addr| addr.index() as u8),
-            D::dir(),
+            internal_dir,
             max_packet_size,
         )
         .map_err(|_| driver::EndpointAllocError)?;
@@ -101,7 +109,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
         trace!("musb driver: start");
 
         let mut ep_confs = [EndpointConfig {
-            ep_type: EndpointType::Bulk,
+            ep_type: crate::types::EndpointType::Bulk,
             tx_max_packet_size: 0,
             rx_max_packet_size: 0,
             #[cfg(not(feature = "_fixed-fifo-size"))]

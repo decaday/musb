@@ -1,4 +1,5 @@
 use super::*;
+use crate::{bus, endpoint0};
 
 /// USB control pipe.
 pub struct ControlPipe<'d, T: MusbInstance> {
@@ -15,12 +16,11 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
     async fn setup(&mut self) -> [u8; 8] {
         trace!("musb/control_pipe: setup");
-        let regs = T::regs();
         loop {
             poll_fn(|cx| {
                 EP_RX_WAKERS[0].register(cx.waker());
-                regs.index().write(|w| w.set_index(0));
-                if regs.csr0l().read().rx_pkt_rdy() {
+                let ready = endpoint0::ep0_is_rx_ready::<T>();
+                if ready {
                     Poll::Ready(())
                 } else {
                     Poll::Pending
@@ -28,17 +28,12 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             })
             .await;
 
-            regs.index().write(|w| w.set_index(0));
-            if regs.count0().read().count() != 8 {
-                trace!("musb/setup: read failed, read count: {:?}", regs.count0().read().count());
+            let mut buf = [0; 8];
+            let read_count = endpoint0::ep0_read_packet_unchecked::<T>(&mut buf);
+            if read_count != 8 {
+                trace!("musb/setup: read failed, read count: {:?}", read_count);
                 continue;
             }
-
-            let mut buf = [0; 8];
-            (&mut buf)
-                .into_iter()
-                .for_each(|b| *b = regs.fifo(0).read().data());
-            regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
 
             trace!("musb/setup: read OK");
             return buf;
@@ -58,13 +53,10 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             last
         );
 
-        let regs = T::regs();
-
         let _ = poll_fn(|cx| {
             EP_RX_WAKERS[0].register(cx.waker());
 
-            regs.index().write(|w| w.set_index(0));
-            let ready = regs.csr0l().read().rx_pkt_rdy();
+            let ready = endpoint0::ep0_is_rx_ready::<T>();
             if ready {
                 Poll::Ready(())
             } else {
@@ -73,25 +65,11 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         })
         .await;
 
-        regs.index().write(|w| w.set_index(0));
-        let read_count = regs.count0().read().count();
-        if read_count as usize > buf.len() {
-            return Err(EndpointError::BufferOverflow);
-        }
+        let read_count = endpoint0::ep0_read_packet_unchecked::<T>(buf);
 
-        if read_count as u16 > self.ep_out.info.max_packet_size {
-            return Err(EndpointError::BufferOverflow);
+        if last {
+            endpoint0::ep0_set_data_end::<T>();
         }
-
-        buf.into_iter()
-            .take(read_count as _)
-            .for_each(|b| *b = regs.fifo(0).read().data());
-        regs.csr0l().modify(|w| {
-            w.set_serviced_rx_pkt_rdy(true);
-            if last {
-                w.set_data_end(true);
-            }
-        });
         trace!("musb/control_pipe: READ OK, rx_len = {}", read_count);
 
         Ok(read_count as usize)
@@ -109,30 +87,18 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             return Err(EndpointError::BufferOverflow);
         }
 
-        let regs = T::regs();
-
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[0].register(cx.waker());
-            regs.index().write(|w| w.set_index(0));
-            let unready = regs.csr0l().read().tx_pkt_rdy();
-            if unready {
+            let busy = endpoint0::ep0_is_tx_busy::<T>();
+            if busy {
                 Poll::Pending
             } else {
                 Poll::Ready(())
             }
         })
         .await;
-        regs.index().write(|w| w.set_index(0));
 
-        data.into_iter()
-            .for_each(|b| regs.fifo(0).write(|w| w.set_data(*b)));
-
-        regs.csr0l().modify(|w| {
-            w.set_tx_pkt_rdy(true);
-            if last {
-                w.set_data_end(true);
-            }
-        });
+        endpoint0::ep0_write_packet_unchecked::<T>(data, last);
         Ok(())
     }
 
@@ -140,9 +106,7 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
         trace!("musb/control_pipe: accept");
 
         // Set `DataEnd` bit to indicate that no more data is expected
-        let regs = T::regs();
-        regs.index().write(|w| w.set_index(0));
-        regs.csr0l().modify(|w| w.set_data_end(true));
+        endpoint0::ep0_set_data_end::<T>();
 
         // musb Programming Guide 21.1.2. WRITE REQUESTS
         // After this transfer completes, MUSB will generate an interrupt, but only
@@ -151,36 +115,28 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
     }
 
     async fn reject(&mut self) {
-        let regs = T::regs();
         trace!("musb/control_pipe: reject");
-
-        regs.index().write(|w| w.set_index(0));
-        regs.csr0l().modify(|w| {
-            w.set_send_stall(true);
-            w.set_serviced_rx_pkt_rdy(true);
-        });
+        endpoint0::ep0_stall::<T>();
     }
 
     async fn accept_set_address(&mut self, addr: u8) {
         // self.accept().await;
         // trace!("musb/control_pipe: setting addr: {}", addr);
-        let regs = T::regs();
 
         // We intentionally do not set the `DataEnd` so that the `SetupEnd` indicates the interrupt
         // after the Status Stage completes.
         // musb Programming Guide 21.1.1. ZERO DATA REQUESTS
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[0].register(cx.waker());
-            regs.index().write(|w| w.set_index(0));
-            let setup_end = regs.csr0l().read().setup_end();
+            let setup_end = endpoint0::ep0_is_setup_end::<T>();
             if setup_end {
-                regs.csr0l().modify(|w| w.set_serviced_setup_end(true));
+                endpoint0::ep0_clear_setup_end::<T>();
                 Poll::Ready(())
             } else {
                 Poll::Pending
             }
         }).await;
         trace!("musb/control_pipe: set address acked, setting addr now");
-        regs.faddr().write(|w| w.set_func_addr(addr));
+        bus::bus_set_device_address::<T>(addr);
     }
 }
