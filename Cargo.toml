@@ -15,7 +15,7 @@ exclude = ["musb-readconf"]
 
 [dependencies]
 embassy-usb-driver = { version = "0.2.0" }
-embassy-sync = { version = "0.7", optional = true }
+embassy-sync = { version = "0.8.0", optional = true }
 usb-device = { version = "0.3.2", optional = true }
 
 cfg-if = {version = "1.0.0", features = ["core"]}
@@ -44,6 +44,7 @@ log = ["embassy-sync/log", "usb-device/log", "dep:log"]
 prebuild = []
 
 builtin-std-8bep-2048 = []
+builtin-mspm0g518x = []
 builtin-py32f07x = ["_lite"]
 builtin-py32f403 = ["_lite"]
 builtin-sf32lb52x = []

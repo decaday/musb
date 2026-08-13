@@ -80,8 +80,8 @@ pub fn alloc_endpoint(
     
     // --- Dynamic FIFO Allocation Logic ---
     #[cfg(not(feature = "_fixed-fifo-size"))]
-    if ep_type == EndpointType::Control {
-        assert!(max_packet_size <= 64, "endpoint0 max packet size must be <= 64");
+    if index == 0 {
+        assert!(max_packet_size <= 64, "endpoint 0 max packet size must be <= 64");
         match direction {
             // EP0 has fixed FIFO size(64k) and address.
             Direction::Out => {
@@ -102,9 +102,8 @@ pub fn alloc_endpoint(
         
         let assigned_addr_8bytes = *next_fifo_addr_8bytes;
         
-        if ep.ep_conf.ep_type == EndpointType::Control {
-            *next_fifo_addr_8bytes += fifo_size_8bytes;
-        }
+        // Advance the FIFO address for this new allocation
+        *next_fifo_addr_8bytes += fifo_size_8bytes;
 
         if *next_fifo_addr_8bytes * 8 > TOTAL_FIFO_SIZE {
             return Err(EndpointAllocError::BufferOverflow);

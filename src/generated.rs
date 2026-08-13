@@ -49,6 +49,13 @@ cfg_if::cfg_if! {
         #[cfg(feature = "builtin-std-8bep-2048")]
         include!("prebuilds/std-8bep-2048/_generated.rs");
 
+        #[cfg(feature = "builtin-mspm0g518x")]
+        pub mod regs {
+            include!("prebuilds/mspm0g518x/regs.rs");
+        }
+        #[cfg(feature = "builtin-mspm0g518x")]
+        include!("prebuilds/mspm0g518x/_generated.rs");
+
         #[cfg(feature = "builtin-readconf")]
         pub mod regs {
             include!("prebuilds/readconf/regs.rs");
