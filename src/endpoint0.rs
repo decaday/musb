@@ -41,9 +41,21 @@ pub fn ep0_read_packet_unchecked<T: MusbInstance>(buf: &mut [u8]) -> usize {
     for b in buf.iter_mut().take(limit) {
         *b = regs.fifo(0).read().data();
     }
-    
-    regs.csr0l().modify(|w| w.set_serviced_rx_pkt_rdy(true));
     limit
+}
+
+/// Acknowledge the received packet by setting `serviced_rx_pkt_rdy` and optionally `data_end`
+/// in a single register write to satisfy the MUSB simultaneous write requirement for Zero Data requests.
+#[inline]
+pub fn ep0_clear_rx_ready<T: MusbInstance>(data_end: bool) {
+    let regs = T::regs();
+    regs.index().write(|w| w.set_index(0));
+    regs.csr0l().modify(|w| {
+        w.set_serviced_rx_pkt_rdy(true);
+        if data_end {
+            w.set_data_end(true);
+        }
+    });
 }
 
 /// Write data to EP0 TX FIFO and trigger transmission unconditionally.

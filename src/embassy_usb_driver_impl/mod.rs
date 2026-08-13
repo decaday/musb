@@ -38,6 +38,8 @@ static IRQ_RESUME: AtomicBool = AtomicBool::new(false);
 static EP_TX_ENABLED: AtomicU16 = AtomicU16::new(0);
 static EP_RX_ENABLED: AtomicU16 = AtomicU16::new(0);
 
+static EP0_EVENT_FLAG: AtomicBool = AtomicBool::new(false);
+
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
     let usb_status = crate::bus::read_and_clear_usb_interrupts::<T>();
@@ -61,6 +63,7 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
     }
     
     if (tx_status & 1) != 0 {
+        EP0_EVENT_FLAG.store(true, Ordering::Release);
         EP_TX_WAKERS[0].wake();
         EP_RX_WAKERS[0].wake();
     }

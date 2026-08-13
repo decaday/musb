@@ -29,6 +29,7 @@ cfg-if = {version = "1.0.0"}
 
 [features]
 default = ["prebuild"]
+# default = ["prebuild", "embassy-usb-driver-impl", "builtin-mspm0g518x"]
 
 embassy-usb-driver-impl = ["embassy-sync", "embassy-usb-driver"]
 usb-device-impl = ["usb-device"]

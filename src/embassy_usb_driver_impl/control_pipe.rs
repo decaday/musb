@@ -53,6 +53,10 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             last
         );
 
+        if first {
+            endpoint0::ep0_clear_rx_ready::<T>(false);
+        }
+
         let _ = poll_fn(|cx| {
             EP_RX_WAKERS[0].register(cx.waker());
 
@@ -67,9 +71,9 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
 
         let read_count = endpoint0::ep0_read_packet_unchecked::<T>(buf);
 
-        if last {
-            endpoint0::ep0_set_data_end::<T>();
-        }
+        // Acknowledge the Data OUT packet. If it's the last one, set DataEnd as well.
+        endpoint0::ep0_clear_rx_ready::<T>(last);
+
         trace!("musb/control_pipe: READ OK, rx_len = {}", read_count);
 
         Ok(read_count as usize)
@@ -82,6 +86,10 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
             first,
             last
         );
+
+        if first {
+            endpoint0::ep0_clear_rx_ready::<T>(false);
+        }
 
         if data.len() > self.ep_in.info.max_packet_size as usize {
             return Err(EndpointError::BufferOverflow);
@@ -105,13 +113,9 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
     async fn accept(&mut self) {
         trace!("musb/control_pipe: accept");
 
-        // Set `DataEnd` bit to indicate that no more data is expected
-        endpoint0::ep0_set_data_end::<T>();
-
-        // musb Programming Guide 21.1.2. WRITE REQUESTS
-        // After this transfer completes, MUSB will generate an interrupt, but only
-        // INTRTX[0] (indicating EP0) is set. To prevent the state machine from getting
-        // stuck, we do not await this interrupt for now.
+        // We set ServicedRxPktRdy and DataEnd simultaneously.
+        // musb Programming Guide 21.1.1. ZERO DATA REQUESTS
+        endpoint0::ep0_clear_rx_ready::<T>(true);
     }
 
     async fn reject(&mut self) {
@@ -120,22 +124,23 @@ impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
     }
 
     async fn accept_set_address(&mut self, addr: u8) {
-        // self.accept().await;
-        // trace!("musb/control_pipe: setting addr: {}", addr);
+        // musb Programming Guide 21.1.2. WRITE REQUESTS
+        // After this transfer completes, MUSB will generate an interrupt, but only
+        // INTRTX[0] (indicating EP0) is set.
+        // So we need a flag.
+        EP0_EVENT_FLAG.store(false, Ordering::Release);
+        self.accept().await;
 
-        // We intentionally do not set the `DataEnd` so that the `SetupEnd` indicates the interrupt
-        // after the Status Stage completes.
-        // musb Programming Guide 21.1.1. ZERO DATA REQUESTS
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[0].register(cx.waker());
-            let setup_end = endpoint0::ep0_is_setup_end::<T>();
-            if setup_end {
-                endpoint0::ep0_clear_setup_end::<T>();
+            if EP0_EVENT_FLAG.load(Ordering::Acquire) {
+                EP0_EVENT_FLAG.store(false, Ordering::Release);
                 Poll::Ready(())
             } else {
                 Poll::Pending
             }
         }).await;
+        
         trace!("musb/control_pipe: set address acked, setting addr now");
         bus::bus_set_device_address::<T>(addr);
     }
