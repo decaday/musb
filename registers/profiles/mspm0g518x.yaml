@@ -1,0 +1,30 @@
+name: mspm0g518x
+target: thumbv6m-none-eabi
+# In fact, `USBFS0` is located at 0x4047F000, but offsets 0x0000 - 0x1FFF belong to the 
+# TI wrapper registers used for managing USB power, reset, PHY, etc. 
+# The MUSB IP core starts at offset 0x2000, which is 0x40481000.
+base_address: 0x40481000
+block: peri_mspm0g518x
+fifo:
+  type: dynamic
+  total_size: 4096
+reg_bit_size:
+  fifo: 8
+  intr: 16
+endpoints:
+  - type: rxtx
+    max_packet_size: 64
+  - type: rxtx
+    max_packet_size: 4096
+  - type: rxtx
+    max_packet_size: 4096
+  - type: rxtx
+    max_packet_size: 4096
+  - type: rxtx
+    max_packet_size: 4096
+  - type: rxtx
+    max_packet_size: 4096
+  - type: rxtx
+    max_packet_size: 4096
+  - type: rxtx
+    max_packet_size: 4096

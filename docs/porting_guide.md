@@ -7,6 +7,8 @@ This guide explains how to add support for new chips using MUSB.
 | Manufacturer             | Chips (not fully listed)         | IP             |
 | ------------------------ | -------------------------------- | -------------- |
 | Texas Instruments        | am335x,am1802, F2837xD, LM3S6911 | musb*          |
+| Texas Instruments        | mspm0g5187, mspm0g511x           | musb std       |
+| Texas Instruments        | am335x,am1802, F2837xD, LM3S6911 | musb std       |
 | Allwinner(全志)          | F1C100S, F133                    | musb phy ip*   |
 | SiFli (思澈)             | SF32LB52x                        | musb std + phy |
 | beken (北科微 or 小博通) | beken725x                        | musb std       |

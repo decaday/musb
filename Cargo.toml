@@ -44,6 +44,7 @@ log = ["embassy-sync/log", "usb-device/log", "dep:log"]
 prebuild = []
 
 builtin-std-8bep-2048 = []
+builtin-mspm0g518x = []
 builtin-py32f07x = ["_lite"]
 builtin-py32f403 = ["_lite"]
 builtin-sf32lb52x = []
