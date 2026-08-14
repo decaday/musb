@@ -1,5 +1,5 @@
 use crate::warn;
-use core::sync::atomic::{AtomicU32, AtomicU8, Ordering};
+use portable_atomic::{AtomicU32, AtomicU8, Ordering};
 
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -41,32 +41,32 @@ impl ControlState {
     }
 
     pub(super) fn set_state(&self, state: ControlStateEnum) {
-        self.state.store(state as u8, Ordering::SeqCst);
+        self.state.store(state as u8, Ordering::Relaxed);
     }
 
     pub(super) fn get_state(&self) -> ControlStateEnum {
-        ControlStateEnum::from(self.state.load(Ordering::SeqCst))
+        ControlStateEnum::from(self.state.load(Ordering::Relaxed))
     }
 
     pub(super) fn reset_tx_len(&self) {
-        self.tx_len.store(0, Ordering::SeqCst);
+        self.tx_len.store(0, Ordering::Relaxed);
     }
 
     pub(super) fn set_tx_len(&self, tx_len: u32) {
-        self.tx_len.store(tx_len, Ordering::SeqCst);
+        self.tx_len.store(tx_len, Ordering::Relaxed);
     }
 
     pub(super) fn decrease_tx_len(&self, len: u32) {
-        let tx_len = self.tx_len.load(Ordering::SeqCst);
+        let tx_len = self.tx_len.load(Ordering::Relaxed);
         if len > tx_len {
             warn!("decrease_tx_len: len {} > tx_len {}", len, tx_len);
-            self.tx_len.store(0, Ordering::SeqCst);
+            self.tx_len.store(0, Ordering::Relaxed);
         } else {
-            self.tx_len.store(tx_len - len, Ordering::SeqCst);
+            self.tx_len.store(tx_len - len, Ordering::Relaxed);
         }
     }
 
     pub(super) fn get_tx_len(&self) -> u32 {
-        self.tx_len.load(Ordering::SeqCst)
+        self.tx_len.load(Ordering::Relaxed)
     }
 }

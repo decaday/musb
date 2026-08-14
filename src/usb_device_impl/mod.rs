@@ -15,7 +15,7 @@
 // Therefore, this porting layer maintains its own state machine:
 // `UsbdBus.control_state`.
 use core::marker::PhantomData;
-use core::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+use portable_atomic::{AtomicBool, AtomicU16, Ordering};
 
 use crate::types::{Direction, EndpointType};
 use usb_device::bus::PollResult;
@@ -172,8 +172,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                     }
                     trace!("NodataPhase, buf.len() = 0");
                     self.control_state.set_state(ControlStateEnum::Idle);
-                    let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1 as u16;
-                    IRQ_EP_TX.store(flags, Ordering::Release);
+                    IRQ_EP_TX.fetch_or(1, Ordering::Release);
                 }
                 ControlStateEnum::DataIn => {
                     self.control_state.decrease_tx_len(buf.len() as u32);
@@ -209,8 +208,8 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             if buf.len() != 0 {
                 endpoint::ep_write_packet_unchecked::<T>(index as _, buf);
             } else {
-                regs.index().write(|w| w.set_index(index as _));
-                regs.txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
+                T::regs().index().write(|w| w.set_index(index as _));
+                T::regs().txcsrl().modify(|w| w.set_tx_pkt_rdy(true));
             }
         }
         trace!("WRITE OK");
@@ -323,15 +322,15 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         endpoint::check_overrun::<T>();
 
         if IRQ_RESET.load(Ordering::Acquire) {
-            IRQ_RESET.store(false, Ordering::Release);
+            IRQ_RESET.store(false, Ordering::Relaxed);
             return PollResult::Reset;
         }
         if IRQ_RESUME.load(Ordering::Acquire) {
-            IRQ_RESUME.store(false, Ordering::Release);
+            IRQ_RESUME.store(false, Ordering::Relaxed);
             return PollResult::Resume;
         }
         if IRQ_SUSPEND.load(Ordering::Acquire) {
-            IRQ_RESET.store(false, Ordering::Release);
+            IRQ_SUSPEND.store(false, Ordering::Relaxed);
             return PollResult::Suspend;
         }
 
@@ -345,8 +344,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                     match self.control_state.get_state() {
                         ControlStateEnum::DataIn => {
                             // interrupt generated due to a packet has been transmitted
-                            let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
-                            IRQ_EP_TX.store(flags, Ordering::Release);
+                            IRQ_EP_TX.fetch_or(1u16, Ordering::Release);
                         }
                         _ => {}
                     }
@@ -367,8 +365,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                             }
                         },
                         ControlStateEnum::DataOut => {
-                            let flags = IRQ_EP_RX.load(Ordering::Acquire) | 1u16;
-                            IRQ_EP_RX.store(flags, Ordering::Release);
+                            IRQ_EP_RX.fetch_or(1u16, Ordering::Release);
                         }
                         ControlStateEnum::Accepted => {}
                         ControlStateEnum::DataIn => {
@@ -417,11 +414,10 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             if flags & 1u16 != 0 {
                 trace!("Accepted with IRQ_EP_RX != 0");
                 IRQ_EP0.store(true, Ordering::Release);
-                IRQ_EP_RX.store(flags & !1u16, Ordering::SeqCst);
+                IRQ_EP_RX.fetch_and(!1u16, Ordering::Release);
             }
 
-            let flags = IRQ_EP_TX.load(Ordering::Acquire) | 1u16;
-            IRQ_EP_TX.store(flags, Ordering::Release);
+            IRQ_EP_TX.fetch_or(1u16, Ordering::Release);
 
             self.control_state.set_state(ControlStateEnum::Idle);
         }
@@ -435,11 +431,10 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             };
             // clean flags after packet was read, rx_pkt_rdy == false
             if !rdy {
-                IRQ_EP_RX.store(rx_flags & !((1 << index) as u16), Ordering::SeqCst);
+                IRQ_EP_RX.fetch_and(!((1 << index) as u16), Ordering::Release);
             }
         }
-        let in_complete = IRQ_EP_TX.load(Ordering::Acquire);
-        IRQ_EP_TX.store(0, Ordering::SeqCst);
+        let in_complete = IRQ_EP_TX.swap(0, Ordering::Acquire);
         let out = IRQ_EP_RX.load(Ordering::Acquire);
 
         if in_complete != 0 || out != 0 || setup {
@@ -472,30 +467,28 @@ static IRQ_EP0: AtomicBool = AtomicBool::new(false);
 pub unsafe fn on_interrupt<T: MusbInstance>() {
     let usb_status = crate::bus::read_and_clear_usb_interrupts::<T>();
     if usb_status.reset {
-        IRQ_RESET.store(true, Ordering::SeqCst);
+        IRQ_RESET.store(true, Ordering::Release);
     }
     if usb_status.suspend {
-        IRQ_SUSPEND.store(true, Ordering::SeqCst);
+        IRQ_SUSPEND.store(true, Ordering::Release);
     }
     if usb_status.resume {
-        IRQ_RESUME.store(true, Ordering::SeqCst);
+        IRQ_RESUME.store(true, Ordering::Release);
     }
 
     let tx_status = crate::endpoint::read_and_clear_tx_interrupts::<T>();
     let rx_status = crate::endpoint::read_and_clear_rx_interrupts::<T>();
 
     if (tx_status & 1) != 0 {
-        IRQ_EP0.store(true, Ordering::SeqCst);
+        IRQ_EP0.store(true, Ordering::Release);
     }
 
     for index in 1..ENDPOINTS.len() {
         if (tx_status & (1 << index)) != 0 {
-            let flags = IRQ_EP_TX.load(Ordering::Acquire) | (1 << index) as u16;
-            IRQ_EP_TX.store(flags, Ordering::Release);
+            IRQ_EP_TX.fetch_or((1 << index) as u16, Ordering::Release);
         }
         if (rx_status & (1 << index)) != 0 {
-            let flags = IRQ_EP_RX.load(Ordering::Acquire) | (1 << index) as u16;
-            IRQ_EP_RX.store(flags, Ordering::Release);
+            IRQ_EP_RX.fetch_or((1 << index) as u16, Ordering::Release);
         }
     }
 }

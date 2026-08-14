@@ -1,6 +1,6 @@
 use core::future::poll_fn;
 use core::marker::PhantomData;
-use core::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+use portable_atomic::{AtomicBool, AtomicU16, Ordering};
 use core::task::Poll;
 
 use embassy_sync::waitqueue::AtomicWaker;
@@ -50,15 +50,15 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         usb_status.reset, usb_status.suspend, usb_status.resume, tx_status, rx_status);
 
     if usb_status.reset {
-        IRQ_RESET.store(true, Ordering::SeqCst);
+        IRQ_RESET.store(true, Ordering::Release);
         BUS_WAKER.wake();
     }
     if usb_status.suspend {
-        IRQ_SUSPEND.store(true, Ordering::SeqCst);
+        IRQ_SUSPEND.store(true, Ordering::Release);
         BUS_WAKER.wake();
     }
     if usb_status.resume {
-        IRQ_RESUME.store(true, Ordering::SeqCst);
+        IRQ_RESUME.store(true, Ordering::Release);
         BUS_WAKER.wake();
     }
     
