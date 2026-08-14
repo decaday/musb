@@ -105,12 +105,13 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                 }
             }
         } else {
-            // py32 official CherryUsb port does nothing when disable an endpoint
             match ep_addr.direction() {
                 Direction::Out => {
+                    endpoint::ep_rx_disable::<T>(ep_index as _);
                     EP_RX_ENABLED.fetch_and(!((1 << ep_index) as u16), Ordering::Release);
                 }
                 Direction::In => {
+                    endpoint::ep_tx_disable::<T>(ep_index as _);
                     EP_TX_ENABLED.fetch_and(!((1 << ep_index) as u16), Ordering::Release);
                 }
             }

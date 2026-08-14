@@ -189,6 +189,34 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
     }
 }
 
+pub fn ep_tx_disable<T: MusbInstance>(index: u8) {
+    trace!("musb/ep_disable: Disabling TX endpoint {}", index);
+    let regs = T::regs();
+    regs.index().write(|w| w.set_index(index));
+
+    regs.txcsrl().modify(|w| w.set_flush_fifo(true));
+    regs.txcsrl().modify(|w| w.set_flush_fifo(true));
+
+    regs.txcsrl().write(|w| w.set_clr_data_tog(true));
+
+    regs.txmaxp().write(|w| w.set_maxp(0));
+    regs.intrtxe().modify(|w| w.set_ep_txe(index as _, false));
+}
+
+pub fn ep_rx_disable<T: MusbInstance>(index: u8) {
+    trace!("musb/ep_disable: Disabling RX endpoint {}", index);
+    let regs = T::regs();
+    regs.index().write(|w| w.set_index(index));
+
+    regs.rxcsrl().modify(|w| w.set_flush_fifo(true));
+    regs.rxcsrl().modify(|w| w.set_flush_fifo(true));
+
+    regs.rxcsrl().write(|w| w.set_clr_data_tog(true));
+
+    regs.rxmaxp().write(|w| w.set_maxp(0));
+    regs.intrrxe().modify(|w| w.set_ep_rxe(index as _, false));
+}
+
 /// Check if TX FIFO is busy (not writable).
 /// Returns true if the hardware is still transmitting the previous packet.
 /// `index` must not be 0.

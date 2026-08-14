@@ -6,7 +6,7 @@ pub struct ControlPipe<'d, T: MusbInstance> {
     pub(super) _phantom: PhantomData<&'d mut T>,
     pub(super) max_packet_size: u16,
     pub(super) ep_in: Endpoint<'d, T, In>,
-    pub(super) ep_out: Endpoint<'d, T, Out>,
+    pub(super) _ep_out: Endpoint<'d, T, Out>,
 }
 
 impl<'d, T: MusbInstance> driver::ControlPipe for ControlPipe<'d, T> {
