@@ -21,7 +21,7 @@ use crate::types::{Direction, EndpointType};
 use usb_device::bus::PollResult;
 use usb_device::{UsbDirection, UsbError};
 
-use crate::alloc_endpoint::{self, EndpointAllocError, EndpointConfig, EndpointData};
+use crate::alloc_endpoint::{EndpointAllocator, EndpointAllocError, EndpointConfig, EndpointData};
 use crate::{bus, endpoint, endpoint0};
 use crate::{trace, warn};
 use crate::MusbInstance;
@@ -34,9 +34,7 @@ use control_state::{ControlState, ControlStateEnum};
 
 pub struct UsbdBus<T: MusbInstance> {
     phantom: PhantomData<T>,
-    endpoints: [EndpointData; ENDPOINTS.len()],
-    #[cfg(not(feature = "_fixed-fifo-size"))]
-    next_fifo_addr_8bytes: u16,
+    allocator: EndpointAllocator,
     control_state: ControlState,
     pending_address: core::cell::Cell<Option<u8>>,
 }
@@ -45,25 +43,7 @@ impl<T: MusbInstance> UsbdBus<T> {
     pub fn new() -> Self {
         Self {
             phantom: PhantomData,
-            endpoints: [EndpointData {
-                ep_conf: EndpointConfig {
-                    ep_type: EndpointType::Bulk,
-                    tx_max_packet_size: 0,
-                    rx_max_packet_size: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    tx_fifo_size_bits: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    rx_fifo_size_bits: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    tx_fifo_addr_8bytes: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    rx_fifo_addr_8bytes: 0,
-                },
-                used_tx: false,
-                used_rx: false,
-            }; ENDPOINTS.len()],
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            next_fifo_addr_8bytes: 8, // 64 bytes for EP0
+            allocator: EndpointAllocator::new(),
             control_state: ControlState::new(),
             pending_address: core::cell::Cell::new(None),
         }
@@ -91,10 +71,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             usb_device::UsbDirection::Out => Direction::Out,
         };
 
-        alloc_endpoint::alloc_endpoint(
-            &mut self.endpoints,
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            &mut self.next_fifo_addr_8bytes,
+        self.allocator.alloc_endpoint(
             ep_type,
             index,
             dir,
@@ -121,7 +98,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         trace!("call reset");
         T::regs().power().write(|w| w.set_suspend_mode(true));
 
-        self.endpoints.iter().enumerate().for_each(|(index, ep)| {
+        self.allocator.endpoints().iter().enumerate().for_each(|(index, ep)| {
             if ep.used_tx {
                 trace!("call ep_tx_enable, index = {}", index);
                 ep::ep_tx_enable::<T>(index as _, &ep.ep_conf);
@@ -154,7 +131,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
             self.control_state.get_state()
         );
 
-        // if buf.len() > self.endpoints[index].ep_conf.tx_max_packet_size as usize {
+        // if buf.len() > self.allocator.endpoints()[index].ep_conf.tx_max_packet_size as usize {
         //     return Err(UsbError::BufferOverflow);
         // }
         let unready = if index == 0 {
@@ -178,15 +155,10 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 }
                 ControlStateEnum::DataIn => {
                     self.control_state.decrease_tx_len(buf.len() as u32);
-                    let mut is_last = false;
-                    if self.control_state.get_tx_len() == 0 {
-                        is_last = true;
-                        self.control_state.set_state(ControlStateEnum::Idle);
-                    } else if buf.len()
-                        < self.endpoints[0].ep_conf.tx_max_packet_size as usize
-                    {
-                        // Last Package. include ZLP
-                        is_last = true;
+                    let is_last = (buf.len() as usize)
+                        < self.allocator.endpoints()[0].ep_conf.tx_max_packet_size as usize
+                        || (self.control_state.get_tx_len() == 0);
+                    if is_last {
                         self.control_state.set_state(ControlStateEnum::Idle);
                         self.control_state.reset_tx_len();
                     }
@@ -272,7 +244,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                 }
                 ControlStateEnum::DataOut => {
                     let is_last = (read_count as u32)
-                        < self.endpoints[0].ep_conf.rx_max_packet_size as u32;
+                        < self.allocator.endpoints()[0].ep_conf.rx_max_packet_size as u32;
                     ep0::ep0_clear_rx_ready::<T>(is_last);
                     if is_last {
                         // Last Package. include ZLP

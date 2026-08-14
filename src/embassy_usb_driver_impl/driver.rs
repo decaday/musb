@@ -1,46 +1,22 @@
 use super::*;
-use crate::alloc_endpoint::{self, EndpointConfig, EndpointData};
+use crate::alloc_endpoint::{EndpointAllocator, EndpointConfig, EndpointData};
 use crate::info::ENDPOINTS;
 use crate::assert_eq;
 
 /// MUSB driver.
 pub struct MusbDriver<'d, T: MusbInstance> {
     phantom: PhantomData<&'d mut T>,
-    alloc: [EndpointData; ENDPOINTS.len()],
-    #[cfg(not(feature = "_fixed-fifo-size"))]
-    next_fifo_addr_8bytes: u16,
+    allocator: EndpointAllocator,
 }
 
 impl<'d, T: MusbInstance> MusbDriver<'d, T> {
-    /// Create a new USB driver.
     pub fn new() -> Self {
-        #[cfg(not(feature = "_fixed-fifo-size"))]
-        let next_fifo_addr_8bytes = 8; // Start after EP0's 64 bytes
-        
         // Initialize the bus so that it signals that power is available
         BUS_WAKER.wake();
 
         Self {
             phantom: PhantomData,
-            alloc: [EndpointData {
-                ep_conf: EndpointConfig {
-                    ep_type: crate::types::EndpointType::Bulk,
-                    tx_max_packet_size: 0,
-                    rx_max_packet_size: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    tx_fifo_size_bits: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    rx_fifo_size_bits: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    tx_fifo_addr_8bytes: 0,
-                    #[cfg(not(feature = "_fixed-fifo-size"))]
-                    rx_fifo_addr_8bytes: 0,
-                },
-                used_tx: false,
-                used_rx: false,
-            }; ENDPOINTS.len()],
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            next_fifo_addr_8bytes,
+            allocator: EndpointAllocator::new(),
         }
     }
 
@@ -74,9 +50,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             Direction::Out => crate::types::Direction::Out,
         };
 
-        let index = alloc_endpoint::alloc_endpoint(
-            &mut self.alloc,
-            #[cfg(not(feature = "_fixed-fifo-size"))] &mut self.next_fifo_addr_8bytes,
+        let index = self.allocator.alloc_endpoint(
             internal_ep_type,
             ep_addr.map(|addr| addr.index() as u8),
             internal_dir,
@@ -108,22 +82,10 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
 
         trace!("musb driver: start");
 
-        let mut ep_confs = [EndpointConfig {
-            ep_type: crate::types::EndpointType::Bulk,
-            tx_max_packet_size: 0,
-            rx_max_packet_size: 0,
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            tx_fifo_size_bits: 0,
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            rx_fifo_size_bits: 0,
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            tx_fifo_addr_8bytes: 0,
-            #[cfg(not(feature = "_fixed-fifo-size"))]
-            rx_fifo_addr_8bytes: 0,
-        }; ENDPOINTS.len()];
+        let mut ep_confs = [EndpointConfig::default(); ENDPOINTS.len()];
 
         for i in 0..ENDPOINTS.len() {
-            ep_confs[i] = self.alloc[i].ep_conf;
+            ep_confs[i] = self.allocator.endpoints()[i].ep_conf;
         }
 
         (
