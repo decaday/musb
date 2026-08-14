@@ -44,7 +44,7 @@ impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
         let index = self.info.addr.index();
         let _ = poll_fn(|cx| {
             EP_RX_WAKERS[index].register(cx.waker());
-            let ready = endpoint::ep_is_rx_ready::<T>(index as _);
+            let ready = ep::ep_is_rx_ready::<T>(index as _);
             if ready {
                 Poll::Ready(())
             } else {
@@ -53,7 +53,7 @@ impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
         })
         .await;
 
-        let read_count = endpoint::ep_read_packet_unchecked::<T>(index as _, buf);
+        let read_count = ep::ep_read_packet_unchecked::<T>(index as _, buf);
         trace!("musb/ep: read ok, rx_len = {}", read_count);
 
         Ok(read_count as usize)
@@ -72,7 +72,7 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
         let _ = poll_fn(|cx| {
             EP_TX_WAKERS[index].register(cx.waker());
 
-            let busy = endpoint::ep_is_tx_busy::<T>(index as _);
+            let busy = ep::ep_is_tx_busy::<T>(index as _);
 
             if busy {
                 Poll::Pending
@@ -82,7 +82,7 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
         })
         .await;
 
-        endpoint::ep_write_packet_unchecked::<T>(index as _, buf);
+        ep::ep_write_packet_unchecked::<T>(index as _, buf);
         trace!("musb/ep: write ok");
         Ok(())
     }

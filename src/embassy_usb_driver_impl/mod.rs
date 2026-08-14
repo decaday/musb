@@ -43,8 +43,8 @@ static EP0_EVENT_FLAG: AtomicBool = AtomicBool::new(false);
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
     let usb_status = crate::bus::read_and_clear_usb_interrupts::<T>();
-    let tx_status = crate::endpoint::read_and_clear_tx_interrupts::<T>();
-    let rx_status = crate::endpoint::read_and_clear_rx_interrupts::<T>();
+    let tx_status = crate::ep::read_and_clear_tx_interrupts::<T>();
+    let rx_status = crate::ep::read_and_clear_rx_interrupts::<T>();
     
     trace!("musb/on_interrupt: reset: {}, suspend: {}, resume: {}, tx: {:b}, rx: {:b}", 
         usb_status.reset, usb_status.suspend, usb_status.resume, tx_status, rx_status);

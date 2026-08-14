@@ -15,8 +15,8 @@ pub use usb_device_impl::*;
 #[cfg(not(feature = "builtin-readconf"))]
 pub mod alloc_endpoint;
 pub mod bus;
-pub mod endpoint;
-pub mod endpoint0;
+pub mod ep;
+pub mod ep0;
 
 pub mod generated;
 pub use generated::common;

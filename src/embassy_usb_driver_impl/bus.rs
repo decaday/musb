@@ -66,10 +66,10 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
         let ep_index = ep_addr.index();
         match ep_addr.direction() {
             Direction::In => {
-                endpoint::ep_tx_stall::<T>(ep_index as _, stalled);
+                ep::ep_tx_stall::<T>(ep_index as _, stalled);
             }
             Direction::Out => {
-                endpoint::ep_rx_stall::<T>(ep_index as _, stalled);
+                ep::ep_rx_stall::<T>(ep_index as _, stalled);
                 EP_TX_WAKERS[ep_addr.index()].wake();
                 EP_RX_WAKERS[ep_addr.index()].wake();
             }
@@ -78,8 +78,8 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
 
     fn endpoint_is_stalled(&mut self, ep_addr: EndpointAddress) -> bool {
         match ep_addr.direction() {
-            Direction::In => endpoint::ep_tx_is_stalled::<T>(ep_addr.index() as _),
-            Direction::Out => endpoint::ep_rx_is_stalled::<T>(ep_addr.index() as _),
+            Direction::In => ep::ep_tx_is_stalled::<T>(ep_addr.index() as _),
+            Direction::Out => ep::ep_rx_is_stalled::<T>(ep_addr.index() as _),
         }
     }
 
@@ -91,14 +91,14 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
         if enabled {
             match ep_addr.direction() {
                 Direction::Out => {
-                    endpoint::ep_rx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
+                    ep::ep_rx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
 
                     EP_RX_ENABLED.fetch_or((1 << ep_index) as u16, Ordering::Release);
                     // Wake for `Endpoint::wait_enabled()`
                     EP_RX_WAKERS[ep_index].wake();
                 }
                 Direction::In => {
-                    endpoint::ep_tx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
+                    ep::ep_tx_enable::<T>(ep_index as _, &self.ep_confs[ep_index]);
 
                     EP_TX_ENABLED.fetch_or((1 << ep_index) as u16, Ordering::Release);
                     EP_TX_WAKERS[ep_index].wake();
@@ -107,11 +107,11 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
         } else {
             match ep_addr.direction() {
                 Direction::Out => {
-                    endpoint::ep_rx_disable::<T>(ep_index as _);
+                    ep::ep_rx_disable::<T>(ep_index as _);
                     EP_RX_ENABLED.fetch_and(!((1 << ep_index) as u16), Ordering::Release);
                 }
                 Direction::In => {
-                    endpoint::ep_tx_disable::<T>(ep_index as _);
+                    ep::ep_tx_disable::<T>(ep_index as _);
                     EP_TX_ENABLED.fetch_and(!((1 << ep_index) as u16), Ordering::Release);
                 }
             }

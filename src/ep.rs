@@ -292,14 +292,14 @@ pub fn check_overrun<T: MusbInstance>() {
 
 #[cfg(not(feature = "_lite"))]
 /// `index` must not be 0.
-pub fn endpoint_set_rx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: bool) {
+pub fn ep_set_rx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: bool) {
     let regs = T::regs();
     regs.rx_dpktbufdis().modify(|w| w.set_dis(index as _, !enabled));
 }
 
 #[cfg(not(feature = "_lite"))]
 /// `index` must not be 0.
-pub fn endpoint_set_tx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: bool) {
+pub fn ep_set_tx_dualpacket_enabled<T: MusbInstance>(index: u8, enabled: bool) {
     let regs = T::regs();
     regs.tx_dpktbufdis().modify(|w| w.set_dis(index as _, !enabled));
 }
