@@ -29,7 +29,8 @@ pub fn ep0_is_tx_busy<T: MusbInstance>() -> bool {
 
 /// Read data from EP0 RX FIFO unconditionally.
 /// **WARNING: Must call `ep0_is_rx_ready` and ensure it returns true before calling this.**
-/// This function also sets the `serviced_rx_pkt_rdy` bit.
+/// **WARNING**: This function DOES NOT clear the `RxPktRdy` flag or set `serviced_rx_pkt_rdy`.
+/// You must explicitly call `ep0_clear_rx_ready` to advance the hardware state machine.
 #[inline]
 pub fn ep0_read_packet_unchecked<T: MusbInstance>(buf: &mut [u8]) -> usize {
     let regs = T::regs();

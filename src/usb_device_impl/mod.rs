@@ -295,7 +295,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         let regs = T::regs();
         let mut setup = false;
 
-        ep::check_overrun::<T>();
+        ep::check_and_clear_overrun_underrun::<T>();
 
         if IRQ_RESET.load(Ordering::Acquire) {
             IRQ_RESET.store(false, Ordering::Relaxed);

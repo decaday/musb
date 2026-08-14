@@ -274,7 +274,7 @@ pub fn ep_read_packet_unchecked<T: MusbInstance>(index: u8, buf: &mut [u8]) -> u
 
 #[allow(unused)]
 #[inline]
-pub fn check_overrun<T: MusbInstance>() {
+pub fn check_and_clear_overrun_underrun<T: MusbInstance>() {
     let regs = T::regs();
 
     for index in 1..ENDPOINTS.len() {

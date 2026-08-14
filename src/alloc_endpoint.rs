@@ -106,13 +106,13 @@ impl EndpointAllocator {
             None => return Err(EndpointAllocError::EndpointOverflow),
         };
 
-        ep.ep_conf.ep_type = ep_type;
-        
         // --- Dynamic FIFO Allocation Logic ---
         #[cfg(not(feature = "_fixed-fifo-size"))]
         if index == 0 {
             assert!(max_packet_size <= 64, "endpoint 0 max packet size must be <= 64");
+            ep.ep_conf.ep_type = ep_type;
             match direction {
+                // EP0 has fixed FIFO size(64k) and address.
                 Direction::Out => {
                     ep.ep_conf.rx_max_packet_size = max_packet_size;
                     ep.ep_conf.rx_fifo_size_bits = 0;
@@ -128,14 +128,14 @@ impl EndpointAllocator {
             let fifo_size_bytes = max_packet_size.next_power_of_two().max(8) as u16;
             let fifo_size_8bytes = fifo_size_bytes / 8;
             
-            let assigned_addr_8bytes = self.next_fifo_addr_8bytes;
-            
-            self.next_fifo_addr_8bytes += fifo_size_8bytes;
-
-            if self.next_fifo_addr_8bytes * 8 > TOTAL_FIFO_SIZE {
+            let next_addr = self.next_fifo_addr_8bytes + fifo_size_8bytes;
+            if next_addr * 8 > TOTAL_FIFO_SIZE {
                 return Err(EndpointAllocError::BufferOverflow);
             }
+            let assigned_addr_8bytes = self.next_fifo_addr_8bytes;
+            self.next_fifo_addr_8bytes = next_addr;
 
+            ep.ep_conf.ep_type = ep_type;
             match direction {
                 Direction::Out => {
                     ep.ep_conf.rx_max_packet_size = max_packet_size;
@@ -152,6 +152,7 @@ impl EndpointAllocator {
         
         #[cfg(feature = "_fixed-fifo-size")]
         {
+            ep.ep_conf.ep_type = ep_type;
             match direction {
                 Direction::Out => ep.ep_conf.rx_max_packet_size = max_packet_size,
                 Direction::In => ep.ep_conf.tx_max_packet_size = max_packet_size,

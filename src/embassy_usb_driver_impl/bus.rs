@@ -11,12 +11,6 @@ pub struct Bus<'d, T: MusbInstance> {
     pub(super) inited: bool,
 }
 
-impl<'d, T: MusbInstance> Bus<'d, T> {
-    fn init(&self) {
-        bus::init_usb_interrupts::<T>();
-    }
-}
-
 impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     async fn poll(&mut self) -> Event {
         poll_fn(move |cx| {
@@ -24,7 +18,6 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
 
             // TODO: implement VBUS detection.
             if !self.inited {
-                self.init();
                 self.inited = true;
                 return Poll::Ready(Event::PowerDetected);
             }
@@ -67,11 +60,11 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
         match ep_addr.direction() {
             Direction::In => {
                 ep::ep_tx_stall::<T>(ep_index as _, stalled);
+                EP_TX_WAKERS[ep_index].wake();
             }
             Direction::Out => {
                 ep::ep_rx_stall::<T>(ep_index as _, stalled);
-                EP_TX_WAKERS[ep_addr.index()].wake();
-                EP_RX_WAKERS[ep_addr.index()].wake();
+                EP_RX_WAKERS[ep_index].wake();
             }
         }
     }
