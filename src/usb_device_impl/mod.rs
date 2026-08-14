@@ -38,6 +38,7 @@ pub struct UsbdBus<T: MusbInstance> {
     #[cfg(not(feature = "_fixed-fifo-size"))]
     next_fifo_addr_8bytes: u16,
     control_state: ControlState,
+    pending_address: core::cell::Cell<Option<u8>>,
 }
 
 impl<T: MusbInstance> UsbdBus<T> {
@@ -64,6 +65,7 @@ impl<T: MusbInstance> UsbdBus<T> {
             #[cfg(not(feature = "_fixed-fifo-size"))]
             next_fifo_addr_8bytes: 8, // 64 bytes for EP0
             control_state: ControlState::new(),
+            pending_address: core::cell::Cell::new(None),
         }
     }
 }
@@ -136,7 +138,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
 
     fn set_device_address(&self, addr: u8) {
         trace!("call set_device_address: {}", addr);
-        bus::bus_set_device_address::<T>(addr);
+        self.pending_address.set(Some(addr));
     }
 
     fn write(
@@ -249,29 +251,31 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                     if direction == 0 {
                         // OUT
                         if w_length == 0 {
-                            endpoint0::ep0_set_data_end::<T>();
+                            endpoint0::ep0_clear_rx_ready::<T>(true);
                             self.control_state.set_state(ControlStateEnum::NodataPhase);
                         } else {
+                            endpoint0::ep0_clear_rx_ready::<T>(false);
                             self.control_state.set_state(ControlStateEnum::DataOut);
                             // self.control_state.set_rx_len(w_length as _);
                         }
                     } else {
                         // IN
                         if w_length == 0 {
-                            endpoint0::ep0_set_data_end::<T>();
+                            endpoint0::ep0_clear_rx_ready::<T>(true);
                             self.control_state.set_state(ControlStateEnum::NodataPhase);
                         } else {
+                            endpoint0::ep0_clear_rx_ready::<T>(false);
                             self.control_state.set_state(ControlStateEnum::DataIn);
                             self.control_state.set_tx_len(w_length as _);
                         }
                     }
                 }
                 ControlStateEnum::DataOut => {
-                    if (read_count as u32)
-                        < self.endpoints[0].ep_conf.rx_max_packet_size as u32
-                    {
+                    let is_last = (read_count as u32)
+                        < self.endpoints[0].ep_conf.rx_max_packet_size as u32;
+                    endpoint0::ep0_clear_rx_ready::<T>(is_last);
+                    if is_last {
                         // Last Package. include ZLP
-                        endpoint0::ep0_set_data_end::<T>();
                         self.control_state.set_state(ControlStateEnum::Idle);
                         trace!("READ END, buf.len() = {}", buf.len());
                     }
@@ -347,6 +351,11 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
                             IRQ_EP_TX.fetch_or(1u16, Ordering::Release);
                         }
                         _ => {}
+                    }
+                    
+                    if let Some(addr) = self.pending_address.get() {
+                        bus::bus_set_device_address::<T>(addr);
+                        self.pending_address.set(None);
                     }
                 }
                 (true, _) => {
