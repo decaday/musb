@@ -53,6 +53,11 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
 
                 trace!("musb/poll: reset");
 
+                // A reset unconfigures the device: endpoints stay disabled until
+                // the host sets a configuration again.
+                EP_TX_ENABLED.store(0, Ordering::Release);
+                EP_RX_ENABLED.store(0, Ordering::Release);
+
                 for w in &EP_TX_WAKERS {
                     w.wake()
                 }
@@ -133,10 +138,14 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
                 Direction::Out => {
                     let flags = EP_RX_ENABLED.load(Ordering::Acquire) & !((1 << ep_index) as u16);
                     EP_RX_ENABLED.store(flags, Ordering::Release);
+                    // Wake a pending `read()` so it returns `Disabled`
+                    EP_RX_WAKERS[ep_index].wake();
                 }
                 Direction::In => {
                     let flags = EP_TX_ENABLED.load(Ordering::Acquire) & !((1 << ep_index) as u16);
                     EP_TX_ENABLED.store(flags, Ordering::Release);
+                    // Wake a pending `write()` so it returns `Disabled`
+                    EP_TX_WAKERS[ep_index].wake();
                 }
             }
         }
