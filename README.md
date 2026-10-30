@@ -38,6 +38,8 @@ If your chip is not included, you'll need to create a new profile. Refer to the 
 
 `embassy-usb-driver-impl`: Enables [embassy-usb-driver](https://crates.io/crates/embassy-usb-driver) implementation.
 
+`embassy-time`: With `embassy-usb-driver-impl`, implements remote wakeup (it times the resume signalling).
+
 `usb-device-impl`: Enables [usb-device](https://crates.io/crates/usb-device) implementation.
 
 **Note:** Only one of these two implementations can be enabled at a time.
