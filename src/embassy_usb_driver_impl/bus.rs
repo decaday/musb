@@ -163,6 +163,18 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
         });
     }
 
+    /// Drive resume signalling for 10 ms, inside the 1-15 ms USB 2.0 allows
+    /// (§7.1.7.7); the host takes over from there. The core raises no Resume
+    /// interrupt for a resume it started, so the bus is resumed on return.
+    #[cfg(feature = "embassy-time")]
+    async fn remote_wakeup(&mut self) -> Result<(), Unsupported> {
+        T::regs().power().modify(|w| w.set_resume(true));
+        embassy_time::Timer::after_millis(10).await;
+        T::regs().power().modify(|w| w.set_resume(false));
+        Ok(())
+    }
+
+    #[cfg(not(feature = "embassy-time"))]
     async fn remote_wakeup(&mut self) -> Result<(), Unsupported> {
         Err(Unsupported)
     }
