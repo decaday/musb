@@ -21,6 +21,8 @@ These built-in profiles are used via Cargo features (see below), with only one s
 
 - `builtin-sf32lb52x`
 
+- `builtin-wb32fq95` (WB32FQ95xx)
+
 - `builtin-std-8bep-2048` (8 bidirectional endpoints, 2048K FIFO size in total, without instance)
 
 Add musb to your `Cargo.toml`:

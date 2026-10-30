@@ -56,6 +56,13 @@ cfg_if::cfg_if! {
         #[cfg(feature = "builtin-mspm0g518x")]
         include!("prebuilds/mspm0g518x/_generated.rs");
 
+        #[cfg(feature = "builtin-wb32fq95")]
+        pub mod regs {
+            include!("prebuilds/wb32fq95/regs.rs");
+        }
+        #[cfg(feature = "builtin-wb32fq95")]
+        include!("prebuilds/wb32fq95/_generated.rs");
+
         #[cfg(feature = "builtin-readconf")]
         pub mod regs {
             include!("prebuilds/readconf/regs.rs");

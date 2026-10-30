@@ -48,6 +48,7 @@ builtin-mspm0g518x = []
 builtin-py32f07x = ["_lite"]
 builtin-py32f403 = ["_lite"]
 builtin-sf32lb52x = []
+builtin-wb32fq95 = ["_lite"]
 # for musb-readconf only
 builtin-readconf = []
 
