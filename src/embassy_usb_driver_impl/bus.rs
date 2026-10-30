@@ -76,6 +76,10 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     fn endpoint_set_stalled(&mut self, ep_addr: EndpointAddress, stalled: bool) {
         // This can race, so do a retry loop.
         let ep_index = ep_addr.index();
+        // The host picks the endpoint (SET/CLEAR_FEATURE(ENDPOINT_HALT)); ignore one we don't have.
+        if ep_index >= ENDPOINTS.len() {
+            return;
+        }
         match ep_addr.direction() {
             Direction::In => {
                 common_impl::ep_tx_stall::<T>(ep_index as _, stalled);
@@ -90,6 +94,9 @@ impl<'d, T: MusbInstance> driver::Bus for Bus<'d, T> {
     }
 
     fn endpoint_is_stalled(&mut self, ep_addr: EndpointAddress) -> bool {
+        if ep_addr.index() >= ENDPOINTS.len() {
+            return false;
+        }
         match ep_addr.direction() {
             Direction::In => common_impl::ep_tx_is_stalled::<T>(ep_addr.index() as _),
             Direction::Out => common_impl::ep_rx_is_stalled::<T>(ep_addr.index() as _),
