@@ -1,6 +1,6 @@
 use core::future::poll_fn;
 use core::marker::PhantomData;
-use core::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU16, AtomicU8, Ordering};
 use core::task::Poll;
 
 use embassy_sync::waitqueue::AtomicWaker;
@@ -37,6 +37,9 @@ static IRQ_SUSPEND: AtomicBool = AtomicBool::new(false);
 static IRQ_RESUME: AtomicBool = AtomicBool::new(false);
 static EP_TX_ENABLED: AtomicU16 = AtomicU16::new(0);
 static EP_RX_ENABLED: AtomicU16 = AtomicU16::new(0);
+// Bumped on every bus reset. embassy-usb doesn't poll the bus during a control
+// transfer, so the control pipe checks this to notice one.
+static RESET_GEN: AtomicU8 = AtomicU8::new(0);
 
 #[inline(always)]
 pub unsafe fn on_interrupt<T: MusbInstance>() {
@@ -48,7 +51,11 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
 
     if intrusb.reset() {
         IRQ_RESET.store(true, Ordering::SeqCst);
+        // Only this handler writes it, so no fetch_add (thumbv6m has none)
+        RESET_GEN.store(RESET_GEN.load(Ordering::Relaxed).wrapping_add(1), Ordering::SeqCst);
         BUS_WAKER.wake();
+        EP_TX_WAKERS[0].wake();
+        EP_RX_WAKERS[0].wake();
     }
     if intrusb.suspend() {
         IRQ_SUSPEND.store(true, Ordering::SeqCst);
