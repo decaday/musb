@@ -51,7 +51,8 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
 
     if intrusb.reset() {
         IRQ_RESET.store(true, Ordering::SeqCst);
-        RESET_GEN.fetch_add(1, Ordering::SeqCst);
+        // Only this handler writes it, so no fetch_add (thumbv6m has none)
+        RESET_GEN.store(RESET_GEN.load(Ordering::Relaxed).wrapping_add(1), Ordering::SeqCst);
         BUS_WAKER.wake();
         EP_TX_WAKERS[0].wake();
         EP_RX_WAKERS[0].wake();
