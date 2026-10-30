@@ -59,16 +59,24 @@ pub fn alloc_endpoint(
                 index,
                 direction,
                 max_packet_size,
+                true,
             )?;
             Some((index as usize, &mut alloc[index as usize]))
         }
     } else {
-        alloc.iter_mut().enumerate().find(|(i, ep)| {
-            if *i == 0 {
-                return false; // reserved for control pipe
-            }
-            check_endpoint(ep, ep_type, *i as _, direction, max_packet_size).is_ok()
-        })
+        // Pair different types on one endpoint number only when nothing else is
+        // free, so endpoints that fit before keep their numbers.
+        let fits = |alloc: &[EndpointData], mixed| {
+            alloc.iter().enumerate().position(|(i, ep)| {
+                // EP0 is reserved for control pipe
+                i != 0
+                    && check_endpoint(ep, ep_type, i as _, direction, max_packet_size, mixed)
+                        .is_ok()
+            })
+        };
+        fits(alloc, false)
+            .or_else(|| fits(alloc, true))
+            .map(|i| (i, &mut alloc[i]))
     };
 
     let (index, ep) = match res {
@@ -147,6 +155,7 @@ fn check_endpoint(
     index: u8,
     direction: Direction,
     max_packet_size: u16,
+    mixed: bool,
 ) -> Result<(), EndpointAllocError> {
     let used = ep.used_rx || ep.used_tx;
     let _ = index;
@@ -173,14 +182,26 @@ fn check_endpoint(
         }
     }
 
-    if alloc_ep_type == EndpointType::Bulk && used {
-        return Err(EndpointAllocError::EpUsed);
-    }
-
     let used_dir = match direction {
         Direction::Out => ep.used_rx,
         Direction::In => ep.used_tx,
     };
+
+    // Without a shared FIFO, IN and OUT of one endpoint number have their own
+    // FIFO and CSRs, so they can be of different types. Only the ISO bit comes
+    // from the single `ep_type` kept per number.
+    #[cfg(not(feature = "_ep-shared-fifo"))]
+    if mixed && used && !used_dir {
+        let iso = EndpointType::Isochronous;
+        if ep.ep_conf.ep_type != iso && alloc_ep_type != iso {
+            return Ok(());
+        }
+    }
+    let _ = mixed;
+
+    if alloc_ep_type == EndpointType::Bulk && used {
+        return Err(EndpointAllocError::EpUsed);
+    }
     
     if !used || (ep.ep_conf.ep_type == alloc_ep_type && !used_dir) {
         Ok(())
