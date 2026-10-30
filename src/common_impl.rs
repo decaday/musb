@@ -151,7 +151,7 @@ pub fn ep_tx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
                 // Lite version uses 8-byte unit
                 T::regs()
                     .txmaxp()
-                    .write(|w| w.set_maxp((config.tx_max_packet_size + 7) / 8));
+                    .write(|w| w.set_maxp(((config.tx_max_packet_size + 7) / 8) as _));
             } else {
                 // Full version uses full packet size
                 T::regs()
@@ -243,7 +243,7 @@ pub fn ep_rx_enable<T: MusbInstance>(index: u8, config: &EndpointConfig) {
                 // Lite version uses 8-byte unit
                 T::regs()
                     .rxmaxp()
-                    .write(|w| w.set_maxp((config.rx_max_packet_size + 7) / 8));
+                    .write(|w| w.set_maxp(((config.rx_max_packet_size + 7) / 8) as _));
             } else {
                 T::regs()
                     .rxmaxp()

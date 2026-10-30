@@ -1,0 +1,8 @@
+fieldset/RXCOUNT:
+  bit_size: 8
+  description: Received data byte count for OUT endpoints, low byte on WB32 (OUTCOUNTL).
+  fields:
+  - name: Count
+    description: Number of received data bytes in FIFO
+    bit_offset: 0
+    bit_size: 8

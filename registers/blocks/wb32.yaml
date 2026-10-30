@@ -1,0 +1,109 @@
+# WB32FQ95 USB block (USB_TypeDef in wb32fq95xx.h). Every register is 8 bits
+# wide and must be accessed by bytes, so FRAME, the MAXPs and RXCOUNT use
+# byte-wide fieldsets.
+block/USB:
+  description: USB control and status registers for managing USB operations.
+  items:
+  - name: FADDR
+    description: Function address of the USB device.
+    byte_offset: 0x00
+    bit_size: 8
+    fieldset: common_std/FADDR.yaml
+  - name: POWER
+    description: USB power management register.
+    byte_offset: 0x01
+    bit_size: 8
+    fieldset: regs_peri_lite/POWER.yaml
+  - name: INTRTX
+    description: Interrupt status for EP0 and IN endpoints (INTRIN).
+    byte_offset: 0x02
+    bit_size: 8
+    fieldset: common_std/INTRTX.yaml
+  - name: INTRRX
+    description: Interrupt status for OUT endpoints (INTROUT).
+    byte_offset: 0x04
+    bit_size: 8
+    fieldset: common_std/INTRRX.yaml
+  - name: INTRUSB
+    description: USB interrupt status register.
+    byte_offset: 0x06
+    bit_size: 8
+    fieldset: regs_peri_lite/INTRUSB.yaml
+  - name: INTRTXE
+    description: Interrupt enable for EP0 and IN endpoints (INTRINE).
+    byte_offset: 0x07
+    bit_size: 8
+    fieldset: common_std/INTRTXE.yaml
+  - name: INTRRXE
+    description: Interrupt enable for OUT endpoints (INTROUTE).
+    byte_offset: 0x09
+    bit_size: 8
+    fieldset: common_std/INTRRXE.yaml
+  - name: INTRUSBE
+    description: USB interrupt enable register.
+    byte_offset: 0x0B
+    bit_size: 8
+    fieldset: regs_peri_lite/INTRUSBE.yaml
+  - name: FRAME
+    description: Frame number bits 0 to 7 (FRAMEL; FRAMEH is at 0x0D).
+    byte_offset: 0x0C
+    bit_size: 8
+    fieldset: vendor/FRAME_wb32.yaml
+  - name: INDEX
+    description: Selected endpoint index.
+    byte_offset: 0x0E
+    bit_size: 8
+    fieldset: common_std/INDEX.yaml
+  - name: TXMAXP
+    description: Maximum packet size for IN endpoints, in units of 8 bytes (INMAXP).
+    byte_offset: 0x10
+    bit_size: 8
+    fieldset: vendor/MAXP_wb32.yaml
+  - name: CSR0L
+    description: Endpoint 0 control and status register (CSR0).
+    byte_offset: 0x11
+    bit_size: 8
+    fieldset: indexed_peri_std/CSR0L.yaml
+  - name: TXCSRL
+    description: Control and status register 1 for IN endpoints (INCSR1).
+    byte_offset: 0x11
+    bit_size: 8
+    fieldset: regs_peri_lite/TXCSRL.yaml
+  - name: TXCSRH
+    description: Control and status register 2 for IN endpoints (INCSR2).
+    byte_offset: 0x12
+    bit_size: 8
+    fieldset: indexed_peri_std/TXCSRH.yaml
+  - name: RXMAXP
+    description: Maximum packet size for OUT endpoints, in units of 8 bytes (OUTMAXP).
+    byte_offset: 0x13
+    bit_size: 8
+    fieldset: vendor/MAXP_wb32.yaml
+  - name: RXCSRL
+    description: Control and status register 1 for OUT endpoints (OUTCSR1).
+    byte_offset: 0x14
+    bit_size: 8
+    fieldset: indexed_peri_std/RXCSRL.yaml
+  - name: RXCSRH
+    description: Control and status register 2 for OUT endpoints (OUTCSR2).
+    byte_offset: 0x15
+    bit_size: 8
+    fieldset: regs_peri_lite/RXCSRH.yaml
+  - name: COUNT0
+    description: Data count for endpoint 0.
+    byte_offset: 0x16
+    bit_size: 8
+    fieldset: indexed_peri_std/COUNT0.yaml
+  - name: RXCOUNT
+    description: Data count for OUT endpoints, low byte (OUTCOUNTL; OUTCOUNTH is at 0x17).
+    byte_offset: 0x16
+    bit_size: 8
+    fieldset: vendor/RXCOUNT_wb32.yaml
+  - name: FIFO
+    description: FIFO for endpoints (byte access only).
+    byte_offset: 0x20
+    bit_size: FIFO_REG_BIT_SIZE
+    fieldset: fifo_std/FIFO.yaml
+    array:
+      len: ENDPOINTS_NUM
+      stride: 4
