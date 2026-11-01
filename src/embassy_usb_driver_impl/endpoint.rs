@@ -43,17 +43,20 @@ impl<'d, T: MusbInstance> driver::EndpointOut for Endpoint<'d, T, Out> {
         let index = self.info.addr.index();
         let regs = T::regs();
 
-        let _ = poll_fn(|cx| {
+        poll_fn(|cx| {
             EP_RX_WAKERS[index].register(cx.waker());
+            if EP_RX_ENABLED.load(Ordering::Acquire) & ((1 << index) as u16) == 0 {
+                return Poll::Ready(Err(EndpointError::Disabled));
+            }
             regs.index().write(|w| w.set_index(index as _)); 
             let ready = regs.rxcsrl().read().rx_pkt_rdy();
             if ready {
-                Poll::Ready(())
+                Poll::Ready(Ok(()))
             } else {
                 Poll::Pending
             }
         })
-        .await;
+        .await?;
 
         regs.index().write(|w| w.set_index(index as _));
         let read_count = regs.rxcount().read().count();
@@ -82,8 +85,11 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
 
         trace!("musb/ep: write waiting len = {}", buf.len());
 
-        let _ = poll_fn(|cx| {
+        poll_fn(|cx| {
             EP_TX_WAKERS[index].register(cx.waker());
+            if EP_TX_ENABLED.load(Ordering::Acquire) & ((1 << index) as u16) == 0 {
+                return Poll::Ready(Err(EndpointError::Disabled));
+            }
             regs.index().write(|w| w.set_index(index as _));
 
             let unready = regs.txcsrl().read().tx_pkt_rdy();
@@ -91,10 +97,10 @@ impl<'d, T: MusbInstance> driver::EndpointIn for Endpoint<'d, T, In> {
             if unready {
                 Poll::Pending
             } else {
-                Poll::Ready(())
+                Poll::Ready(Ok(()))
             }
         })
-        .await;
+        .await?;
 
         regs.index().write(|w| w.set_index(index as _));
         buf.into_iter()
