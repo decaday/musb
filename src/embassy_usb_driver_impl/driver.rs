@@ -127,6 +127,7 @@ impl<'d, T: MusbInstance> MusbDriver<'d, T> {
             ControlPipe {
                 _phantom: PhantomData,
                 max_packet_size: control_max_packet_size,
+                reset_gen: 0,
                 ep_out,
                 ep_in,
             },
