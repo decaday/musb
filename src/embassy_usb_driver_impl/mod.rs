@@ -57,9 +57,17 @@ pub unsafe fn on_interrupt<T: MusbInstance>() {
         EP_TX_WAKERS[0].wake();
         EP_RX_WAKERS[0].wake();
     }
+    // `poll()` may run late and find several of these set, so keep only the
+    // latest state. Resume is only flagged while suspended, so in one read
+    // Suspend came first.
     if intrusb.suspend() {
+        IRQ_RESUME.store(false, Ordering::SeqCst);
         IRQ_SUSPEND.store(true, Ordering::SeqCst);
         BUS_WAKER.wake();
+    }
+    // A resume or a reset ends the suspend
+    if intrusb.resume() || intrusb.reset() {
+        IRQ_SUSPEND.store(false, Ordering::SeqCst);
     }
     if intrusb.resume() {
         IRQ_RESUME.store(true, Ordering::SeqCst);
