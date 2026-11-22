@@ -1,0 +1,8 @@
+fieldset/FRAME:
+  bit_size: 8
+  description: Last received USB frame number, low byte on WB32 (FRAMEL).
+  fields:
+  - name: Frame
+    description: USB frame number bits 0 to 7
+    bit_offset: 0
+    bit_size: 8

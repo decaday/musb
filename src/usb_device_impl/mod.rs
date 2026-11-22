@@ -233,7 +233,7 @@ impl<T: MusbInstance> usb_device::bus::UsbBus for UsbdBus<T> {
         let read_count = if index == 0 {
             regs.count0().read().count() as u16
         } else {
-            regs.rxcount().read().count()
+            regs.rxcount().read().count() as u16
         };
         // if read_count as usize > buf.len() {
         //     panic!("read_count > buf.len()");
